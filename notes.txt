@@ -1,0 +1,81 @@
+Done:
+- Create app in Supabase
+- Create Github repository
+- Create Vite+React TS app
+- Write SQL to create tables and populate with dummy data
+- Display dummy data as JSON
+- Log in/out
+- Change password
+
+
+TODO:
+- Row Level Security
+- Password reset
+
+
+Features:
+
+Auth:
+- Logging In/Out using email and password
+
+Viewing:
+- Searching for parents or kids (by name, email, phone, whatever)
+- Viewing orders (monthly reports)
+
+Changing Data:
+- Adding/Updating/Deleting parent data
+- Adding/Updating/Deleting kid data
+- Creating/Updating/Deleting order data
+
+Order Actions:
+- Generate labels
+- Generate Reference Sheet
+- Generate Deliverer emails (customized to recipient)
+- Close out order (saved as historical data, can no longer be edited)
+
+Other Actions:
+- Generate kid report (sorted oldest to youngest with an indicator for kids over 2 years old)
+- Export data
+- Import data
+
+Parent data model:
+  - generated random id
+  - first name
+  - last name
+  - address
+  - city
+  - zip
+  - phone number
+  - phone number 2 (optional)
+  - country of origin
+  - rough family income
+  - planned deliverer
+  - isActive
+  - created_at
+  - modified_at
+
+Kid data model:
+  - generated random id
+  - parent id
+  - first name
+  - last name
+  - birth date
+  - diaper size
+  - isActive
+  - created_at
+  - modified_at
+
+Order data model:
+  - generated random id
+  - date of order
+  - date of pickup
+  - isCompleted
+  - generated list of who will get what that month based on who is active
+  - created_at
+  - modified_at
+
+Deliverer data model:
+  - generated random id
+  - name
+  - email
+  
