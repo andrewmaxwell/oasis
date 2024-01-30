@@ -6,7 +6,6 @@ CREATE TABLE parent (
     city TEXT NOT NULL,
     zip TEXT NOT NULL,
     phone_number TEXT NOT NULL,
-    phone_number_2 TEXT,
     country_of_origin TEXT NOT NULL,
     rough_family_income NUMERIC,
     -- planned_deliverer TEXT, TODO
@@ -43,16 +42,3 @@ CREATE TABLE order_record (
 );
 
 -- TODO: Order details. Copy data from parent and kids and deliverer
-
--- INSERT INTO parent (first_name, last_name, address, city, zip, phone_number, phone_number_2, country_of_origin, rough_family_income, planned_deliverer, is_active)
--- VALUES 
--- ('John', 'Doe', '123 Maple Street', 'Springfield', '12345', '555-1234', NULL, 'USA', 50000, 'Deliverer1', TRUE),
--- ('Jane', 'Smith', '456 Oak Avenue', 'Centerville', '67890', '555-5678', '555-8765', 'Canada', 60000, 'Deliverer2', TRUE),
--- ('Alice', 'Johnson', '789 Pine Road', 'Lakeview', '13579', '555-2468', NULL, 'UK', 55000, 'Deliverer3', FALSE);
-
-
--- INSERT INTO kid (parent_id, first_name, last_name, birth_date, diaper_size, is_active)
--- VALUES 
--- ('417b3341-b7a0-4896-95d0-40501b04e087', 'Emily', 'Doe', '2021-06-01', 'Medium', TRUE),
--- ('b5567627-734b-429b-9a38-9d47764c4ac3', 'Michael', 'Smith', '2020-03-15', 'Large', TRUE),
--- ('417b3341-b7a0-4896-95d0-40501b04e087', 'Sophia', 'Doe', '2019-01-20', 'Small', FALSE);

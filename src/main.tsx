@@ -1,5 +1,5 @@
-import React from 'react';
-import ReactDOM from 'react-dom/client';
+import {StrictMode} from 'react';
+import {createRoot} from 'react-dom/client';
 import {App} from './App.tsx';
 import {
   createTheme,
@@ -12,16 +12,16 @@ import {OasisToolbar} from './components/OasisToolbar.tsx';
 
 const darkTheme = createTheme({palette: {mode: 'dark'}});
 
-ReactDOM.createRoot(document.getElementById('root')!).render(
-  <React.StrictMode>
+createRoot(document.getElementById('root')!).render(
+  <StrictMode>
     <ThemeProvider theme={darkTheme}>
       <CssBaseline />
       <Box sx={{flexGrow: 1}}>
         <OasisToolbar />
-        <Container maxWidth="sm">
+        <Container>
           <App />
         </Container>
       </Box>
     </ThemeProvider>
-  </React.StrictMode>,
+  </StrictMode>,
 );
