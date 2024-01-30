@@ -1,11 +1,13 @@
 Done:
-- Create app in Supabase
+- Create Supabase project
 - Create Github repository
 - Create Vite+React TS app
 - Write SQL to create tables and populate with dummy data
-- Display dummy data as JSON
-- Log in/out
-- Change password
+- Log in/out, change password
+- Generate and load dummy data
+- Search for parent data
+- Create table for parent data
+- View/update/create parents
 
 
 TODO:
@@ -26,6 +28,7 @@ Changing Data:
 - Adding/Updating/Deleting parent data
 - Adding/Updating/Deleting kid data
 - Creating/Updating/Deleting order data
+- Adding/updating/deleting users
 
 Order Actions:
 - Generate labels
@@ -79,3 +82,63 @@ Deliverer data model:
   - name
   - email
   
+
+Brennan's original notes:
+
+Database Requirements
+Must include the following info: 
+  Parent Name
+  Address
+  Phone# (Maybe multiple)
+  Kid Name
+  Kid Gender
+  Kid birthday
+  Kid Diaper Size
+  *May be multiple children under same parent
+  Country of origin 
+  Rough Family Income (requirement from non-profit)
+  Archive of past people that are no longer active
+  Planned Deliverer
+Must be easily editable by single user. 
+
+Automated tasks
+*In priority order
+*Tasks should be nearly automatic – no updating multiple files to be able to stuff
+  Generate a consolidated diaper order based on who is active in database
+  Generate label file to be stuck to diaper packs – Label file should contain:
+    Parent Name
+    Address
+    Phone
+    Diaper Size
+    Deliverer
+  Label file preferred to be organized by deliverer
+*Current label file uses mail-merge feature in Microsoft word to generate a PDF that has text in the correct places to print on an Avery 5263 shipping label sheet. These print on a standard printer (8.5 x 11 sheet with 2” x 4” labels). 
+*Would be open to using a brother labeler or similar if it makes the system better
+Generate a Diaper Day reference sheet for Selia to use on diaper distribution day. Should contain: 
+All info on label files organized by zip code then alphabetical
+*Will need to talk to Selia a bit more in depth to tailor her reference sheet to her preferences. 
+Generate a monthly report
+Record of diapers ordered
+Record of who got diapers that month
+Generate text for generic reminder email to deliverers. Email shall be customized to recipient. Contains: 
+Date of next diaper pickup day
+Who they will be picking up for (Name, address, phone, Size)
+When they can pick up
+Contact info of Selia for questions
+Invite to provide size feedback for next month
+Check database for children that are too old
+Add a feature to the monthly report (above) that highlights any kids older than 2 and sorts them in oldest to youngest order. With the list of kids include all the same info as what would go on a diaper label. 
+
+-----
+1. 4 users. (2 of them will be "read-only") - a user will log on weekly or bi-weekly to update sizes and place monthly orders
+2. I think two types of account - a read only user and a standard user
+3. Planned deliverer changes very often. Only about 40% have a consistent delivery person. For those without a consistent delivery person it can be left as blank and it can be assigned on-the-fly. 
+4. The diaper #s are as follows: 
+Size 7 - 50 diapers per month per kid
+Size 6 - 50 diapers per month per kid
+Size 5 - 50 diapers per month per kid
+Size 4 - 50 diapers per month per kid
+Size 3 - 50 diapers per month per kid
+Size 2 - 50 diapers per month per kid
+Size 1 - 75 diapers per month per kid
+Size N (for newborn) - 75 diapers per month per kid

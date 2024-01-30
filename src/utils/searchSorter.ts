@@ -7,7 +7,6 @@ const getTermScore = (term: string, val: string) => {
 
 const getScore = <T>(row: T, searchTerms: string[], fields: (keyof T)[]) => {
   const values = fields.map((f) => String(row[f] ?? '').toLowerCase());
-
   return searchTerms
     .map((term) => Math.max(...values.map((val) => getTermScore(term, val))))
     .reduce((a, b) => a + b);

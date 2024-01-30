@@ -1,3 +1,11 @@
+CREATE OR REPLACE FUNCTION update_modified_at()
+RETURNS TRIGGER AS $$
+BEGIN
+    NEW.modified_at = CURRENT_TIMESTAMP;
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
 CREATE TABLE parent (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     first_name TEXT NOT NULL,
@@ -40,5 +48,10 @@ CREATE TABLE order_record (
     created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
     modified_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
+
+CREATE TRIGGER update_parent_modified_at
+BEFORE UPDATE ON parent
+FOR EACH ROW
+EXECUTE FUNCTION update_modified_at();
 
 -- TODO: Order details. Copy data from parent and kids and deliverer

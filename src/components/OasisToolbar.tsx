@@ -6,7 +6,7 @@ export const OasisToolbar = () => {
   const session = useSession();
 
   return (
-    <AppBar position="static">
+    <AppBar position="static" sx={{marginBottom: 2}}>
       <Toolbar>
         <Typography variant="h6" sx={{flexGrow: 1}}>
           Oasis Diaper Ministry Manager

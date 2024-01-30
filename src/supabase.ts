@@ -9,19 +9,19 @@ const supabase = createClient(
 
 export const signIn = async (email: string, password: string) => {
   const {error} = await supabase.auth.signInWithPassword({email, password});
-  if (error) alert(error);
+  if (error) alert(error.message);
 };
 
 export const updatePassword = async (password: string) => {
   const {error} = await supabase.auth.updateUser({password});
-  if (error) alert(error);
+  if (error) alert(error.message);
 };
 
 export const logOut = () => supabase.auth.signOut();
 
 export const getParentsWithChildren = async () => {
   const {data, error} = await supabase.from('parent').select(`*, kid:id (*)`);
-  if (error) console.error(error);
+  if (error) alert(error.message);
   return data as Parent[];
 };
 
@@ -30,3 +30,35 @@ export const getSession = () => supabase.auth.getSession();
 export const onAuthStateChange = (
   func: (event: AuthChangeEvent, session: Session | null) => void,
 ) => supabase.auth.onAuthStateChange(func);
+
+export const getParent = async (parentId: string) => {
+  const {data, error} = await supabase
+    .from('parent')
+    .select(`*, kid (*)`)
+    .eq('id', parentId);
+  if (error) alert(error.message);
+  return data?.[0] as Parent;
+};
+
+export const insertRecord = async (tableName: string, newRecord: object) => {
+  const {data, error} = await supabase
+    .from(tableName)
+    .insert(newRecord)
+    .select();
+  if (error) alert(error.message);
+  return data?.[0] as Parent;
+};
+
+export const updateRecord = async (
+  tableName: string,
+  id: string,
+  updates: object,
+) => {
+  const {data, error} = await supabase
+    .from(tableName)
+    .update(updates)
+    .eq('id', id)
+    .select();
+  if (error) alert(error.message);
+  return data?.[0] as Parent;
+};
