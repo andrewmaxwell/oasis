@@ -54,6 +54,7 @@ export const PersonSearch = () => {
             <TableCell>Name</TableCell>
             <TableCell>Address</TableCell>
             <TableCell>Phone #</TableCell>
+            <TableCell>Kids</TableCell>
             <TableCell>Active</TableCell>
           </TableRow>
         </TableHead>
@@ -69,6 +70,7 @@ export const PersonSearch = () => {
                 {p.address}, {p.city}, {p.zip}
               </TableCell>
               <TableCell>{p.phone_number}</TableCell>
+              <TableCell>{p.kid.length}</TableCell>
               <TableCell>{p.is_active ? 'Y' : 'N'}</TableCell>
             </TableRow>
           ))}

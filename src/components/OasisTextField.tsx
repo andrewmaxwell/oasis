@@ -21,6 +21,7 @@ export const OasisTextField = <T extends string>({
     type={type}
     error={!!error}
     helperText={String(error?.message || '')}
+    InputLabelProps={type === 'date' ? {shrink: true} : {}}
     {...props}
   />
 );

@@ -1,6 +1,6 @@
 // eslint-disable-next-line import/named
 import {AuthChangeEvent, Session, createClient} from '@supabase/supabase-js';
-import {Parent} from './types.ts';
+import {Kid, Parent} from './types.ts';
 
 const supabase = createClient(
   'https://lsagjnicdssonuenzunb.supabase.co',
@@ -40,13 +40,19 @@ export const getParent = async (parentId: string) => {
   return data?.[0] as Parent;
 };
 
+export const getKid = async (kidId: string) => {
+  const {data, error} = await supabase.from('kid').select().eq('id', kidId);
+  if (error) alert(error.message);
+  return data?.[0] as Kid;
+};
+
 export const insertRecord = async (tableName: string, newRecord: object) => {
   const {data, error} = await supabase
     .from(tableName)
     .insert(newRecord)
     .select();
   if (error) alert(error.message);
-  return data?.[0] as Parent;
+  return data?.[0];
 };
 
 export const updateRecord = async (
@@ -54,11 +60,11 @@ export const updateRecord = async (
   id: string,
   updates: object,
 ) => {
-  const {data, error} = await supabase
-    .from(tableName)
-    .update(updates)
-    .eq('id', id)
-    .select();
+  const {error} = await supabase.from(tableName).update(updates).eq('id', id);
   if (error) alert(error.message);
-  return data?.[0] as Parent;
+};
+
+export const deleteRecord = async (tableName: string, id: string) => {
+  const {error} = await supabase.from(tableName).delete().eq('id', id);
+  if (error) alert(error.message);
 };

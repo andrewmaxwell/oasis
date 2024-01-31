@@ -3,6 +3,7 @@ import {SignInForm} from './components/SignInForm.tsx';
 import {PersonSearch} from './components/PersonSearch.tsx';
 import {createBrowserRouter, RouterProvider} from 'react-router-dom';
 import {ParentPage} from './components/ParentPage.tsx';
+import {KidPage} from './components/KidPage.tsx';
 
 const base = 'oasis';
 const router = createBrowserRouter([
@@ -13,6 +14,10 @@ const router = createBrowserRouter([
   {
     path: `${base}/parent/:id`,
     element: <ParentPage />,
+  },
+  {
+    path: `${base}/kid/:id`,
+    element: <KidPage />,
   },
 ]);
 

@@ -1,3 +1,17 @@
+import {Path} from 'react-hook-form';
+
+export type Kid = {
+  id: string;
+  parent_id: string;
+  first_name: string;
+  last_name: string;
+  birth_date: string;
+  diaper_size: string;
+  is_active: boolean;
+  created_at: string;
+  modified_at: string;
+};
+
 export type Parent = {
   id: string;
   first_name: string;
@@ -9,20 +23,9 @@ export type Parent = {
   country_of_origin: string;
   rough_family_income?: number;
   is_active: boolean;
-  created_at: Date;
-  modified_at: Date;
-};
-
-export type Kid = {
-  id: string;
-  parent_id: string;
-  first_name: string;
-  last_name: string;
-  birth_date: Date;
-  diaper_size: string;
-  is_active: boolean;
-  created_at: Date;
-  modified_at: Date;
+  created_at: string;
+  modified_at: string;
+  kid: Kid[];
 };
 
 export type Deliverer = {
@@ -33,9 +36,22 @@ export type Deliverer = {
 
 export type OrderRecord = {
   id: string;
-  date_of_order: Date;
-  date_of_pickup: Date;
+  date_of_order: string;
+  date_of_pickup: string;
   is_completed: boolean;
-  created_at: Date;
-  modified_at: Date;
+  created_at: string;
+  modified_at: string;
+};
+
+export type Option = {
+  label: string;
+  value: string;
+};
+export type FormField<T> = {
+  id: Path<Partial<T>>;
+  label: string;
+  required?: boolean;
+  width?: number;
+  type?: 'text' | 'number' | 'switch' | 'select' | 'date';
+  options?: Option[] | (() => Promise<Option[]>);
 };

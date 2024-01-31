@@ -18,7 +18,7 @@ createRoot(document.getElementById('root')!).render(
       <CssBaseline />
       <Box sx={{flexGrow: 1}}>
         <OasisToolbar />
-        <Container>
+        <Container sx={{pb: 10}}>
           <App />
         </Container>
       </Box>

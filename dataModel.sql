@@ -24,7 +24,7 @@ CREATE TABLE parent (
 
 CREATE TABLE kid (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    parent_id UUID REFERENCES parent(id),
+    parent_id UUID REFERENCES parent(id) NOT NULL ON DELETE CASCADE,
     first_name TEXT NOT NULL,
     last_name TEXT NOT NULL,
     birth_date DATE NOT NULL,
