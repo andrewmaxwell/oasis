@@ -1,3 +1,5 @@
+// nodemon scripts/generateFake
+
 import casual from 'casual'; // https://www.npmjs.com/package/casual
 import {writeFileSync} from 'fs';
 
@@ -52,19 +54,31 @@ for (const {parentId, lastName} of parents) {
       lastName,
       casual.moment.format(),
       randEl(['N', '1', '2', '3', '4', '5', '6', '7']),
-      Math.random() < 0.25,
+      Math.random() > 0.25,
     ]);
   }
 }
 
+const delivererValues = Array.from({length: 10}, () => [
+  casual.uuid,
+  casual.name,
+  casual.email,
+  casual.phone,
+  Math.random() > 0.25,
+]);
+
 const sql = `DELETE FROM kid;
 DELETE FROM parent;
+DELETE FROM deliverer;
 
 INSERT INTO parent (id, first_name, last_name, address, city, zip, phone_number, country_of_origin, rough_family_income, is_active) VALUES
 ${valuesToSQL(parentValues)};
 
 INSERT INTO kid (id, parent_id, first_name, last_name, birth_date, diaper_size, is_active) VALUES
 ${valuesToSQL(kidValues)}
+
+INSERT INTO deliverer (id, name, email, phone_number, is_active) VALUES
+${valuesToSQL(delivererValues)}
 `;
 
 writeFileSync('dummy.sql', sql);

@@ -1,15 +1,4 @@
-import {
-  Box,
-  Button,
-  CircularProgress,
-  Paper,
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableRow,
-  Typography,
-} from '@mui/material';
+import {Button, CircularProgress, Paper, Typography} from '@mui/material';
 import {useEffect, useState} from 'react';
 import {Link, useNavigate, useParams} from 'react-router-dom';
 import {
@@ -17,12 +6,12 @@ import {
   getParent,
   insertRecord,
   updateRecord,
-} from '../supabase.ts';
-import {FormField, Parent} from '../types.ts';
-import {getDifference} from '../utils/getDifference.ts';
-import {OasisForm} from './OasisForm.tsx';
+} from '../../supabase.ts';
+import {FormField, Kid, Parent} from '../../types.ts';
+import {getDifference} from '../../utils/getDifference.ts';
+import {OasisForm} from '../OasisForm.tsx';
 import {UseFormReset} from 'react-hook-form';
-import {Add} from '@mui/icons-material';
+import {OasisTable} from '../OasisTable.tsx';
 
 const parentFields: FormField<Parent>[] = [
   {id: 'first_name', label: 'First Name', required: true, width: 4},
@@ -46,6 +35,22 @@ const parentFields: FormField<Parent>[] = [
   },
   {id: 'is_active', label: 'Active', type: 'switch', width: 3},
 ];
+
+const kidColumns = [
+  {
+    label: 'Name',
+    render: (k: Kid) => (
+      <Button component={Link} to={`/oasis/kid/${k.id}`}>
+        {k.first_name} {k.last_name}
+      </Button>
+    ),
+  },
+  {label: 'Birth Date', render: (k: Kid) => k.birth_date},
+  {label: 'Diaper Size', render: (k: Kid) => k.diaper_size},
+  {label: 'Active', render: (k: Kid) => (k.is_active ? 'Y' : 'N')},
+];
+
+const kidFieldsToSearch: (keyof Kid)[] = ['first_name', 'last_name'];
 
 export const ParentPage = () => {
   const [origData, setOrigData] = useState<Partial<Parent> | undefined>();
@@ -100,48 +105,17 @@ export const ParentPage = () => {
       </Paper>
 
       {origData.kid && (
-        <Paper sx={{p: 2, mt: 2}}>
-          <Box
-            display="flex"
-            justifyContent="space-between"
-            alignItems="center"
-          >
-            <Typography variant="h5">Kids</Typography>
-            <Button
-              variant="contained"
-              onClick={() => navigate(`/oasis/kid/new?parentId=${origData.id}`)}
-              startIcon={<Add />}
-            >
-              Kid
-            </Button>
-          </Box>
-          <Table size="small">
-            <TableHead>
-              <TableRow>
-                <TableCell>Name</TableCell>
-                <TableCell>Birth Date</TableCell>
-                <TableCell>Diaper Size</TableCell>
-                <TableCell>Active</TableCell>
-              </TableRow>
-            </TableHead>
-            <TableBody>
-              {origData.kid
-                .sort((a, b) => b.birth_date.localeCompare(a.birth_date))
-                .map((k) => (
-                  <TableRow key={k.id}>
-                    <TableCell>
-                      <Button component={Link} to={`/oasis/kid/${k.id}`}>
-                        {k.first_name} {k.last_name}
-                      </Button>
-                    </TableCell>
-                    <TableCell>{k.birth_date}</TableCell>
-                    <TableCell>{k.diaper_size}</TableCell>
-                    <TableCell>{k.is_active ? 'Y' : 'N'}</TableCell>
-                  </TableRow>
-                ))}
-            </TableBody>
-          </Table>
-        </Paper>
+        <OasisTable
+          dataGetter={() =>
+            (origData.kid ?? []).sort((a, b) =>
+              a.birth_date.localeCompare(b.birth_date),
+            )
+          }
+          label="Kid"
+          columns={kidColumns}
+          fieldsToSearch={kidFieldsToSearch}
+          newItemUrl={`/oasis/kid/new?parentId=${origData.id}`}
+        />
       )}
 
       <Button color="error" sx={{mt: 4}} onClick={deleteParent}>

@@ -1,6 +1,6 @@
 // eslint-disable-next-line import/named
 import {AuthChangeEvent, Session, createClient} from '@supabase/supabase-js';
-import {Kid, Parent} from './types.ts';
+import {Parent} from './types.ts';
 
 const supabase = createClient(
   'https://lsagjnicdssonuenzunb.supabase.co',
@@ -40,10 +40,16 @@ export const getParent = async (parentId: string) => {
   return data?.[0] as Parent;
 };
 
-export const getKid = async (kidId: string) => {
-  const {data, error} = await supabase.from('kid').select().eq('id', kidId);
+export const getAllRecords = async (tableName: string) => {
+  const {data, error} = await supabase.from(tableName).select();
   if (error) alert(error.message);
-  return data?.[0] as Kid;
+  return data;
+};
+
+export const getRecord = async (tableName: string, id: string) => {
+  const {data, error} = await supabase.from(tableName).select().eq('id', id);
+  if (error) alert(error.message);
+  return data?.[0];
 };
 
 export const insertRecord = async (tableName: string, newRecord: object) => {

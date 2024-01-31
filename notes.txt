@@ -7,7 +7,8 @@ Done:
 - Generate and load dummy data
 - Search for parent data
 - Create table for parent data
-- View/update/create parents
+- View/update/create/delete parents and kids
+- View/search for deliverers
 
 
 TODO:

@@ -32,6 +32,10 @@ export type Deliverer = {
   id: string;
   name: string;
   email: string;
+  phone_number: string;
+  is_active: boolean;
+  created_at: string;
+  modified_at: string;
 };
 
 export type OrderRecord = {

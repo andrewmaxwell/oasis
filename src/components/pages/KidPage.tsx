@@ -3,14 +3,14 @@ import {useEffect, useState} from 'react';
 import {useNavigate, useParams, useSearchParams} from 'react-router-dom';
 import {
   deleteRecord,
-  getKid,
   getParentsWithChildren,
+  getRecord,
   insertRecord,
   updateRecord,
-} from '../supabase.ts';
-import {FormField, Kid} from '../types.ts';
-import {getDifference} from '../utils/getDifference.ts';
-import {OasisForm} from './OasisForm.tsx';
+} from '../../supabase.ts';
+import {FormField, Kid} from '../../types.ts';
+import {getDifference} from '../../utils/getDifference.ts';
+import {OasisForm} from '../OasisForm.tsx';
 
 const kidFields: FormField<Kid>[] = [
   {id: 'first_name', label: 'First Name', required: true, width: 6},
@@ -52,7 +52,7 @@ export const KidPage = () => {
 
   useEffect(() => {
     if (id && id !== 'new') {
-      getKid(id).then(setOrigData);
+      getRecord('kid', id).then(setOrigData);
     } else {
       setOrigData({
         is_active: true,

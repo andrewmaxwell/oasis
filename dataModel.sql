@@ -37,7 +37,11 @@ CREATE TABLE kid (
 CREATE TABLE deliverer (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     name TEXT NOT NULL,
-    email TEXT NOT NULL
+    email TEXT NOT NULL,
+    phone_number TEXT NOT NULL,
+    is_active BOOLEAN NOT NULL,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    modified_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
 
 CREATE TABLE order_record (
