@@ -17,7 +17,7 @@ export const DelivererSelect = ({parent, onChange}: DelivererSelectProps) => {
       select
       label="Deliverer"
       fullWidth
-      defaultValue={parent.deliverer_id || ''}
+      value={parent.deliverer_id || ''}
       onChange={onChange}
     >
       <MenuItem></MenuItem>

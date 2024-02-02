@@ -20,6 +20,7 @@ import {getDifference} from '../../../utils/getDifference.ts';
 import {OasisForm} from '../../OasisForm.tsx';
 import {OasisTable} from '../../OasisTable.tsx';
 import {DelivererSelect} from './DelivererSelect.tsx';
+import {dateToAge} from '../../../utils/dateToAge.ts';
 
 const getParentsWithAtLeastOneKid = async () =>
   (await getParentsAndKids()).filter((p) => p.kid.length > 0);
@@ -76,7 +77,7 @@ const parentColumns: TableColumn<Parent>[] = [
                 </Button>
               </Grid>
               <Grid item xs={2}>
-                {k.birth_date}
+                {dateToAge(k.birth_date)}
               </Grid>
               <Grid item xs={2}>
                 Size {k.diaper_size}
