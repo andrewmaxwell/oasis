@@ -1,6 +1,6 @@
 // eslint-disable-next-line import/named
 import {AuthChangeEvent, Session, createClient} from '@supabase/supabase-js';
-import {Parent} from './types.ts';
+import {Parent, TableName} from './types.ts';
 
 const supabase = createClient(
   'https://lsagjnicdssonuenzunb.supabase.co',
@@ -19,7 +19,7 @@ export const updatePassword = async (password: string) => {
 
 export const logOut = () => supabase.auth.signOut();
 
-export const getParentsWithChildren = async () => {
+export const getParentsAndKids = async () => {
   const {data, error} = await supabase.from('parent').select(`*, kid:id (*)`);
   if (error) alert(error.message);
   return data as Parent[];
@@ -40,19 +40,19 @@ export const getParent = async (parentId: string) => {
   return data?.[0] as Parent;
 };
 
-export const getAllRecords = async (tableName: string) => {
+export const getAllRecords = async (tableName: TableName) => {
   const {data, error} = await supabase.from(tableName).select();
   if (error) alert(error.message);
   return data;
 };
 
-export const getRecord = async (tableName: string, id: string) => {
+export const getRecord = async (tableName: TableName, id: string) => {
   const {data, error} = await supabase.from(tableName).select().eq('id', id);
   if (error) alert(error.message);
   return data?.[0];
 };
 
-export const insertRecord = async (tableName: string, newRecord: object) => {
+export const insertRecord = async (tableName: TableName, newRecord: object) => {
   const {data, error} = await supabase
     .from(tableName)
     .insert(newRecord)
@@ -62,7 +62,7 @@ export const insertRecord = async (tableName: string, newRecord: object) => {
 };
 
 export const updateRecord = async (
-  tableName: string,
+  tableName: TableName,
   id: string,
   updates: object,
 ) => {
@@ -70,7 +70,7 @@ export const updateRecord = async (
   if (error) alert(error.message);
 };
 
-export const deleteRecord = async (tableName: string, id: string) => {
+export const deleteRecord = async (tableName: TableName, id: string) => {
   const {error} = await supabase.from(tableName).delete().eq('id', id);
   if (error) alert(error.message);
 };

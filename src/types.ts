@@ -12,6 +12,16 @@ export type Kid = {
   modified_at: string;
 };
 
+export type Deliverer = {
+  id: string;
+  name: string;
+  email: string;
+  phone_number: string;
+  is_active: boolean;
+  created_at: string;
+  modified_at: string;
+};
+
 export type Parent = {
   id: string;
   first_name: string;
@@ -26,16 +36,8 @@ export type Parent = {
   created_at: string;
   modified_at: string;
   kid: Kid[];
-};
-
-export type Deliverer = {
-  id: string;
-  name: string;
-  email: string;
-  phone_number: string;
-  is_active: boolean;
-  created_at: string;
-  modified_at: string;
+  deliverer_id: string;
+  deliverer?: Deliverer;
 };
 
 export type OrderRecord = {
@@ -58,4 +60,15 @@ export type FormField<T> = {
   width?: number;
   type?: 'text' | 'number' | 'switch' | 'select' | 'date';
   options?: Option[] | (() => Promise<Option[]>);
+};
+
+export type TableName = 'parent' | 'kid' | 'order_record' | 'deliverer';
+
+export type TableColumn<T> = {
+  label: string;
+  width?: number;
+  render: (
+    record: T,
+    setState?: React.Dispatch<React.SetStateAction<T[] | undefined>>,
+  ) => string | number | null | boolean | JSX.Element;
 };

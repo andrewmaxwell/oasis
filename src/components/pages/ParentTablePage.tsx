@@ -1,8 +1,9 @@
 import {Button} from '@mui/material';
-import {getParentsWithChildren} from '../../supabase.ts';
+import {getParentsAndKids} from '../../supabase.ts';
 import {Parent} from '../../types.ts';
 import {OasisTable} from '../OasisTable.tsx';
 import {Link} from 'react-router-dom';
+import {useData} from '../../utils/useData.ts';
 
 const parentFieldsToSearch: (keyof Parent)[] = [
   'last_name',
@@ -33,7 +34,7 @@ const columns = [
 
 export const ParentTablePage = () => (
   <OasisTable
-    dataGetter={getParentsWithChildren}
+    data={useData(getParentsAndKids)}
     label="Parent"
     columns={columns}
     fieldsToSearch={parentFieldsToSearch}

@@ -1,4 +1,4 @@
-import {useEffect, useState} from 'react';
+import {useState} from 'react';
 import {
   Box,
   Button,
@@ -14,56 +14,55 @@ import {
 import {searchSorter} from '../utils/searchSorter.ts';
 import {useNavigate} from 'react-router-dom';
 import {Add} from '@mui/icons-material';
+import {TableColumn} from '../types.ts';
 
 type OasisTableProps<T> = {
-  dataGetter: () => T[] | Promise<T[]>;
-  label: string;
-  columns: {
-    label: string;
-    render: (record: T) => string | number | JSX.Element;
-  }[];
-  fieldsToSearch: (keyof T)[];
-  newItemUrl: string;
+  data: T[] | undefined;
+  label?: string;
+  columns: TableColumn<T>[];
+  fieldsToSearch?: (keyof T)[];
+  newItemUrl?: string;
+  setState?: React.Dispatch<React.SetStateAction<T[] | undefined>>;
 };
 
 export const OasisTable = <T extends {id: string}>({
-  dataGetter,
+  data,
   label,
   columns,
   fieldsToSearch,
   newItemUrl,
+  setState,
 }: OasisTableProps<T>) => {
-  const [data, setData] = useState<T[]>();
   const [search, setSearch] = useState('');
-
-  useEffect(() => {
-    Promise.resolve(dataGetter()).then(setData);
-  }, [dataGetter]);
-
   const navigate = useNavigate();
 
   if (!data) return <CircularProgress />;
-
   return (
     <Paper sx={{p: 2, mt: 2}}>
-      <Box display="flex" mb={2}>
-        <TextField
-          type="search"
-          label={`Search ${label}s`}
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-          fullWidth
-          sx={{mr: 1}}
-        />
+      {(fieldsToSearch || newItemUrl) && (
+        <Box display="flex" mb={2}>
+          {fieldsToSearch && (
+            <TextField
+              type="search"
+              label={`Search ${label}s`}
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              fullWidth
+              sx={{mr: 1}}
+            />
+          )}
 
-        <Button
-          variant="contained"
-          onClick={() => navigate(newItemUrl)}
-          startIcon={<Add />}
-        >
-          {label}
-        </Button>
-      </Box>
+          {newItemUrl && (
+            <Button
+              variant="contained"
+              onClick={() => navigate(newItemUrl)}
+              startIcon={<Add />}
+            >
+              {label}
+            </Button>
+          )}
+        </Box>
+      )}
 
       <Table size="small">
         <TableHead>
@@ -74,10 +73,15 @@ export const OasisTable = <T extends {id: string}>({
           </TableRow>
         </TableHead>
         <TableBody>
-          {searchSorter(data, search, fieldsToSearch).map((p) => (
+          {(fieldsToSearch
+            ? searchSorter(data, search, fieldsToSearch)
+            : data
+          ).map((p) => (
             <TableRow key={p.id}>
               {columns.map((c) => (
-                <TableCell key={c.label}>{c.render(p)}</TableCell>
+                <TableCell key={c.label} width={c.width}>
+                  {c.render(p, setState)}
+                </TableCell>
               ))}
             </TableRow>
           ))}

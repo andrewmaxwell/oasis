@@ -3,7 +3,7 @@ import {useEffect, useState} from 'react';
 import {useNavigate, useParams, useSearchParams} from 'react-router-dom';
 import {
   deleteRecord,
-  getParentsWithChildren,
+  getAllRecords,
   getRecord,
   insertRecord,
   updateRecord,
@@ -22,7 +22,7 @@ const kidFields: FormField<Kid>[] = [
     width: 6,
     type: 'select',
     options: async () =>
-      (await getParentsWithChildren()).map((p) => ({
+      (await getAllRecords('parent'))!.map((p) => ({
         value: p.id,
         label: `${p.first_name} ${p.last_name}`,
       })),

@@ -9,9 +9,14 @@ Done:
 - Create table for parent data
 - View/update/create/delete parents and kids
 - View/search for deliverers
+- Landing page
+- can assign deliverers to parents
+- can create, view, edit, delete orders
+
 
 
 TODO:
+- On order screen, check to make sure every active parent with >0 active kids has an active deliverer assigned
 - Row Level Security
 - Password reset
 
@@ -28,6 +33,7 @@ Viewing:
 Changing Data:
 - Adding/Updating/Deleting parent data
 - Adding/Updating/Deleting kid data
+- Adding/Updating/Deleting deliverer data
 - Creating/Updating/Deleting order data
 - Adding/updating/deleting users
 

@@ -21,6 +21,14 @@ const valuesToSQL = (rows) =>
     })
     .join(',\n');
 
+const delivererValues = Array.from({length: 10}, () => [
+  casual.uuid,
+  casual.name,
+  casual.email,
+  casual.phone,
+  Math.random() > 0.25,
+]);
+
 const parents = [];
 const parentValues = Array.from({length: numParents}, () => {
   const id = casual.uuid;
@@ -37,6 +45,7 @@ const parentValues = Array.from({length: numParents}, () => {
     casual.country,
     10000 + 5000 * Math.round(Math.random() * 10),
     Math.random() > 0.25,
+    randEl(delivererValues)[0],
   ];
 });
 
@@ -59,26 +68,19 @@ for (const {parentId, lastName} of parents) {
   }
 }
 
-const delivererValues = Array.from({length: 10}, () => [
-  casual.uuid,
-  casual.name,
-  casual.email,
-  casual.phone,
-  Math.random() > 0.25,
-]);
-
-const sql = `DELETE FROM kid;
+const sql = `
+DELETE FROM kid;
 DELETE FROM parent;
 DELETE FROM deliverer;
 
-INSERT INTO parent (id, first_name, last_name, address, city, zip, phone_number, country_of_origin, rough_family_income, is_active) VALUES
+INSERT INTO deliverer (id, name, email, phone_number, is_active) VALUES
+${valuesToSQL(delivererValues)}
+
+INSERT INTO parent (id, first_name, last_name, address, city, zip, phone_number, country_of_origin, rough_family_income, is_active, deliverer_id) VALUES
 ${valuesToSQL(parentValues)};
 
 INSERT INTO kid (id, parent_id, first_name, last_name, birth_date, diaper_size, is_active) VALUES
 ${valuesToSQL(kidValues)}
-
-INSERT INTO deliverer (id, name, email, phone_number, is_active) VALUES
-${valuesToSQL(delivererValues)}
 `;
 
 writeFileSync('dummy.sql', sql);

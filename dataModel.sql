@@ -16,7 +16,7 @@ CREATE TABLE parent (
     phone_number TEXT NOT NULL,
     country_of_origin TEXT NOT NULL,
     rough_family_income NUMERIC,
-    -- planned_deliverer TEXT, TODO
+    deliverer_id UUID REFERENCES deliverer(id),
     is_active BOOLEAN NOT NULL,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
     modified_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP

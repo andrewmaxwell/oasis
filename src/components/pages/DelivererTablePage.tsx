@@ -3,6 +3,7 @@ import {getAllRecords} from '../../supabase.ts';
 import {Deliverer} from '../../types.ts';
 import {OasisTable} from '../OasisTable.tsx';
 import {Button} from '@mui/material';
+import {useData} from '../../utils/useData.ts';
 
 const getDeliverers = async () =>
   (await getAllRecords('deliverer')) as Deliverer[];
@@ -22,9 +23,10 @@ const columns = [
   {label: 'Phone Number', render: (d: Deliverer) => d.phone_number},
   {label: 'Active', render: (d: Deliverer) => (d.is_active ? 'Y' : 'N')},
 ];
+
 export const DelivererTablePage = () => (
   <OasisTable
-    dataGetter={getDeliverers}
+    data={useData(getDeliverers)}
     label="Deliverer"
     columns={columns}
     fieldsToSearch={delivererFieldsToSearch}

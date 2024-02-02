@@ -12,6 +12,7 @@ import {getDifference} from '../../utils/getDifference.ts';
 import {OasisForm} from '../OasisForm.tsx';
 import {UseFormReset} from 'react-hook-form';
 import {OasisTable} from '../OasisTable.tsx';
+import {getDelivererOptions} from '../../utils/getDelivererOptions.ts';
 
 const parentFields: FormField<Parent>[] = [
   {id: 'first_name', label: 'First Name', required: true, width: 4},
@@ -31,7 +32,14 @@ const parentFields: FormField<Parent>[] = [
     label: 'Rough Family Income',
     required: true,
     type: 'number',
-    width: 3,
+    width: 2,
+  },
+  {
+    id: 'deliverer_id',
+    label: 'Planned Deliverer',
+    type: 'select',
+    options: getDelivererOptions,
+    width: 4,
   },
   {id: 'is_active', label: 'Active', type: 'switch', width: 3},
 ];
@@ -106,11 +114,7 @@ export const ParentPage = () => {
 
       {origData.kid && (
         <OasisTable
-          dataGetter={() =>
-            (origData.kid ?? []).sort((a, b) =>
-              a.birth_date.localeCompare(b.birth_date),
-            )
-          }
+          data={origData.kid}
           label="Kid"
           columns={kidColumns}
           fieldsToSearch={kidFieldsToSearch}
