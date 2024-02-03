@@ -12,6 +12,7 @@ import {DelivererPage} from './components/pages/DelivererPage.tsx';
 import {OrderTablePage} from './components/pages/OrderTablePage.tsx';
 import {FinishedOrderPage} from './components/pages/FinishedOrderPage.tsx';
 import {NewOrderPage} from './components/pages/NewOrderPage/NewOrderPage.tsx';
+import {ChangePasswordPage} from './components/pages/ChangePasswordPage.tsx';
 
 const PageWrapper = ({children}: {children: JSX.Element}) => (
   <Box sx={{flexGrow: 1}}>
@@ -59,12 +60,12 @@ const router = createBrowserRouter(
       path: `${base}/order/:id`,
       element: <FinishedOrderPage />,
     },
+    {
+      path: `${base}/changePassword`,
+      element: <ChangePasswordPage />,
+    },
   ].map((r) => ({...r, element: <PageWrapper>{r.element}</PageWrapper>})),
 );
 
-export const App = () => {
-  const session = useSession();
-  if (!session) return <SignInForm />;
-
-  return <RouterProvider router={router} />;
-};
+export const App = () =>
+  useSession() ? <RouterProvider router={router} /> : <SignInForm />;

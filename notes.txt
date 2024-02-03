@@ -15,12 +15,12 @@ Done:
 
 TODO:
 - User management
+- Read only mode
 - Generate labels
 - Generate Deliverer emails (customized to recipient)
 - Generate kid report (sorted oldest to youngest with an indicator for kids over 2 years old)
 - Mobile UX
 - Row Level Security
-- Password reset
 - Import/Export
 
 Brennan's original notes:

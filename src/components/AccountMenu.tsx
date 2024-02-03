@@ -1,24 +1,16 @@
 import {MouseEvent, useState} from 'react';
 import {Menu, MenuItem, Button, Typography} from '@mui/material';
-import {logOut, updatePassword} from '../supabase.ts';
+import {logOut} from '../supabase.ts';
 import {ArrowDropDown} from '@mui/icons-material';
+import {useNavigate} from 'react-router-dom';
 
 type AccountMenuProps = {
   email: string | undefined;
 };
 
-const changePassword = async () => {
-  const pw = prompt('Enter a new password', '');
-  if (pw) {
-    await updatePassword(pw);
-    alert('Password updated');
-  }
-};
-
 export const AccountMenu = ({email}: AccountMenuProps) => {
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
-
-  const handleClose = () => setAnchorEl(null);
+  const navigate = useNavigate();
 
   return (
     <>
@@ -46,12 +38,12 @@ export const AccountMenu = ({email}: AccountMenuProps) => {
         anchorEl={anchorEl}
         keepMounted
         open={Boolean(anchorEl)}
-        onClose={handleClose}
+        onClose={() => setAnchorEl(null)}
       >
         <MenuItem
           onClick={() => {
-            changePassword;
-            handleClose();
+            navigate('/oasis/changePassword');
+            setAnchorEl(null);
           }}
         >
           Change Password
@@ -60,7 +52,7 @@ export const AccountMenu = ({email}: AccountMenuProps) => {
         <MenuItem
           onClick={() => {
             logOut();
-            handleClose();
+            setAnchorEl(null);
           }}
         >
           Log Out

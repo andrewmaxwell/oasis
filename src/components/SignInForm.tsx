@@ -1,20 +1,19 @@
-import React, {useState} from 'react';
-import {Button, TextField, Box, Typography} from '@mui/material';
+import {Button, Box, Typography} from '@mui/material';
 import {signIn} from '../supabase.ts';
+import {FieldError, useForm} from 'react-hook-form';
+import {OasisTextField} from './OasisTextField.tsx';
 
 export const SignInForm = () => {
-  const [email, setEmail] = useState<string>('');
-  const [password, setPassword] = useState<string>('');
-
-  const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
-    event.preventDefault();
-    await signIn(email, password);
-  };
+  const {
+    handleSubmit,
+    register,
+    formState: {errors},
+  } = useForm();
 
   return (
     <Box
       component="form"
-      onSubmit={handleSubmit}
+      onSubmit={handleSubmit(({email, password}) => signIn(email, password))}
       sx={{
         '& .MuiTextField-root': {m: 1, width: '25ch'},
         display: 'flex',
@@ -26,19 +25,17 @@ export const SignInForm = () => {
       <Typography variant="h6" gutterBottom>
         Sign In
       </Typography>
-      <TextField
+      <OasisTextField
         label="Email Address"
         type="email"
-        value={email}
-        onChange={(e) => setEmail(e.target.value)}
-        required
+        props={register('email', {required: true})}
+        error={errors.email as FieldError}
       />
-      <TextField
+      <OasisTextField
         label="Password"
         type="password"
-        value={password}
-        onChange={(e) => setPassword(e.target.value)}
-        required
+        props={register('password', {required: true})}
+        error={errors.password as FieldError}
       />
       <Button type="submit" variant="contained" sx={{mt: 3, mb: 2}}>
         Sign In
