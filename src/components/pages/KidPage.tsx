@@ -58,6 +58,7 @@ export const KidPage = () => {
         is_active: true,
         diaper_size: '',
         parent_id: searchParams.get('parentId') || undefined,
+        last_name: searchParams.get('last_name') || undefined,
       });
     }
   }, [id, searchParams]);

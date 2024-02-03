@@ -1,9 +1,9 @@
 import {Button} from '@mui/material';
-import {getParentsAndKids} from '../../supabase.ts';
 import {Parent} from '../../types.ts';
 import {OasisTable} from '../OasisTable.tsx';
 import {Link} from 'react-router-dom';
 import {useData} from '../../utils/useData.ts';
+import {getAllRecords} from '../../supabase.ts';
 
 const parentFieldsToSearch: (keyof Parent)[] = [
   'last_name',
@@ -28,13 +28,15 @@ const columns = [
     render: (p: Parent) => `${p.address}, ${p.city}, ${p.zip}`,
   },
   {label: 'Phone', render: (p: Parent) => p.phone_number},
-  {label: 'Kids', render: (p: Parent) => p.kid.length},
+  // {label: 'Kids', render: (p: Parent) => p.kid.length},
   {label: 'Active', render: (p: Parent) => (p.is_active ? 'Y' : 'N')},
 ];
 
+const getParents = () => getAllRecords('parent') as Promise<Parent[]>;
+
 export const ParentTablePage = () => (
   <OasisTable
-    data={useData(getParentsAndKids)}
+    data={useData(getParents)}
     label="Parent"
     columns={columns}
     fieldsToSearch={parentFieldsToSearch}

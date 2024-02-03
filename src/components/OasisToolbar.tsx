@@ -17,7 +17,15 @@ export const OasisToolbar = () => {
           />
         </Link>
 
-        <Typography variant="h6" sx={{flexGrow: 1}}>
+        <Typography
+          variant="h6"
+          sx={{
+            flexGrow: 1,
+            overflow: 'hidden',
+            whiteSpace: 'nowrap',
+            textOverflow: 'ellipsis',
+          }}
+        >
           Oasis Diaper Ministry Manager
         </Typography>
 

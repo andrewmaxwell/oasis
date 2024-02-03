@@ -63,23 +63,25 @@ export const OasisTable = <T extends {id: string}>({
         </Box>
       )}
 
-      <Table size="small">
-        <TableHead>
-          <TableRow>
-            {columns.map((c) => (
-              <TableCell key={c.label}>{c.label}</TableCell>
+      {data.length > 0 && (
+        <Table size="small">
+          <TableHead>
+            <TableRow>
+              {columns.map((c) => (
+                <TableCell key={c.label}>{c.label}</TableCell>
+              ))}
+            </TableRow>
+          </TableHead>
+          <TableBody>
+            {(fieldsToSearch
+              ? searchSorter(data, search, fieldsToSearch)
+              : data
+            ).map((p) => (
+              <OasisTableRow key={p.id} data={p} columns={columns} />
             ))}
-          </TableRow>
-        </TableHead>
-        <TableBody>
-          {(fieldsToSearch
-            ? searchSorter(data, search, fieldsToSearch)
-            : data
-          ).map((p) => (
-            <OasisTableRow key={p.id} data={p} columns={columns} />
-          ))}
-        </TableBody>
-      </Table>
+          </TableBody>
+        </Table>
+      )}
     </Paper>
   );
 };

@@ -5,7 +5,7 @@ import {
   Session,
   createClient,
 } from '@supabase/supabase-js';
-import {Deliverer, OrderKid, Parent, TableName} from './types.ts';
+import {Deliverer, Kid, OrderKid, Parent, TableName} from './types.ts';
 
 const supabase = createClient(
   'https://lsagjnicdssonuenzunb.supabase.co',
@@ -29,29 +29,20 @@ export const updatePassword = async (password: string) => {
 
 export const logOut = () => supabase.auth.signOut();
 
-export const getParentsAndKids = async () => {
-  const {data, error} = await supabase
-    .from('parent')
-    .select('*, kid (id)')
-    .eq('is_deleted', false);
-  if (error) log(error);
-  return data as Parent[];
-};
-
 export const getSession = () => supabase.auth.getSession();
 
 export const onAuthStateChange = (
   func: (event: AuthChangeEvent, session: Session | null) => void,
 ) => supabase.auth.onAuthStateChange(func);
 
-export const getParent = async (parentId: string) => {
+export const getKidsForParent = async (parentId: string) => {
   const {data, error} = await supabase
-    .from('parent')
-    .select('*, kid (*)')
-    .eq('id', parentId)
+    .from('kid')
+    .select()
+    .eq('parent_id', parentId)
     .eq('is_deleted', false);
   if (error) log(error);
-  return data?.[0] as Parent;
+  return data as Kid[];
 };
 
 export const getAllRecords = async (tableName: TableName) => {

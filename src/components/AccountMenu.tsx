@@ -1,5 +1,5 @@
 import {MouseEvent, useState} from 'react';
-import {Menu, MenuItem, Button} from '@mui/material';
+import {Menu, MenuItem, Button, Typography} from '@mui/material';
 import {logOut, updatePassword} from '../supabase.ts';
 import {ArrowDropDown} from '@mui/icons-material';
 
@@ -30,7 +30,15 @@ export const AccountMenu = ({email}: AccountMenuProps) => {
         }
         endIcon={<ArrowDropDown />}
       >
-        {email}
+        <Typography
+          sx={{
+            overflow: 'hidden',
+            whiteSpace: 'nowrap',
+            textOverflow: 'ellipsis',
+          }}
+        >
+          {email}
+        </Typography>
       </Button>
 
       <Menu

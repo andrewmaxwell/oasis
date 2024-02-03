@@ -48,10 +48,6 @@ const parentColumns: TableColumn<Parent>[] = [
       </Grid>
     ),
   },
-  // {
-  //   label: 'Diapers',
-  //   render: (p: Parent) => p.is_active && calcDiaperSizes(p),
-  // },
   {
     label: 'Deliverer',
     render: (p: Parent) =>

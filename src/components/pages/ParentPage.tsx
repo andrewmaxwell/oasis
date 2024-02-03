@@ -3,7 +3,8 @@ import {useEffect, useState} from 'react';
 import {Link, useNavigate, useParams} from 'react-router-dom';
 import {
   deleteRecord,
-  getParent,
+  getKidsForParent,
+  getRecord,
   insertRecord,
   updateRecord,
 } from '../../supabase.ts';
@@ -60,21 +61,31 @@ const kidColumns = [
 
 const kidFieldsToSearch: (keyof Kid)[] = ['first_name', 'last_name'];
 
+const getParent = async (parentId: string) => {
+  const [parent, kid] = await Promise.all([
+    getRecord('parent', parentId) as Promise<Parent>,
+    getKidsForParent(parentId),
+  ]);
+
+  parent.kid = kid;
+  return parent;
+};
+
 export const ParentPage = () => {
-  const [origData, setOrigData] = useState<Partial<Parent> | undefined>();
+  const [parentData, setParentData] = useState<Partial<Parent> | undefined>();
   const {id} = useParams();
 
   useEffect(() => {
     if (id && id !== 'new') {
-      getParent(id).then(setOrigData);
+      getParent(id).then(setParentData);
     } else {
-      setOrigData({is_active: true});
+      setParentData({is_active: true});
     }
   }, [id]);
 
   const navigate = useNavigate();
 
-  if (!origData) return <CircularProgress />;
+  if (!parentData) return <CircularProgress />;
 
   const onSubmit = async (
     formData: Partial<Parent>,
@@ -82,10 +93,10 @@ export const ParentPage = () => {
   ) => {
     if (formData.id) {
       await updateRecord('parent', formData.id, {
-        ...getDifference(formData, origData),
+        ...getDifference(formData, parentData),
         kid: undefined,
       });
-      reset(await getParent(formData.id));
+      reset(await getRecord('parent', formData.id));
     } else {
       const {id} = await insertRecord('parent', formData);
       navigate(`/oasis/parent/${id}`, {replace: true});
@@ -93,9 +104,9 @@ export const ParentPage = () => {
   };
 
   const deleteParent = async () => {
-    const msg = `Are you sure you want to delete ${origData.first_name} ${origData.last_name} and their kids forever? This cannot be undone.`;
-    if (!origData.id || !confirm(msg)) return;
-    await deleteRecord('parent', origData.id);
+    const msg = `Are you sure you want to delete ${parentData.first_name} ${parentData.last_name} and their kids forever? This cannot be undone.`;
+    if (!parentData.id || !confirm(msg)) return;
+    await deleteRecord('parent', parentData.id);
     navigate('/oasis/parents');
   };
 
@@ -106,24 +117,24 @@ export const ParentPage = () => {
           Parent Info
         </Typography>
         <OasisForm
-          origData={origData}
+          origData={parentData}
           onSubmit={onSubmit}
           fields={parentFields}
         />
       </Paper>
 
-      {origData.kid && (
+      {parentData.kid && (
         <OasisTable
-          data={origData.kid}
+          data={parentData.kid}
           label="Kid"
           columns={kidColumns}
           fieldsToSearch={kidFieldsToSearch}
-          newItemUrl={`/oasis/kid/new?parentId=${origData.id}`}
+          newItemUrl={`/oasis/kid/new?parentId=${parentData.id}&last_name=${parentData.last_name}`}
         />
       )}
 
       <Button color="error" sx={{mt: 4}} onClick={deleteParent}>
-        Delete {origData.first_name} {origData.last_name}
+        Delete {parentData.first_name} {parentData.last_name}
       </Button>
     </>
   );

@@ -11,7 +11,7 @@ const sections = [
 export const LandingPage = () => (
   <Grid container spacing={2}>
     {sections.map(({label, url, Icon}) => (
-      <Grid key={label} item xs={4}>
+      <Grid key={label} item xs={12} md={4}>
         <Button
           component={Link}
           to={`/oasis/${url}`}
