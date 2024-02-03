@@ -20,10 +20,6 @@ const columns = [
     label: 'Pickup',
     render: (o: OrderRecord) => o.date_of_pickup,
   },
-  {
-    label: 'Completed',
-    render: (o: OrderRecord) => (o.is_completed ? 'Y' : 'N'),
-  },
 ];
 
 const getOrders = async () =>

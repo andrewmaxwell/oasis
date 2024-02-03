@@ -10,13 +10,15 @@ type OasisFormProps<T> = {
   onSubmit: (
     formData: Partial<T>,
     reset: UseFormReset<Partial<T>>,
-  ) => Promise<void>;
+  ) => Promise<void> | void;
   fields: FormField<T>[];
+  disableSave?: boolean;
 };
 export const OasisForm = <T extends FieldValues>({
   origData,
   onSubmit,
   fields,
+  disableSave,
 }: OasisFormProps<T>) => {
   const {
     register,
@@ -52,7 +54,11 @@ export const OasisForm = <T extends FieldValues>({
         ))}
 
         <Grid item xs={12} sx={{display: 'flex', justifyContent: 'flex-end'}}>
-          <Button type="submit" variant="contained" disabled={!isDirty}>
+          <Button
+            type="submit"
+            variant="contained"
+            disabled={!isDirty || disableSave}
+          >
             Save
           </Button>
         </Grid>

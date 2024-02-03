@@ -31,5 +31,6 @@ module.exports = {
     'no-use-before-define': 'warn',
     'no-prototype-builtins': 'off',
     'react/react-in-jsx-scope': 'off',
+    '@typescript-eslint/no-explicit-any': 'off'
   },
 };

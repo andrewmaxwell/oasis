@@ -96,7 +96,7 @@ export const ParentPage = () => {
     const msg = `Are you sure you want to delete ${origData.first_name} ${origData.last_name} and their kids forever? This cannot be undone.`;
     if (!origData.id || !confirm(msg)) return;
     await deleteRecord('parent', origData.id);
-    navigate('/oasis/');
+    navigate('/oasis/parents');
   };
 
   return (

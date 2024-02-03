@@ -10,7 +10,8 @@ import {Box, Container} from '@mui/material';
 import {LandingPage} from './components/pages/LandingPage.tsx';
 import {DelivererPage} from './components/pages/DelivererPage.tsx';
 import {OrderTablePage} from './components/pages/OrderTablePage.tsx';
-import {OrderPage} from './components/pages/OrderPage/OrderPage.tsx';
+import {FinishedOrderPage} from './components/pages/FinishedOrderPage.tsx';
+import {NewOrderPage} from './components/pages/NewOrderPage/NewOrderPage.tsx';
 
 const PageWrapper = ({children}: {children: JSX.Element}) => (
   <Box sx={{flexGrow: 1}}>
@@ -51,8 +52,12 @@ const router = createBrowserRouter(
       element: <OrderTablePage />,
     },
     {
+      path: `${base}/order/new`,
+      element: <NewOrderPage />,
+    },
+    {
       path: `${base}/order/:id`,
-      element: <OrderPage />,
+      element: <FinishedOrderPage />,
     },
   ].map((r) => ({...r, element: <PageWrapper>{r.element}</PageWrapper>})),
 );

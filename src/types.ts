@@ -37,14 +37,12 @@ export type Parent = {
   modified_at: string;
   kid: Kid[];
   deliverer_id: string;
-  deliverer?: Deliverer;
 };
 
 export type OrderRecord = {
   id: string;
   date_of_order: string;
   date_of_pickup: string;
-  is_completed: boolean;
   created_at: string;
   modified_at: string;
 };
@@ -62,13 +60,22 @@ export type FormField<T> = {
   options?: Option[] | (() => Promise<Option[]>);
 };
 
-export type TableName = 'parent' | 'kid' | 'order_record' | 'deliverer';
+export type TableName =
+  | 'parent'
+  | 'kid'
+  | 'deliverer'
+  | 'order_record'
+  | 'order_parent'
+  | 'order_kid';
 
 export type TableColumn<T> = {
   label: string;
   width?: number;
-  render: (
-    record: T,
-    setState?: React.Dispatch<React.SetStateAction<T[] | undefined>>,
-  ) => string | number | null | boolean | JSX.Element;
+  render: (record: T) => string | number | null | boolean | JSX.Element;
+};
+
+export type OrderKid = {
+  diaper_size: string;
+  diaper_quantity: number;
+  kid: {parent_id: string};
 };

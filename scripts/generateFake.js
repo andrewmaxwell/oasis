@@ -4,6 +4,7 @@ import casual from 'casual'; // https://www.npmjs.com/package/casual
 import {writeFileSync} from 'fs';
 
 const numParents = 50;
+const numDeliverers = 20;
 const minKidsPerParent = 1;
 const maxKidsPerParent = 5;
 
@@ -21,13 +22,19 @@ const valuesToSQL = (rows) =>
     })
     .join(',\n');
 
-const delivererValues = Array.from({length: 10}, () => [
-  casual.uuid,
-  casual.name,
-  casual.email,
-  casual.phone,
-  Math.random() > 0.25,
-]);
+const delivererIds = [];
+const delivererValues = Array.from({length: numDeliverers}, () => {
+  const active = Math.random() > 0.25;
+  const id = casual.uuid;
+  if (active) delivererIds.push(id);
+  return [
+    id,
+    casual.first_name + ' ' + casual.last_name,
+    casual.email,
+    casual.phone,
+    active,
+  ];
+});
 
 const parents = [];
 const parentValues = Array.from({length: numParents}, () => {
@@ -43,9 +50,9 @@ const parentValues = Array.from({length: numParents}, () => {
     casual.zip(6),
     casual.phone,
     casual.country,
-    10000 + 5000 * Math.round(Math.random() * 10),
+    5000 * Math.round(Math.random() * 10),
     Math.random() > 0.25,
-    randEl(delivererValues)[0],
+    randEl(delivererIds),
   ];
 });
 
@@ -56,31 +63,33 @@ for (const {parentId, lastName} of parents) {
     Math.floor(Math.random() * (maxKidsPerParent - minKidsPerParent));
 
   for (let i = 0; i < numKids; i++) {
+    const birthTime = Date.now() - Math.random() * (2.5 * 365 * 24 * 3600000); // born in past 2.5 years
     kidValues.push([
       casual.uuid,
       parentId,
       casual.first_name,
       lastName,
-      casual.moment.format(),
-      randEl(['N', '1', '2', '3', '4', '5', '6', '7']),
+      new Date(birthTime).toISOString(),
+      randEl('N1234567'),
       Math.random() > 0.25,
     ]);
   }
 }
 
 const sql = `
-DELETE FROM kid;
-DELETE FROM parent;
+DELETE FROM order_record;
 DELETE FROM deliverer;
+DELETE FROM parent;
+DELETE FROM kid;
 
 INSERT INTO deliverer (id, name, email, phone_number, is_active) VALUES
-${valuesToSQL(delivererValues)}
+${valuesToSQL(delivererValues)};
 
 INSERT INTO parent (id, first_name, last_name, address, city, zip, phone_number, country_of_origin, rough_family_income, is_active, deliverer_id) VALUES
 ${valuesToSQL(parentValues)};
 
 INSERT INTO kid (id, parent_id, first_name, last_name, birth_date, diaper_size, is_active) VALUES
-${valuesToSQL(kidValues)}
+${valuesToSQL(kidValues)};
 `;
 
 writeFileSync('dummy.sql', sql);

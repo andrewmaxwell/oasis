@@ -11,12 +11,15 @@ Done:
 - View/search for deliverers
 - Landing page
 - can assign deliverers to parents
-- can create, view, edit, delete orders
+- can create, view, and delete orders
 
 
 
 TODO:
-- On order screen, check to make sure every active parent with >0 active kids has an active deliverer assigned
+- User management
+- Generate labels
+- Generate Deliverer emails (customized to recipient)
+- Generate kid report (sorted oldest to youngest with an indicator for kids over 2 years old)
 - Row Level Security
 - Password reset
 

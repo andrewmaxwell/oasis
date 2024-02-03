@@ -15,6 +15,7 @@ import {searchSorter} from '../utils/searchSorter.ts';
 import {useNavigate} from 'react-router-dom';
 import {Add} from '@mui/icons-material';
 import {TableColumn} from '../types.ts';
+import {OasisTableRow} from './OasisTableRow.tsx';
 
 type OasisTableProps<T> = {
   data: T[] | undefined;
@@ -22,7 +23,6 @@ type OasisTableProps<T> = {
   columns: TableColumn<T>[];
   fieldsToSearch?: (keyof T)[];
   newItemUrl?: string;
-  setState?: React.Dispatch<React.SetStateAction<T[] | undefined>>;
 };
 
 export const OasisTable = <T extends {id: string}>({
@@ -31,7 +31,6 @@ export const OasisTable = <T extends {id: string}>({
   columns,
   fieldsToSearch,
   newItemUrl,
-  setState,
 }: OasisTableProps<T>) => {
   const [search, setSearch] = useState('');
   const navigate = useNavigate();
@@ -77,13 +76,7 @@ export const OasisTable = <T extends {id: string}>({
             ? searchSorter(data, search, fieldsToSearch)
             : data
           ).map((p) => (
-            <TableRow key={p.id}>
-              {columns.map((c) => (
-                <TableCell key={c.label} width={c.width}>
-                  {c.render(p, setState)}
-                </TableCell>
-              ))}
-            </TableRow>
+            <OasisTableRow key={p.id} data={p} columns={columns} />
           ))}
         </TableBody>
       </Table>

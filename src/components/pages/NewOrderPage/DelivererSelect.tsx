@@ -12,6 +12,10 @@ export const DelivererSelect = ({parent, onChange}: DelivererSelectProps) => {
   const options = useData(getDelivererOptions);
 
   if (!options) return <CircularProgress />;
+
+  const selectedOption = options.find((o) => o.value === parent.deliverer_id);
+  const valid = selectedOption && !selectedOption.label.includes('INACTIVE');
+
   return (
     <TextField
       select
@@ -19,6 +23,7 @@ export const DelivererSelect = ({parent, onChange}: DelivererSelectProps) => {
       fullWidth
       value={parent.deliverer_id || ''}
       onChange={onChange}
+      error={!valid}
     >
       <MenuItem></MenuItem>
       {options.map((o) => (
