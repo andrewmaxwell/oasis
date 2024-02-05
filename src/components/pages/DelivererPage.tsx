@@ -103,7 +103,7 @@ export const DelivererPage = () => {
           columns={columns}
         />
       ) : (
-        <Typography>No one</Typography>
+        <Typography>No families assigned for delivery</Typography>
       )}
 
       {origData.id && (

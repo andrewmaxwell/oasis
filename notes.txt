@@ -1,13 +1,13 @@
 TODO:
-- Add validation to <Select>
+- Add validation to drop-down selectors
 - Unassigned deliverer
 - User management
 - Read only users
 - Generate labels
 - Generate Deliverer emails (customized to recipient)
 - Generate kid report (sorted oldest to youngest with an indicator for kids over 2 years old)
-- Mobile UX
-- Row Level Security
+- Improve mobile user experience
+- Improve security (row level security)
 
 Brennan's original notes:
 
