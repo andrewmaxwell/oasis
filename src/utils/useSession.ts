@@ -1,4 +1,3 @@
-// eslint-disable-next-line import/named
 import {Session} from '@supabase/supabase-js';
 import {useEffect, useState} from 'react';
 import {getSession, onAuthStateChange} from '../supabase.ts';

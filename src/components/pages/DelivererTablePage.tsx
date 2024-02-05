@@ -1,27 +1,37 @@
-import {Link} from 'react-router-dom';
 import {getAllRecords} from '../../supabase.ts';
 import {Deliverer} from '../../types.ts';
 import {OasisTable} from '../OasisTable.tsx';
-import {Button} from '@mui/material';
 import {useData} from '../../utils/useData.ts';
+import {GridColDef} from '@mui/x-data-grid';
+import {anchor, bool, linkButton} from '../cellRenderers.tsx';
 
 const getDeliverers = async () =>
-  (await getAllRecords('deliverer')) as Deliverer[];
+  ((await getAllRecords('deliverer')) as Deliverer[]).sort((a, b) =>
+    a.name.localeCompare(b.name),
+  );
 
 const delivererFieldsToSearch: (keyof Deliverer)[] = ['name', 'email'];
 
-const columns = [
+const columns: GridColDef<Deliverer>[] = [
   {
-    label: 'Name',
-    render: (d: Deliverer) => (
-      <Button component={Link} to={`/oasis/deliverer/${d.id}`}>
-        {d.name}
-      </Button>
-    ),
+    field: 'name',
+    headerName: 'Name',
+    width: 250,
+    renderCell: linkButton('deliverer'),
   },
-  {label: 'Email', render: (d: Deliverer) => d.email},
-  {label: 'Phone Number', render: (d: Deliverer) => d.phone_number},
-  {label: 'Active', render: (d: Deliverer) => (d.is_active ? 'Y' : 'N')},
+  {
+    field: 'email',
+    headerName: 'Email',
+    width: 250,
+    renderCell: anchor('email'),
+  },
+  {
+    field: 'phone_number',
+    headerName: 'Phone Number',
+    width: 200,
+    renderCell: anchor('tel'),
+  },
+  {field: 'is_active', headerName: 'Active', width: 100, renderCell: bool},
 ];
 
 export const DelivererTablePage = () => (

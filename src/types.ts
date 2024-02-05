@@ -69,12 +69,6 @@ export type TableName =
   | 'order_parent'
   | 'order_kid';
 
-export type TableColumn<T> = {
-  label: string;
-  width?: number;
-  render: (record: T) => string | number | null | boolean | JSX.Element;
-};
-
 export type OrderKid = {
   diaper_size: string;
   diaper_quantity: number;

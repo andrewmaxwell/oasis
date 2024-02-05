@@ -1,9 +1,9 @@
-import {Button} from '@mui/material';
 import {Parent} from '../../types.ts';
 import {OasisTable} from '../OasisTable.tsx';
-import {Link} from 'react-router-dom';
 import {useData} from '../../utils/useData.ts';
 import {getAllRecords} from '../../supabase.ts';
+import {GridColDef} from '@mui/x-data-grid';
+import {anchor, bool, linkButton, mapAnchor} from '../cellRenderers.tsx';
 
 const parentFieldsToSearch: (keyof Parent)[] = [
   'last_name',
@@ -14,25 +14,33 @@ const parentFieldsToSearch: (keyof Parent)[] = [
   'address',
 ];
 
-const columns = [
+const columns: GridColDef<Parent>[] = [
   {
-    label: 'Name',
-    render: (p: Parent) => (
-      <Button component={Link} to={`/oasis/parent/${p.id}`}>
-        {p.first_name} {p.last_name}
-      </Button>
-    ),
+    field: 'name',
+    headerName: 'Name',
+    valueGetter: ({row}) => `${row.first_name} ${row.last_name}`,
+    renderCell: linkButton('parent'),
+    width: 250,
   },
+  {field: 'address', headerName: 'Address', width: 250, renderCell: mapAnchor},
+  {field: 'city', headerName: 'City', width: 150},
+  {field: 'zip', headerName: 'Zip', width: 100},
   {
-    label: 'Address',
-    render: (p: Parent) => `${p.address}, ${p.city}, ${p.zip}`,
+    field: 'phone_number',
+    headerName: 'Phone',
+    renderCell: anchor('tel'),
+    width: 150,
   },
-  {label: 'Phone', render: (p: Parent) => p.phone_number},
-  // {label: 'Kids', render: (p: Parent) => p.kid.length},
-  {label: 'Active', render: (p: Parent) => (p.is_active ? 'Y' : 'N')},
+  {field: 'is_active', headerName: 'Active', renderCell: bool, width: 100},
 ];
 
-const getParents = () => getAllRecords('parent') as Promise<Parent[]>;
+const getParents = async () =>
+  ((await getAllRecords('parent')) as Parent[]).sort(
+    (a, b) =>
+      Number(b.is_active) - Number(a.is_active) ||
+      a.first_name.localeCompare(b.first_name) ||
+      a.last_name.localeCompare(b.last_name),
+  );
 
 export const ParentTablePage = () => (
   <OasisTable

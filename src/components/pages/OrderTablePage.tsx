@@ -1,29 +1,30 @@
-import {Button} from '@mui/material';
 import {getAllRecords} from '../../supabase.ts';
 import {OrderRecord} from '../../types.ts';
 import {OasisTable} from '../OasisTable.tsx';
-import {Link} from 'react-router-dom';
 import {useData} from '../../utils/useData.ts';
+import {GridColDef} from '@mui/x-data-grid';
+import {linkButton} from '../cellRenderers.tsx';
 
 const orderFieldsToSearch: (keyof OrderRecord)[] = ['date_of_order'];
 
-const columns = [
+const columns: GridColDef<OrderRecord>[] = [
   {
-    label: 'Date of Order',
-    render: (o: OrderRecord) => (
-      <Button component={Link} to={`/oasis/order/${o.id}`}>
-        {o.date_of_order}
-      </Button>
-    ),
+    field: 'date_of_order',
+    headerName: 'Date of Order',
+    width: 200,
+    renderCell: linkButton('order'),
   },
   {
-    label: 'Pickup',
-    render: (o: OrderRecord) => o.date_of_pickup,
+    field: 'date_of_pickup',
+    width: 200,
+    headerName: 'Pickup',
   },
 ];
 
 const getOrders = async () =>
-  (await getAllRecords('order_record')) as OrderRecord[];
+  ((await getAllRecords('order_record')) as OrderRecord[]).sort((a, b) =>
+    b.date_of_order.localeCompare(a.date_of_order),
+  );
 
 export const OrderTablePage = () => (
   <OasisTable

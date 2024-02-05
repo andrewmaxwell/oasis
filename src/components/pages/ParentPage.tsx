@@ -1,6 +1,6 @@
 import {Button, CircularProgress, Paper, Typography} from '@mui/material';
 import {useEffect, useState} from 'react';
-import {Link, useNavigate, useParams} from 'react-router-dom';
+import {useNavigate, useParams} from 'react-router-dom';
 import {
   deleteRecord,
   getKidsForParent,
@@ -14,6 +14,8 @@ import {OasisForm} from '../OasisForm.tsx';
 import {UseFormReset} from 'react-hook-form';
 import {OasisTable} from '../OasisTable.tsx';
 import {getDelivererOptions} from '../../utils/getDelivererOptions.ts';
+import {GridColDef} from '@mui/x-data-grid';
+import {bool, linkButton} from '../cellRenderers.tsx';
 
 const parentFields: FormField<Parent>[] = [
   {id: 'first_name', label: 'First Name', required: true, width: 4},
@@ -45,18 +47,17 @@ const parentFields: FormField<Parent>[] = [
   {id: 'is_active', label: 'Active', type: 'switch', width: 3},
 ];
 
-const kidColumns = [
+const kidColumns: GridColDef<Kid>[] = [
   {
-    label: 'Name',
-    render: (k: Kid) => (
-      <Button component={Link} to={`/oasis/kid/${k.id}`}>
-        {k.first_name} {k.last_name}
-      </Button>
-    ),
+    field: 'name',
+    headerName: 'Name',
+    renderCell: linkButton('kid'),
+    valueGetter: ({row}) => `${row.first_name} ${row.last_name}`,
+    width: 250,
   },
-  {label: 'Birth Date', render: (k: Kid) => k.birth_date},
-  {label: 'Diaper Size', render: (k: Kid) => k.diaper_size},
-  {label: 'Active', render: (k: Kid) => (k.is_active ? 'Y' : 'N')},
+  {field: 'birth_date', headerName: 'Birth Date', width: 150},
+  {field: 'diaper_size', headerName: 'Diaper Size', width: 100},
+  {field: 'is_active', headerName: 'Active', renderCell: bool, width: 100},
 ];
 
 const kidFieldsToSearch: (keyof Kid)[] = ['first_name', 'last_name'];
@@ -67,7 +68,7 @@ const getParent = async (parentId: string) => {
     getKidsForParent(parentId),
   ]);
 
-  parent.kid = kid;
+  parent.kid = kid.sort((a, b) => b.birth_date.localeCompare(a.birth_date));
   return parent;
 };
 

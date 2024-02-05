@@ -1,26 +1,36 @@
-import {Button, CircularProgress, Grid, Switch} from '@mui/material';
+import {
+  Button,
+  CircularProgress,
+  Grid,
+  Switch,
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableRow,
+} from '@mui/material';
 import {Fragment} from 'react';
 import {Link} from 'react-router-dom';
 import {updateRecord} from '../../../supabase.ts';
-import {Parent, TableColumn} from '../../../types.ts';
-import {OasisTable} from '../../OasisTable.tsx';
+import {Parent} from '../../../types.ts';
 import {DelivererSelect} from './DelivererSelect.tsx';
 import {dateToAge} from '../../../utils/dateToAge.ts';
 import {calcDiaperSizes} from './calcDiaperSizes.ts';
 
-const parentColumns: TableColumn<Parent>[] = [
-  {
-    label: 'Families',
-    render: (p: Parent) => (
+const ParentRow = ({parent: p}: {parent: Parent}) => (
+  <TableRow>
+    <TableCell>
       <Grid container alignItems="center" justifyContent="center">
         <Grid item xs={6}>
           <Button component={Link} to={`/oasis/parent/${p.id}`}>
             {p.first_name} {p.last_name}
           </Button>
         </Grid>
+
         <Grid item xs={6}>
           {p.is_active && calcDiaperSizes([p])}
         </Grid>
+
         {p.is_active &&
           p.kid.map((k) => (
             <Fragment key={k.id}>
@@ -39,41 +49,57 @@ const parentColumns: TableColumn<Parent>[] = [
                 <Switch
                   checked={k.is_active || false}
                   onChange={(e) => {
-                    updateRecord('kid', k.id, {is_active: e.target.checked});
+                    updateRecord('kid', k.id, {
+                      is_active: e.target.checked,
+                    });
                   }}
                 />
               </Grid>
             </Fragment>
           ))}
       </Grid>
-    ),
-  },
-  {
-    label: 'Deliverer',
-    render: (p: Parent) =>
-      p.is_active && (
+    </TableCell>
+
+    <TableCell>
+      {p.is_active && (
         <DelivererSelect
           parent={p}
           onChange={(e) => {
-            updateRecord('parent', p.id, {deliverer_id: e.target.value});
+            updateRecord('parent', p.id, {
+              deliverer_id: e.target.value,
+            });
           }}
         />
-      ),
-  },
-  {
-    label: 'Active',
-    render: (p: Parent) => (
+      )}
+    </TableCell>
+
+    <TableCell>
       <Switch
         checked={p.is_active}
         onChange={(e) => {
           updateRecord('parent', p.id, {is_active: e.target.checked});
         }}
       />
-    ),
-  },
-];
+    </TableCell>
+  </TableRow>
+);
 
 export const OrderSetupTable = ({parents}: {parents: Parent[] | undefined}) => {
   if (!parents) return <CircularProgress />;
-  return <OasisTable data={parents} columns={parentColumns} />;
+  return (
+    <Table size="small">
+      <TableHead>
+        <TableRow>
+          <TableCell>Families</TableCell>
+          <TableCell>Deliverer</TableCell>
+          <TableCell>Active</TableCell>
+        </TableRow>
+      </TableHead>
+      <TableBody>
+        {parents.map((p) => (
+          <ParentRow key={p.id} parent={p} />
+        ))}
+      </TableBody>
+    </Table>
+  );
 };

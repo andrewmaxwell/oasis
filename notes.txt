@@ -1,21 +1,11 @@
-Done:
-- Create Supabase project
-- Create Github repository
-- Create Vite+React TS app
-- Write SQL to create tables and populate with dummy data
-- Log in/out, change password
-- Generate and load dummy data
-- Search for parent data
-- Create table for parent data
-- View/update/create/delete parents and kids
-- View/search for deliverers
-- Landing page
-- can assign deliverers to parents
-- can create, view, and delete orders
-
 TODO:
+- Add validation to <Select>
+- Fix table search
+- Notes section in parents, kids, deliverers, and orders
+- In deliverers, show a list of everyone they're assigned to
+- Unassigned deliverer
 - User management
-- Read only mode
+- Read only users
 - Generate labels
 - Generate Deliverer emails (customized to recipient)
 - Generate kid report (sorted oldest to youngest with an indicator for kids over 2 years old)

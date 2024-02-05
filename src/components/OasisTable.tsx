@@ -1,26 +1,13 @@
 import {useState} from 'react';
-import {
-  Box,
-  Button,
-  CircularProgress,
-  Paper,
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableRow,
-  TextField,
-} from '@mui/material';
-import {searchSorter} from '../utils/searchSorter.ts';
+import {Box, Button, CircularProgress, Paper, TextField} from '@mui/material';
 import {useNavigate} from 'react-router-dom';
 import {Add} from '@mui/icons-material';
-import {TableColumn} from '../types.ts';
-import {OasisTableRow} from './OasisTableRow.tsx';
+import {DataGrid, GridColDef, GridValidRowModel} from '@mui/x-data-grid';
 
-type OasisTableProps<T> = {
+type OasisTableProps<T extends GridValidRowModel> = {
   data: T[] | undefined;
   label?: string;
-  columns: TableColumn<T>[];
+  columns: readonly GridColDef<T>[];
   fieldsToSearch?: (keyof T)[];
   newItemUrl?: string;
 };
@@ -33,6 +20,7 @@ export const OasisTable = <T extends {id: string}>({
   newItemUrl,
 }: OasisTableProps<T>) => {
   const [search, setSearch] = useState('');
+
   const navigate = useNavigate();
 
   if (!data) return <CircularProgress />;
@@ -63,25 +51,7 @@ export const OasisTable = <T extends {id: string}>({
         </Box>
       )}
 
-      {data.length > 0 && (
-        <Table size="small">
-          <TableHead>
-            <TableRow>
-              {columns.map((c) => (
-                <TableCell key={c.label}>{c.label}</TableCell>
-              ))}
-            </TableRow>
-          </TableHead>
-          <TableBody>
-            {(fieldsToSearch
-              ? searchSorter(data, search, fieldsToSearch)
-              : data
-            ).map((p) => (
-              <OasisTableRow key={p.id} data={p} columns={columns} />
-            ))}
-          </TableBody>
-        </Table>
-      )}
+      <DataGrid rows={data} columns={columns} density="compact" />
     </Paper>
   );
 };

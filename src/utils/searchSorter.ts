@@ -26,7 +26,7 @@ export const searchSorter = <T>(
   if (!searchTerms.length) return data;
   return data
     .map((row) => ({row, score: getScore(row, searchTerms, fields)}))
-    .filter(({score}) => score > 0)
+    .filter(({score}) => score > 0.5)
     .sort((a, b) => b.score - a.score)
     .map(({row}) => row);
 };

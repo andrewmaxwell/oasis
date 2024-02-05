@@ -6,7 +6,6 @@ import {validateOrder} from './validateOrder.ts';
 import {calcDiaperSizes, getDiaperQuantity} from './calcDiaperSizes.ts';
 import {getAllRecords, insertRecord} from '../../../supabase.ts';
 import {Deliverer, FormField, OrderRecord, Parent} from '../../../types.ts';
-// eslint-disable-next-line import/named
 import {NavigateFunction, useNavigate} from 'react-router-dom';
 import {OasisForm} from '../../OasisForm.tsx';
 
