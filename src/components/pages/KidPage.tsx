@@ -13,19 +13,30 @@ import {getDifference} from '../../utils/getDifference.ts';
 import {OasisForm} from '../OasisForm.tsx';
 
 const kidFields: FormField<Kid>[] = [
-  {id: 'first_name', label: 'First Name', required: true, width: 6},
-  {id: 'last_name', label: 'Last Name', required: true, width: 6},
+  {id: 'first_name', label: 'First Name', required: true, width: 4},
+  {id: 'last_name', label: 'Last Name', required: true, width: 4},
   {
     id: 'parent_id',
     label: 'Parent',
     required: true,
-    width: 6,
+    width: 4,
     type: 'select',
     options: async () =>
       (await getAllRecords('parent'))!.map((p) => ({
         value: p.id,
         label: `${p.first_name} ${p.last_name}`,
       })),
+  },
+  {
+    id: 'gender',
+    label: 'Gender',
+    required: true,
+    width: 3,
+    type: 'select',
+    options: [
+      {value: 'M', label: 'M'},
+      {value: 'F', label: 'F'},
+    ],
   },
   {
     id: 'birth_date',
@@ -57,7 +68,7 @@ export const KidPage = () => {
       setOrigData({
         is_active: true,
         diaper_size: '',
-        parent_id: searchParams.get('parentId') || undefined,
+        parent_id: searchParams.get('parent_id') || undefined,
         last_name: searchParams.get('last_name') || undefined,
       });
     }

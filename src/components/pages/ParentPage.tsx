@@ -129,13 +129,15 @@ export const ParentPage = () => {
           label="Kid"
           columns={kidColumns}
           fieldsToSearch={kidFieldsToSearch}
-          newItemUrl={`/oasis/kid/new?parentId=${parentData.id}&last_name=${parentData.last_name}`}
+          newItemUrl={`/oasis/kid/new?parent_id=${parentData.id}&last_name=${parentData.last_name}`}
         />
       )}
 
-      <Button color="error" sx={{mt: 4}} onClick={deleteParent}>
-        Delete {parentData.first_name} {parentData.last_name}
-      </Button>
+      {parentData.id && (
+        <Button color="error" sx={{mt: 4}} onClick={deleteParent}>
+          Delete {parentData.first_name} {parentData.last_name}
+        </Button>
+      )}
     </>
   );
 };

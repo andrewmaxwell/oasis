@@ -69,6 +69,7 @@ for (const {parentId, lastName} of parents) {
       parentId,
       casual.first_name,
       lastName,
+      randEl('MF'),
       new Date(birthTime).toISOString(),
       randEl('N1234567'),
       Math.random() > 0.25,
@@ -88,7 +89,7 @@ ${valuesToSQL(delivererValues)};
 INSERT INTO parent (id, first_name, last_name, address, city, zip, phone_number, country_of_origin, rough_family_income, is_active, deliverer_id) VALUES
 ${valuesToSQL(parentValues)};
 
-INSERT INTO kid (id, parent_id, first_name, last_name, birth_date, diaper_size, is_active) VALUES
+INSERT INTO kid (id, parent_id, first_name, last_name, gender, birth_date, diaper_size, is_active) VALUES
 ${valuesToSQL(kidValues)};
 `;
 

@@ -14,12 +14,14 @@ type OasisSelectProps<T extends FieldValues> = {
   label: string;
   control: Control<T>;
   options: Option[] | (() => Promise<Option[]>);
+  required?: boolean;
 };
 export const OasisSelect = <T extends FieldValues>({
   name,
   label,
   control,
   options: optsOrGetOpts,
+  required = false,
 }: OasisSelectProps<T>) => {
   const [options, setOptions] = useState<Option[]>();
 
@@ -39,6 +41,7 @@ export const OasisSelect = <T extends FieldValues>({
       <Controller
         name={name}
         control={control}
+        rules={{required}}
         render={({field}) => (
           <Select labelId={labelId} label={label} fullWidth {...field}>
             <MenuItem></MenuItem>

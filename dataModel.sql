@@ -35,6 +35,7 @@ CREATE TABLE kid (
     parent_id UUID REFERENCES parent(id) ON DELETE CASCADE,
     first_name TEXT NOT NULL,
     last_name TEXT NOT NULL,
+    gender TEXT NOT NULL,
     birth_date DATE NOT NULL,
     diaper_size TEXT NOT NULL,
     is_active BOOLEAN NOT NULL,
