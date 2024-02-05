@@ -11,6 +11,7 @@ export type Kid = {
   is_active: boolean;
   created_at: string;
   modified_at: string;
+  notes?: string;
 };
 
 export type Deliverer = {
@@ -21,6 +22,7 @@ export type Deliverer = {
   is_active: boolean;
   created_at: string;
   modified_at: string;
+  notes?: string;
 };
 
 export type Parent = {
@@ -38,6 +40,7 @@ export type Parent = {
   modified_at: string;
   kid: Kid[];
   deliverer_id: string;
+  notes?: string;
 };
 
 export type OrderRecord = {
@@ -46,6 +49,7 @@ export type OrderRecord = {
   date_of_pickup: string;
   created_at: string;
   modified_at: string;
+  notes?: string;
 };
 
 export type Option = {
@@ -59,6 +63,7 @@ export type FormField<T> = {
   width?: number;
   type?: 'text' | 'number' | 'switch' | 'select' | 'date';
   options?: Option[] | (() => Promise<Option[]>);
+  multiline?: boolean;
 };
 
 export type TableName =

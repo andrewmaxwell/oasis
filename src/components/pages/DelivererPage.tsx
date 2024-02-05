@@ -3,13 +3,17 @@ import {useEffect, useState} from 'react';
 import {useNavigate, useParams} from 'react-router-dom';
 import {
   deleteRecord,
+  getDelivererParents,
   getRecord,
   insertRecord,
   updateRecord,
 } from '../../supabase.ts';
-import {FormField, Deliverer} from '../../types.ts';
+import {FormField, Deliverer, Parent} from '../../types.ts';
 import {getDifference} from '../../utils/getDifference.ts';
 import {OasisForm} from '../OasisForm.tsx';
+import {OasisTable} from '../OasisTable.tsx';
+import {linkButton, mapAnchor} from '../cellRenderers.tsx';
+import {GridColDef} from '@mui/x-data-grid';
 
 const delivererFields: FormField<Deliverer>[] = [
   {id: 'name', label: 'Name', required: true, width: 6},
@@ -21,15 +25,33 @@ const delivererFields: FormField<Deliverer>[] = [
     width: 3,
   },
   {id: 'is_active', label: 'Active', type: 'switch', width: 3},
+  {id: 'notes', label: 'Notes', width: 12, multiline: true},
+];
+
+const columns: GridColDef<Parent>[] = [
+  {
+    field: 'name',
+    headerName: 'Name',
+    valueGetter: ({row}) => `${row.first_name} ${row.last_name}`,
+    renderCell: linkButton('parent'),
+    width: 250,
+  },
+  {field: 'address', headerName: 'Address', width: 250, renderCell: mapAnchor},
+  {field: 'city', headerName: 'City', width: 150},
+  {field: 'zip', headerName: 'Zip', width: 100},
 ];
 
 export const DelivererPage = () => {
   const [origData, setOrigData] = useState<Partial<Deliverer> | undefined>();
+  const [delivererParents, setDelivererParents] = useState<
+    Parent[] | undefined
+  >();
   const {id} = useParams();
 
   useEffect(() => {
     if (id && id !== 'new') {
       getRecord('deliverer', id).then(setOrigData);
+      getDelivererParents(id).then(setDelivererParents);
     } else {
       setOrigData({is_active: true});
     }
@@ -59,9 +81,11 @@ export const DelivererPage = () => {
     navigate(`/oasis/deliverers`);
   };
 
+  console.log('delivererParents', delivererParents);
+
   return (
     <>
-      <Paper sx={{p: 2}}>
+      <Paper sx={{p: 2, mb: 2}}>
         <Typography variant="h5" pb={2}>
           Deliverer Info
         </Typography>
@@ -72,8 +96,18 @@ export const DelivererPage = () => {
         />
       </Paper>
 
+      {delivererParents?.length ? (
+        <OasisTable
+          label="Assigned To Parent"
+          data={delivererParents}
+          columns={columns}
+        />
+      ) : (
+        <Typography>No one</Typography>
+      )}
+
       {origData.id && (
-        <Button color="error" sx={{mt: 4}} onClick={deleteDeliverer}>
+        <Button color="error" sx={{mt: 2}} onClick={deleteDeliverer}>
           Delete {origData.name}
         </Button>
       )}

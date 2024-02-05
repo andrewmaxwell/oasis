@@ -45,6 +45,7 @@ const parentFields: FormField<Parent>[] = [
     width: 4,
   },
   {id: 'is_active', label: 'Active', type: 'switch', width: 3},
+  {id: 'notes', label: 'Notes', width: 12, multiline: true},
 ];
 
 const kidColumns: GridColDef<Kid>[] = [
@@ -59,8 +60,6 @@ const kidColumns: GridColDef<Kid>[] = [
   {field: 'diaper_size', headerName: 'Diaper Size', width: 100},
   {field: 'is_active', headerName: 'Active', renderCell: bool, width: 100},
 ];
-
-const kidFieldsToSearch: (keyof Kid)[] = ['first_name', 'last_name'];
 
 const getParent = async (parentId: string) => {
   const [parent, kid] = await Promise.all([
@@ -129,7 +128,6 @@ export const ParentPage = () => {
           data={parentData.kid}
           label="Kid"
           columns={kidColumns}
-          fieldsToSearch={kidFieldsToSearch}
           newItemUrl={`/oasis/kid/new?parent_id=${parentData.id}&last_name=${parentData.last_name}`}
         />
       )}

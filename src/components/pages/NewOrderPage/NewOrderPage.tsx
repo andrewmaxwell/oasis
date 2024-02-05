@@ -24,6 +24,7 @@ const orderFields: FormField<OrderRecord>[] = [
     type: 'date',
     width: 6,
   },
+  {id: 'notes', label: 'Notes', width: 12, multiline: true},
 ];
 
 const getDeliverers = async () =>

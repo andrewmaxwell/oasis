@@ -54,6 +54,7 @@ const kidFields: FormField<Kid>[] = [
     options: 'N1234567'.split('').map((s) => ({label: s, value: s})),
   },
   {id: 'is_active', label: 'Active', type: 'switch', width: 3},
+  {id: 'notes', label: 'Notes', width: 12, multiline: true},
 ];
 
 export const KidPage = () => {

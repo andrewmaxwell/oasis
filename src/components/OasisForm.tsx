@@ -31,29 +31,32 @@ export const OasisForm = <T extends FieldValues>({
   return (
     <form onSubmit={handleSubmit((data) => onSubmit(data, reset))}>
       <Grid container alignItems="flex-start" spacing={2}>
-        {fields.map(({id, label, required, type, width, options}) => (
-          <Grid key={id} item xs={width}>
-            {type === 'switch' ? (
-              <OasisSwitch name={id} label={label} control={control} />
-            ) : type === 'select' && options ? (
-              <OasisSelect
-                name={id}
-                label={label}
-                control={control}
-                options={options}
-                required={required}
-                // error={errors[id] as FieldError}
-              />
-            ) : (
-              <OasisTextField
-                label={label}
-                props={register(id, {required})}
-                error={errors[id] as FieldError}
-                type={type}
-              />
-            )}
-          </Grid>
-        ))}
+        {fields.map(
+          ({id, label, required, type, width, options, multiline}) => (
+            <Grid key={id} item xs={width}>
+              {type === 'switch' ? (
+                <OasisSwitch name={id} label={label} control={control} />
+              ) : type === 'select' && options ? (
+                <OasisSelect
+                  name={id}
+                  label={label}
+                  control={control}
+                  options={options}
+                  required={required}
+                  // error={errors[id] as FieldError}
+                />
+              ) : (
+                <OasisTextField
+                  label={label}
+                  props={register(id, {required})}
+                  error={errors[id] as FieldError}
+                  type={type}
+                  multiline={multiline}
+                />
+              )}
+            </Grid>
+          ),
+        )}
 
         <Grid item xs={12} sx={{display: 'flex', justifyContent: 'flex-end'}}>
           <Button

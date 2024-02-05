@@ -38,6 +38,7 @@ const getData = async (orderId: string): Promise<FinishedOrder | undefined> => {
   };
 };
 
+// TODO: consolidate by size
 const formatKids = (orderKids: OrderKid[]) =>
   orderKids
     .map((k) => `${k.diaper_quantity}x Size ${k.diaper_size}`)
@@ -58,6 +59,10 @@ const formatDeliverers = (deliverers: OrderDeliverer[]) =>
 
 const formatOrderData = (o: FinishedOrder) => `Date of Order: ${o.date_of_order}
 Date of Pickup: ${o.date_of_pickup}
+Notes:
+${o.notes}
+
+
 
 ${formatDeliverers(o.deliverers)}`;
 

@@ -1,8 +1,5 @@
 TODO:
 - Add validation to <Select>
-- Fix table search
-- Notes section in parents, kids, deliverers, and orders
-- In deliverers, show a list of everyone they're assigned to
 - Unassigned deliverer
 - User management
 - Read only users
@@ -11,7 +8,6 @@ TODO:
 - Generate kid report (sorted oldest to youngest with an indicator for kids over 2 years old)
 - Mobile UX
 - Row Level Security
-- Import/Export
 
 Brennan's original notes:
 

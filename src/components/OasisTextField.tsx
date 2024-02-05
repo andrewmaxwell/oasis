@@ -7,6 +7,7 @@ type OasisTextFieldProps<T extends string> = {
   props: UseFormRegisterReturn<T>;
   error: FieldError | undefined;
   type?: HTMLInputTypeAttribute;
+  multiline?: boolean;
 };
 
 export const OasisTextField = <T extends string>({
@@ -14,6 +15,7 @@ export const OasisTextField = <T extends string>({
   props,
   error,
   type,
+  multiline,
 }: OasisTextFieldProps<T>) => (
   <TextField
     label={label}
@@ -22,6 +24,7 @@ export const OasisTextField = <T extends string>({
     error={!!error}
     helperText={String(error?.message || '')}
     InputLabelProps={type === 'date' ? {shrink: true} : {}}
+    multiline={multiline}
     {...props}
   />
 );

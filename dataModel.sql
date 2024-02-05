@@ -21,7 +21,8 @@ CREATE TABLE parent (
     is_active BOOLEAN NOT NULL,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
     modified_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
-    is_deleted BOOLEAN NOT NULL DEFAULT false
+    is_deleted BOOLEAN NOT NULL DEFAULT false,
+    notes TEXT
 );
 
 CREATE TRIGGER update_parent_modified_at
@@ -41,7 +42,8 @@ CREATE TABLE kid (
     is_active BOOLEAN NOT NULL,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
     modified_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
-    is_deleted BOOLEAN NOT NULL DEFAULT false
+    is_deleted BOOLEAN NOT NULL DEFAULT false,
+    notes TEXT
 );
 
 CREATE TRIGGER update_kid_modified_at
@@ -58,7 +60,8 @@ CREATE TABLE deliverer (
     is_active BOOLEAN NOT NULL,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
     modified_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
-    is_deleted BOOLEAN NOT NULL DEFAULT false
+    is_deleted BOOLEAN NOT NULL DEFAULT false,
+    notes TEXT
 );
 
 CREATE TRIGGER update_deliverer_modified_at
@@ -73,7 +76,8 @@ CREATE TABLE order_record (
     date_of_pickup DATE NOT NULL,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
     modified_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
-    is_deleted BOOLEAN NOT NULL DEFAULT false
+    is_deleted BOOLEAN NOT NULL DEFAULT false,
+    notes TEXT
 );
 
 CREATE TRIGGER update_order_record_modified_at
@@ -95,19 +99,3 @@ CREATE TABLE order_kid (
     diaper_size TEXT NOT NULL,
     diaper_quantity NUMERIC
 );
-
--- DROP TABLE IF EXISTS oasis_users CASCADE;
--- CREATE TABLE oasis_users (
---     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
---     name TEXT NOT NULL,
---     email TEXT NOT NULL,
---     is_admin BOOLEAN NOT NULL DEFAULT false,
---     created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
---     modified_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
---     is_deleted BOOLEAN NOT NULL DEFAULT false
--- );
-
--- CREATE TRIGGER update_order_record_modified_at
--- BEFORE UPDATE ON oasis_users
--- FOR EACH ROW
--- EXECUTE FUNCTION update_modified_at();

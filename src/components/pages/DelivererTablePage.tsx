@@ -6,13 +6,13 @@ import {GridColDef} from '@mui/x-data-grid';
 import {anchor, bool, linkButton} from '../cellRenderers.tsx';
 
 const getDeliverers = async () =>
-  ((await getAllRecords('deliverer')) as Deliverer[]).sort((a, b) =>
-    a.name.localeCompare(b.name),
+  ((await getAllRecords('deliverer')) as Deliverer[]).sort(
+    (a, b) =>
+      Number(b.is_active) - Number(a.is_active) || a.name.localeCompare(b.name),
   );
 
-const delivererFieldsToSearch: (keyof Deliverer)[] = ['name', 'email'];
-
 const columns: GridColDef<Deliverer>[] = [
+  {field: 'is_active', headerName: 'Active', width: 50, renderCell: bool},
   {
     field: 'name',
     headerName: 'Name',
@@ -31,7 +31,6 @@ const columns: GridColDef<Deliverer>[] = [
     width: 200,
     renderCell: anchor('tel'),
   },
-  {field: 'is_active', headerName: 'Active', width: 100, renderCell: bool},
 ];
 
 export const DelivererTablePage = () => (
@@ -39,7 +38,6 @@ export const DelivererTablePage = () => (
     data={useData(getDeliverers)}
     label="Deliverer"
     columns={columns}
-    fieldsToSearch={delivererFieldsToSearch}
     newItemUrl="/oasis/deliverer/new"
   />
 );

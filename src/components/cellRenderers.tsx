@@ -1,14 +1,9 @@
-import {Button} from '@mui/material';
 import {GridRenderCellParams} from '@mui/x-data-grid';
 import {Link} from 'react-router-dom';
 
 export const linkButton = (type: string) =>
   function LinkButton({row, value}: GridRenderCellParams) {
-    return (
-      <Button component={Link} to={`/oasis/${type}/${row.id}`}>
-        {value}
-      </Button>
-    );
+    return <Link to={`/oasis/${type}/${row.id}`}>{value}</Link>;
   };
 
 export const anchor = (type: string) =>

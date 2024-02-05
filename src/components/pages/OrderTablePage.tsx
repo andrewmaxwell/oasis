@@ -5,8 +5,6 @@ import {useData} from '../../utils/useData.ts';
 import {GridColDef} from '@mui/x-data-grid';
 import {linkButton} from '../cellRenderers.tsx';
 
-const orderFieldsToSearch: (keyof OrderRecord)[] = ['date_of_order'];
-
 const columns: GridColDef<OrderRecord>[] = [
   {
     field: 'date_of_order',
@@ -31,7 +29,6 @@ export const OrderTablePage = () => (
     data={useData(getOrders)}
     label="Order"
     columns={columns}
-    fieldsToSearch={orderFieldsToSearch}
     newItemUrl="/oasis/order/new"
   />
 );

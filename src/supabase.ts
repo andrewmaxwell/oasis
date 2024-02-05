@@ -131,3 +131,14 @@ export const getOrderKids = async (orderId: string) => {
 
   return data as unknown as OrderKid[];
 };
+
+export const getDelivererParents = async (delivererId: string) => {
+  const {data, error} = await supabase
+    .from('parent')
+    .select()
+    .eq('is_deleted', false)
+    .eq('is_active', true)
+    .eq('deliverer_id', delivererId);
+  if (error) log(error);
+  return data || [];
+};

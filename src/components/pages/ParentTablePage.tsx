@@ -5,15 +5,6 @@ import {getAllRecords} from '../../supabase.ts';
 import {GridColDef} from '@mui/x-data-grid';
 import {anchor, bool, linkButton, mapAnchor} from '../cellRenderers.tsx';
 
-const parentFieldsToSearch: (keyof Parent)[] = [
-  'last_name',
-  'first_name',
-  'phone_number',
-  'zip',
-  'city',
-  'address',
-];
-
 const columns: GridColDef<Parent>[] = [
   {
     field: 'name',
@@ -47,7 +38,6 @@ export const ParentTablePage = () => (
     data={useData(getParents)}
     label="Parent"
     columns={columns}
-    fieldsToSearch={parentFieldsToSearch}
     newItemUrl="/oasis/parent/new"
   />
 );
