@@ -1,7 +1,7 @@
 import {useSession} from './utils/useSession.ts';
 import {SignInForm} from './components/SignInForm.tsx';
 import {ParentTablePage} from './components/pages/ParentTablePage.tsx';
-import {createBrowserRouter, RouterProvider} from 'react-router-dom';
+import {createHashRouter, RouterProvider} from 'react-router-dom';
 import {ParentPage} from './components/pages/ParentPage.tsx';
 import {KidPage} from './components/pages/KidPage.tsx';
 import {DelivererTablePage} from './components/pages/DelivererTablePage.tsx';
@@ -21,47 +21,46 @@ const PageWrapper = ({children}: {children: JSX.Element}) => (
   </Box>
 );
 
-const base = 'oasis';
-const router = createBrowserRouter(
+const router = createHashRouter(
   [
     {
-      path: base,
+      path: '',
       element: <LandingPage />,
     },
     {
-      path: `${base}/parents`,
+      path: `/parents`,
       element: <ParentTablePage />,
     },
     {
-      path: `${base}/parent/:id`,
+      path: `/parent/:id`,
       element: <ParentPage />,
     },
     {
-      path: `${base}/kid/:id`,
+      path: `/kid/:id`,
       element: <KidPage />,
     },
     {
-      path: `${base}/deliverers`,
+      path: `/deliverers`,
       element: <DelivererTablePage />,
     },
     {
-      path: `${base}/deliverer/:id`,
+      path: `/deliverer/:id`,
       element: <DelivererPage />,
     },
     {
-      path: `${base}/orders`,
+      path: `/orders`,
       element: <OrderTablePage />,
     },
     {
-      path: `${base}/order/new`,
+      path: `/order/new`,
       element: <NewOrderPage />,
     },
     {
-      path: `${base}/order/:id`,
+      path: `/order/:id`,
       element: <FinishedOrderPage />,
     },
     {
-      path: `${base}/changePassword`,
+      path: `/changePassword`,
       element: <ChangePasswordPage />,
     },
   ].map((r) => ({...r, element: <PageWrapper>{r.element}</PageWrapper>})),

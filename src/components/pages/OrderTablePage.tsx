@@ -29,6 +29,6 @@ export const OrderTablePage = () => (
     data={useData(getOrders)}
     label="Order"
     columns={columns}
-    newItemUrl="/oasis/order/new"
+    newItemUrl="/order/new"
   />
 );

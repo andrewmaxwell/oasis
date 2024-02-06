@@ -17,7 +17,7 @@ export const ChangePasswordPage = () => {
     <Box
       component="form"
       onSubmit={handleSubmit(async ({password}) => {
-        if (await updatePassword(password)) navigate('/oasis/');
+        if (await updatePassword(password)) navigate('/');
       })}
       sx={{
         '& .MuiTextField-root': {m: 1, width: '25ch'},

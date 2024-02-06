@@ -71,14 +71,14 @@ export const DelivererPage = () => {
     } else {
       await insertRecord('deliverer', formData);
     }
-    navigate(`/oasis/deliverers`, {replace: true});
+    navigate(`/deliverers`, {replace: true});
   };
 
   const deleteDeliverer = async () => {
     const msg = `Are you sure you want to delete ${origData.name}? This cannot be undone.`;
     if (!origData.id || !confirm(msg)) return;
     await deleteRecord('deliverer', origData.id);
-    navigate(`/oasis/deliverers`);
+    navigate(`/deliverers`);
   };
 
   console.log('delivererParents', delivererParents);

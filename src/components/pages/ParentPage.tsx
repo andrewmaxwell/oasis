@@ -99,7 +99,7 @@ export const ParentPage = () => {
       reset(await getRecord('parent', formData.id));
     } else {
       const {id} = await insertRecord('parent', formData);
-      navigate(`/oasis/parent/${id}`, {replace: true});
+      navigate(`/parent/${id}`, {replace: true});
     }
   };
 
@@ -107,7 +107,7 @@ export const ParentPage = () => {
     const msg = `Are you sure you want to delete ${parentData.first_name} ${parentData.last_name} and their kids forever? This cannot be undone.`;
     if (!parentData.id || !confirm(msg)) return;
     await deleteRecord('parent', parentData.id);
-    navigate('/oasis/parents');
+    navigate('/parents');
   };
 
   return (
@@ -128,7 +128,7 @@ export const ParentPage = () => {
           data={parentData.kid}
           label="Kid"
           columns={kidColumns}
-          newItemUrl={`/oasis/kid/new?parent_id=${parentData.id}&last_name=${parentData.last_name}`}
+          newItemUrl={`/kid/new?parent_id=${parentData.id}&last_name=${parentData.last_name}`}
         />
       )}
 

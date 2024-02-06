@@ -42,7 +42,7 @@ export const AccountMenu = ({email}: AccountMenuProps) => {
       >
         <MenuItem
           onClick={() => {
-            navigate('/oasis/changePassword');
+            navigate('/changePassword');
             setAnchorEl(null);
           }}
         >

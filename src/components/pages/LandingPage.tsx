@@ -14,7 +14,7 @@ export const LandingPage = () => (
       <Grid key={label} item xs={12} md={4}>
         <Button
           component={Link}
-          to={`/oasis/${url}`}
+          to={url}
           variant="outlined"
           size="large"
           fullWidth

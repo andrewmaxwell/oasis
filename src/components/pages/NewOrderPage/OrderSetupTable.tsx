@@ -22,7 +22,7 @@ const ParentRow = ({parent: p}: {parent: Parent}) => (
     <TableCell>
       <Grid container alignItems="center" justifyContent="center">
         <Grid item xs={6}>
-          <Button component={Link} to={`/oasis/parent/${p.id}`}>
+          <Button component={Link} to={`/parent/${p.id}`}>
             {p.first_name} {p.last_name}
           </Button>
         </Grid>
@@ -35,7 +35,7 @@ const ParentRow = ({parent: p}: {parent: Parent}) => (
           p.kid.map((k) => (
             <Fragment key={k.id}>
               <Grid item xs={6}>
-                <Button component={Link} to={`/oasis/kid/${k.id}`}>
+                <Button component={Link} to={`/kid/${k.id}`}>
                   {k.first_name} {k.last_name}
                 </Button>
               </Grid>

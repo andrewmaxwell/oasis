@@ -38,6 +38,6 @@ export const ParentTablePage = () => (
     data={useData(getParents)}
     label="Parent"
     columns={columns}
-    newItemUrl="/oasis/parent/new"
+    newItemUrl="/parent/new"
   />
 );

@@ -67,7 +67,7 @@ const finishOrder = async (
     ),
   ]);
 
-  navigate(`/oasis/order/${orderId}`);
+  navigate(`/order/${orderId}`);
 };
 
 export const NewOrderPage = () => {

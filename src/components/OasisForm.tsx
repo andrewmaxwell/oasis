@@ -43,7 +43,7 @@ export const OasisForm = <T extends FieldValues>({
                   control={control}
                   options={options}
                   required={required}
-                  // error={errors[id] as FieldError}
+                  error={errors[id] as FieldError}
                 />
               ) : (
                 <OasisTextField

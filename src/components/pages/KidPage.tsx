@@ -85,14 +85,14 @@ export const KidPage = () => {
     } else {
       await insertRecord('kid', formData);
     }
-    navigate(`/oasis/parent/${formData.parent_id}`, {replace: true});
+    navigate(`/parent/${formData.parent_id}`, {replace: true});
   };
 
   const deleteKid = async () => {
     const msg = `Are you sure you want to delete ${origData.first_name} ${origData.last_name}? This cannot be undone.`;
     if (!origData.id || !confirm(msg)) return;
     await deleteRecord('kid', origData.id);
-    navigate(`/oasis/parent/${origData.parent_id}`);
+    navigate(`/parent/${origData.parent_id}`);
   };
 
   return (

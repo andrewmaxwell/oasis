@@ -38,6 +38,6 @@ export const DelivererTablePage = () => (
     data={useData(getDeliverers)}
     label="Deliverer"
     columns={columns}
-    newItemUrl="/oasis/deliverer/new"
+    newItemUrl="/deliverer/new"
   />
 );

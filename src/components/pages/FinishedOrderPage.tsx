@@ -135,7 +135,7 @@ export const FinishedOrderPage = () => {
     const msg = `Are you sure you want to delete this order? This cannot be undone.`;
     if (!orderId || !confirm(msg)) return;
     await deleteRecord('order_record', orderId);
-    navigate(`/oasis/orders`);
+    navigate(`/orders`);
   };
 
   if (!orderData) return <CircularProgress />;

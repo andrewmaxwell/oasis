@@ -9,7 +9,7 @@ export const OasisToolbar = () => {
   return (
     <AppBar position="static" sx={{marginBottom: 2}}>
       <Toolbar>
-        <Link to={'/oasis/'}>
+        <Link to={'/'}>
           <img
             src="/oasis/favicon.png"
             height="50px"

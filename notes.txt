@@ -1,5 +1,4 @@
 TODO:
-- Add validation to drop-down selectors
 - Unassigned deliverer
 - User management
 - Read only users

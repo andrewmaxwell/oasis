@@ -3,7 +3,7 @@ import {Link} from 'react-router-dom';
 
 export const linkButton = (type: string) =>
   function LinkButton({row, value}: GridRenderCellParams) {
-    return <Link to={`/oasis/${type}/${row.id}`}>{value}</Link>;
+    return <Link to={`/${type}/${row.id}`}>{value}</Link>;
   };
 
 export const anchor = (type: string) =>
