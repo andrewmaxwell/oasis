@@ -54,6 +54,12 @@ export const getAllRecords = async (tableName: TableName) => {
   return data;
 };
 
+export const getView = async (viewName: string) => {
+  const {data, error} = await supabase.from(viewName).select();
+  if (error) log(error);
+  return data;
+};
+
 export const getRecord = async (tableName: TableName, id: string) => {
   const {data, error} = await supabase
     .from(tableName)

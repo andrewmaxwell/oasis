@@ -18,7 +18,9 @@ import {LabelPage} from './components/pages/LabelPage.tsx';
 const PageWrapper = ({children}: {children: JSX.Element}) => (
   <Box sx={{flexGrow: 1}}>
     <OasisToolbar />
-    <Container sx={{pb: 10}}>{children}</Container>
+    <Container sx={{pb: 10}} maxWidth="xl">
+      {children}
+    </Container>
   </Box>
 );
 

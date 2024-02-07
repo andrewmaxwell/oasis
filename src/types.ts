@@ -80,6 +80,9 @@ export type OrderKid = {
   kid: {parent_id: string};
 };
 
-export type OrderParent = Parent & {orderKids: OrderKid[]};
+export type OrderParent = Parent & {
+  deliverer: Deliverer;
+  orderKids: OrderKid[];
+};
 export type OrderDeliverer = Deliverer & {orderParents: OrderParent[]};
 export type FinishedOrder = OrderRecord & {deliverers: OrderDeliverer[]};

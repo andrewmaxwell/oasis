@@ -1,4 +1,4 @@
-import {Parent} from '../../../types.ts';
+import {Parent} from '../types.ts';
 
 export const getDiaperQuantity = (size: string) =>
   size === 'N' || size === '1' ? 75 : 50;

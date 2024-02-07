@@ -1,12 +1,21 @@
-import {Paper, Typography} from '@mui/material';
+import {
+  Paper,
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableRow,
+  Typography,
+} from '@mui/material';
 import {useData} from '../../../utils/useData.ts';
-import {OrderSetupTable} from './OrderSetupTable.tsx';
 import {useParentsWithAtLeastOneKid} from './useParentsWithAtLeastOneKid.ts';
-import {validateOrder} from './validateOrder.ts';
-import {calcDiaperSizes, getDiaperQuantity} from './calcDiaperSizes.ts';
+import {
+  calcDiaperSizes,
+  getDiaperQuantity,
+} from '../../../utils/calcDiaperSizes.ts';
 import {getAllRecords, insertRecord} from '../../../supabase.ts';
 import {Deliverer, FormField, OrderRecord, Parent} from '../../../types.ts';
-import {NavigateFunction, useNavigate} from 'react-router-dom';
+import {Link, NavigateFunction, useNavigate} from 'react-router-dom';
 import {OasisForm} from '../../OasisForm.tsx';
 
 const orderFields: FormField<OrderRecord>[] = [
@@ -75,51 +84,73 @@ export const NewOrderPage = () => {
   const parents = useParentsWithAtLeastOneKid();
   const deliverers = useData(getDeliverers);
 
-  const validationMessage = validateOrder(parents, deliverers);
   return (
     <>
-      <OrderSetupTable parents={parents} />
+      <Typography mb={2}>
+        Review the data on the <Link to="/parents">Parents & Kids</Link> and{' '}
+        <Link to="/deliverers">Deliverers</Link> pages closely. When you save
+        this order, the number of diapers in the specified sizes for all active
+        children of active parents and deliverer assignments will be saved into
+        this order.
+      </Typography>
+
+      {parents && (
+        <Paper sx={{p: 2, mt: 2}}>
+          <Typography variant="h5">Totals:</Typography>
+          {calcDiaperSizes(parents)
+            .split(', ')
+            .map((r) => (
+              <div key={r}>{r}</div>
+            ))}
+        </Paper>
+      )}
 
       {parents && deliverers && (
         <Paper sx={{p: 2, mt: 2}}>
-          <Typography variant="h5">Order Summary</Typography>
-          {deliverers
-            .filter((d) => d.is_active)
-            .map((d) => {
-              const families = parents.filter(
-                (p) => p.is_active && p.deliverer_id === d.id,
-              );
-              return (
-                <Typography key={d.id}>
-                  <strong>{d.name}:</strong>
-                  {` ${calcDiaperSizes(families)} (${families.length} ${families.length === 1 ? 'family' : 'families'})`}
-                </Typography>
-              );
-            })}
-          <Typography>
-            <strong>Total:</strong> {calcDiaperSizes(parents)}
+          <Typography variant="h5" mb={2}>
+            Deliverer Assignment Summary
           </Typography>
 
-          {validationMessage && (
-            <Typography variant="h5" color="error">
-              {validationMessage}
-            </Typography>
-          )}
+          <Table size="small">
+            <TableHead>
+              <TableRow>
+                <TableCell>Deliverer</TableCell>
+                <TableCell>Diapers</TableCell>
+                <TableCell>Families</TableCell>
+              </TableRow>
+            </TableHead>
+            <TableBody>
+              {deliverers
+                .filter((d) => d.is_active)
+                .sort((a, b) => a.name.localeCompare(b.name))
+                .map((d) => {
+                  const families = parents.filter(
+                    (p) => p.is_active && p.deliverer_id === d.id,
+                  );
+                  return (
+                    <TableRow key={d.id}>
+                      <TableCell>
+                        <Link to={`/deliverer/${d.id}`}> {d.name}</Link>
+                      </TableCell>
+                      <TableCell>{calcDiaperSizes(families)}</TableCell>
+                      <TableCell>{families.length}</TableCell>
+                    </TableRow>
+                  );
+                })}
+            </TableBody>
+          </Table>
         </Paper>
       )}
 
       <Paper sx={{p: 2, mt: 2}}>
-        <Typography variant="h5" pb={2}>
+        <Typography variant="h5" mb={2}>
           Order Info
         </Typography>
 
         <OasisForm
           origData={{}}
-          onSubmit={(formData) => {
-            finishOrder(formData, parents, navigate);
-          }}
+          onSubmit={(formData) => finishOrder(formData, parents, navigate)}
           fields={orderFields}
-          disableSave={!!validationMessage}
         />
       </Paper>
     </>

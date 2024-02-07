@@ -16,6 +16,7 @@ export const getOrderData = async (
   const groupedParents = groupBy(orderParents, (p) => p.deliverer.id);
   const kidIndex = groupBy(orderKids, (k) => k.kid.parent_id);
 
+  // TODO: don't group by deliverer, use a sql view
   return {
     ...orderRecord,
     deliverers: Object.values(groupedParents)
@@ -25,6 +26,7 @@ export const getOrderData = async (
           .map((a) => ({
             ...a.parent,
             orderKids: kidIndex[a.parent.id] || [],
+            deliverer: arr[0].deliverer,
           }))
           .sort(
             (a, b) =>

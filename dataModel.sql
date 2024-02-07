@@ -99,3 +99,48 @@ CREATE TABLE order_kid (
     diaper_size TEXT NOT NULL,
     diaper_quantity NUMERIC
 );
+
+DROP VIEW IF EXISTS parent_view;
+CREATE VIEW parent_view AS
+SELECT
+  p.id,
+  p.first_name || ' ' || p.last_name as name,
+  p.address,
+  p.city,
+  p.zip,
+  p.phone_number,
+  p.deliverer_id,
+  d.name as deliverer_name,
+  p.is_active,
+  json_agg(k.diaper_size) as diaper_sizes
+FROM parent p
+  LEFT JOIN deliverer d 
+    ON p.deliverer_id = d.id 
+    AND NOT d.is_deleted 
+    AND d.is_active
+  LEFT JOIN kid k 
+    ON p.id = k.parent_id 
+    AND NOT k.is_deleted 
+    AND k.is_active
+WHERE NOT p.is_deleted
+GROUP BY p.id, d.id
+ORDER BY p.is_active DESC, p.first_name, p.last_name;
+
+DROP VIEW IF EXISTS finished_order_view;
+CREATE VIEW finished_order_view AS
+SELECT
+  op.parent_id,
+  p.first_name || ' ' || p.last_name as parent_name,
+  p.address,
+  p.city,
+  p.zip,
+  p.phone_number,
+  op.deliverer_id,
+  d.name as deliverer_name,
+  json_agg(ok) as order_kids
+FROM order_parent op
+LEFT JOIN deliverer d ON d.id = op.deliverer_id AND NOT d.is_deleted
+LEFT JOIN parent p ON op.parent_id = p.id AND NOT p.is_deleted
+LEFT JOIN kid k ON k.parent_id = op.parent_id AND NOT k.is_deleted
+LEFT JOIN order_kid ok ON ok.kid_id = k.id
+GROUP BY op.parent_id, p.id, op.deliverer_id, d.id;

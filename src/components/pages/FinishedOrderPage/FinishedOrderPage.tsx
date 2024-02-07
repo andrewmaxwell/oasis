@@ -8,24 +8,42 @@ import {
   Table,
   TableBody,
   TableCell,
+  TableHead,
   TableRow,
 } from '@mui/material';
 import {getOrderData} from './getOrderData.ts';
 import {consolidateOrderKids} from '../../../utils/consolidateOrderKids.ts';
 
-const formatParents = (orderParents: OrderParent[]) =>
-  orderParents.map((p) => (
-    <TableRow key={p.id}>
-      <TableCell>
-        {p.first_name} {p.last_name}
-      </TableCell>
-      <TableCell>{p.address}</TableCell>
-      <TableCell>{p.city}</TableCell>
-      <TableCell>{p.zip}</TableCell>
-      <TableCell>{p.phone_number}</TableCell>
-      <TableCell>{consolidateOrderKids(p.orderKids)}</TableCell>
-    </TableRow>
-  ));
+const makeParentTable = (orderParents: OrderParent[]) => (
+  <Table size="small">
+    <TableHead>
+      <TableRow>
+        <TableCell>Name</TableCell>
+        <TableCell>Address</TableCell>
+        <TableCell>City</TableCell>
+        <TableCell>Zip</TableCell>
+        <TableCell>Phone</TableCell>
+        <TableCell>Deliverer</TableCell>
+        <TableCell>Diapers</TableCell>
+      </TableRow>
+    </TableHead>
+    <TableBody>
+      {orderParents.map((p) => (
+        <TableRow key={p.id}>
+          <TableCell>
+            {p.first_name} {p.last_name}
+          </TableCell>
+          <TableCell>{p.address}</TableCell>
+          <TableCell>{p.city}</TableCell>
+          <TableCell>{p.zip}</TableCell>
+          <TableCell>{p.phone_number}</TableCell>
+          <TableCell>{p.deliverer.name}</TableCell>
+          <TableCell>{consolidateOrderKids(p.orderKids)}</TableCell>
+        </TableRow>
+      ))}
+    </TableBody>
+  </Table>
+);
 
 export const FinishedOrderPage = () => {
   const [orderData, setOrderData] = useState<FinishedOrder>();
@@ -53,15 +71,13 @@ export const FinishedOrderPage = () => {
     .split(', ')
     .map((r) => <div key={r}>{r}</div>);
 
-  const families = formatParents(
-    deliverers
-      .flatMap((d) => d.orderParents)
-      .sort(
-        (a, b) =>
-          a.first_name.localeCompare(b.first_name) ||
-          a.last_name.localeCompare(b.last_name),
-      ),
-  );
+  const families = deliverers
+    .flatMap((d) => d.orderParents)
+    .sort(
+      (a, b) =>
+        a.first_name.localeCompare(b.first_name) ||
+        a.last_name.localeCompare(b.last_name),
+    );
 
   return (
     <>
@@ -80,17 +96,13 @@ export const FinishedOrderPage = () => {
       <div>Totals: {totals}</div>
 
       <h3>Families:</h3>
-      <Table size="small">
-        <TableBody>{families}</TableBody>
-      </Table>
+      {makeParentTable(families)}
 
       <h3>Sorted by Deliverer:</h3>
       {deliverers.map((d) => (
         <Fragment key={d.id}>
           <h4>Deliverer: {d.name}</h4>
-          <Table size="small">
-            <TableBody>{formatParents(d.orderParents)}</TableBody>
-          </Table>
+          {makeParentTable(d.orderParents)}
         </Fragment>
       ))}
 
