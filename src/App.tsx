@@ -10,9 +10,10 @@ import {Box, Container} from '@mui/material';
 import {LandingPage} from './components/pages/LandingPage.tsx';
 import {DelivererPage} from './components/pages/DelivererPage.tsx';
 import {OrderTablePage} from './components/pages/OrderTablePage.tsx';
-import {FinishedOrderPage} from './components/pages/FinishedOrderPage.tsx';
+import {FinishedOrderPage} from './components/pages/FinishedOrderPage/FinishedOrderPage.tsx';
 import {NewOrderPage} from './components/pages/NewOrderPage/NewOrderPage.tsx';
 import {ChangePasswordPage} from './components/pages/ChangePasswordPage.tsx';
+import {LabelPage} from './components/pages/LabelPage.tsx';
 
 const PageWrapper = ({children}: {children: JSX.Element}) => (
   <Box sx={{flexGrow: 1}}>
@@ -21,50 +22,58 @@ const PageWrapper = ({children}: {children: JSX.Element}) => (
   </Box>
 );
 
-const router = createHashRouter(
-  [
-    {
-      path: '',
-      element: <LandingPage />,
-    },
-    {
-      path: `/parents`,
-      element: <ParentTablePage />,
-    },
-    {
-      path: `/parent/:id`,
-      element: <ParentPage />,
-    },
-    {
-      path: `/kid/:id`,
-      element: <KidPage />,
-    },
-    {
-      path: `/deliverers`,
-      element: <DelivererTablePage />,
-    },
-    {
-      path: `/deliverer/:id`,
-      element: <DelivererPage />,
-    },
-    {
-      path: `/orders`,
-      element: <OrderTablePage />,
-    },
-    {
-      path: `/order/new`,
-      element: <NewOrderPage />,
-    },
-    {
-      path: `/order/:id`,
-      element: <FinishedOrderPage />,
-    },
-    {
-      path: `/changePassword`,
-      element: <ChangePasswordPage />,
-    },
-  ].map((r) => ({...r, element: <PageWrapper>{r.element}</PageWrapper>})),
-);
+const routes = [
+  {
+    path: '',
+    element: <LandingPage />,
+  },
+  {
+    path: `/parents`,
+    element: <ParentTablePage />,
+  },
+  {
+    path: `/parent/:id`,
+    element: <ParentPage />,
+  },
+  {
+    path: `/kid/:id`,
+    element: <KidPage />,
+  },
+  {
+    path: `/deliverers`,
+    element: <DelivererTablePage />,
+  },
+  {
+    path: `/deliverer/:id`,
+    element: <DelivererPage />,
+  },
+  {
+    path: `/orders`,
+    element: <OrderTablePage />,
+  },
+  {
+    path: `/order/new`,
+    element: <NewOrderPage />,
+  },
+  {
+    path: `/order/:id`,
+    element: <FinishedOrderPage />,
+  },
+  {
+    path: `/changePassword`,
+    element: <ChangePasswordPage />,
+  },
+].map((r) => ({
+  ...r,
+  element: <PageWrapper>{r.element}</PageWrapper>,
+}));
+
+routes.push({
+  path: '/labels/:id',
+  element: <LabelPage />,
+});
+
+const router = createHashRouter(routes);
 
 export const App = () =>
   useSession() ? <RouterProvider router={router} /> : <SignInForm />;
