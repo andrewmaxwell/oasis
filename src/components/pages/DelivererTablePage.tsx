@@ -23,7 +23,7 @@ const columns: GridColDef<Deliverer>[] = [
     field: 'email',
     headerName: 'Email',
     width: 250,
-    renderCell: anchor('email'),
+    renderCell: anchor('mailto'),
   },
   {
     field: 'phone_number',

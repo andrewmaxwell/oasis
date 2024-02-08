@@ -38,6 +38,7 @@ const deliverer = {
   phone_number: '',
   is_active: true,
 };
+
 const parents = data.split('\n').map((r) => {
   const [
     first_name,
@@ -72,6 +73,16 @@ const parents = data.split('\n').map((r) => {
   };
 });
 
+const deliverers = fs
+  .readFileSync('scripts/prodDeliverers.txt', 'utf-8')
+  .split('\n')
+  .map((r) => {
+    const [first, last, phone_number, email] = r
+      .split('\t')
+      .map((v) => v.trim());
+    return {name: `${first} ${last}`, email, phone_number, is_active: true};
+  });
+
 fs.writeFileSync(
   'scripts/temp.sql',
   `
@@ -85,5 +96,7 @@ ${makeInsert('deliverer', [deliverer])}
 ${makeInsert('parent', parents)}
 
 ${makeInsert('kid', kids)}
+
+${makeInsert('deliverer', deliverers)}
 `,
 );
