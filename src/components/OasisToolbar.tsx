@@ -1,10 +1,11 @@
 import {AppBar, Toolbar, Typography} from '@mui/material';
 import {useSession} from '../utils/useSession.ts';
 import {AccountMenu} from './AccountMenu.tsx';
-import {Link} from 'react-router-dom';
+import {Link, useNavigate} from 'react-router-dom';
 
 export const OasisToolbar = () => {
   const session = useSession();
+  const navigate = useNavigate();
 
   return (
     <AppBar position="static" sx={{marginBottom: 2}}>
@@ -14,6 +15,7 @@ export const OasisToolbar = () => {
             src="/oasis/favicon.png"
             height="50px"
             style={{marginRight: 10}}
+            title="Go home"
           />
         </Link>
 
@@ -24,7 +26,10 @@ export const OasisToolbar = () => {
             overflow: 'hidden',
             whiteSpace: 'nowrap',
             textOverflow: 'ellipsis',
+            cursor: 'pointer',
           }}
+          onClick={() => navigate('/')}
+          title="Go home"
         >
           Oasis Diaper Ministry Manager
         </Typography>

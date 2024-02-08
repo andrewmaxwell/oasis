@@ -33,7 +33,7 @@ export const OasisForm = <T extends FieldValues>({
       <Grid container alignItems="flex-start" spacing={2}>
         {fields.map(
           ({id, label, required, type, width, options, multiline}) => (
-            <Grid key={id} item xs={width}>
+            <Grid key={id} item md={width} xs={12}>
               {type === 'switch' ? (
                 <OasisSwitch name={id} label={label} control={control} />
               ) : type === 'select' && options ? (
