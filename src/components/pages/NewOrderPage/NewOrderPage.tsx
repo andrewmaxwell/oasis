@@ -14,27 +14,10 @@ import {
   getDiaperQuantity,
 } from '../../../utils/calcDiaperSizes.ts';
 import {getAllRecords, insertRecord} from '../../../supabase.ts';
-import {Deliverer, FormField, OrderRecord, Parent} from '../../../types.ts';
+import {Deliverer, OrderRecord, Parent} from '../../../types.ts';
 import {Link, NavigateFunction, useNavigate} from 'react-router-dom';
 import {OasisForm} from '../../OasisForm.tsx';
-
-const orderFields: FormField<OrderRecord>[] = [
-  {
-    id: 'date_of_order',
-    label: 'Date of Order',
-    required: true,
-    type: 'date',
-    width: 6,
-  },
-  {
-    id: 'date_of_pickup',
-    label: 'Date of Pickup',
-    required: true,
-    type: 'date',
-    width: 6,
-  },
-  {id: 'notes', label: 'Notes', width: 12, multiline: true},
-];
+import {orderFields} from './orderFields.ts';
 
 const getDeliverers = async () =>
   (await getAllRecords('deliverer')) as Deliverer[];

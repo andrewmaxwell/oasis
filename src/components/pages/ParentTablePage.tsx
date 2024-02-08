@@ -53,12 +53,10 @@ const columns: GridColDef<ParentViewRow>[] = [
     headerName: 'Quantities',
     renderCell: ({row}) =>
       consolidateOrderKids(
-        row.diaper_sizes
-          .filter((s) => s)
-          .map((diaper_size) => ({
-            diaper_size,
-            diaper_quantity: getDiaperQuantity(diaper_size),
-          })),
+        row.diaper_sizes.map((diaper_size) => ({
+          diaper_size,
+          diaper_quantity: getDiaperQuantity(diaper_size),
+        })),
       ),
     width: 400,
   },
