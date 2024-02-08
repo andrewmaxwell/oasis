@@ -27,13 +27,11 @@ const parentFields: FormField<Parent>[] = [
   {
     id: 'country_of_origin',
     label: 'Country of Origin',
-    required: true,
     width: 3,
   },
   {
     id: 'rough_family_income',
     label: 'Rough Family Income',
-    required: true,
     type: 'number',
     width: 2,
   },
@@ -68,7 +66,9 @@ const getParent = async (parentId: string) => {
     getKidsForParent(parentId),
   ]);
 
-  parent.kid = kid.sort((a, b) => b.birth_date.localeCompare(a.birth_date));
+  parent.kid = kid.sort((a, b) =>
+    (b.birth_date || '').localeCompare(a.birth_date || ''),
+  );
   parent.deliverer_id = parent.deliverer_id || '';
   return parent;
 };

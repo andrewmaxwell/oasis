@@ -2,6 +2,7 @@
 
 import casual from 'casual'; // https://www.npmjs.com/package/casual
 import {writeFileSync} from 'fs';
+import {valuesToSQL} from './valuesToSql';
 
 const numParents = 50;
 const numDeliverers = 20;
@@ -9,18 +10,6 @@ const minKidsPerParent = 1;
 const maxKidsPerParent = 5;
 
 const randEl = (arr) => arr[Math.floor(Math.random() * arr.length)];
-
-const valuesToSQL = (rows) =>
-  rows
-    .map((row) => {
-      const vals = row
-        .map((val) =>
-          typeof val === 'string' ? `'${val.replace(/'/g, "''")}'` : val,
-        )
-        .join(',');
-      return `(${vals})`;
-    })
-    .join(',\n');
 
 const delivererIds = [];
 const delivererValues = Array.from({length: numDeliverers}, () => {

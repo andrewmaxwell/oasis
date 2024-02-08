@@ -81,8 +81,6 @@ export const DelivererPage = () => {
     navigate(`/deliverers`);
   };
 
-  console.log('delivererParents', delivererParents);
-
   return (
     <>
       <Paper sx={{p: 2, mb: 2}}>

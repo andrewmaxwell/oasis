@@ -1,3 +1,5 @@
+-- use the output of scripts/generateTriggersAndPolicies.js to add triggers and policies
+
 CREATE OR REPLACE FUNCTION update_modified_at()
 RETURNS TRIGGER AS $$
 BEGIN
@@ -15,20 +17,15 @@ CREATE TABLE parent (
     city TEXT NOT NULL,
     zip TEXT NOT NULL,
     phone_number TEXT NOT NULL,
-    country_of_origin TEXT NOT NULL,
+    country_of_origin TEXT,
     rough_family_income NUMERIC,
-    deliverer_id UUID REFERENCES deliverer(id),
-    is_active BOOLEAN NOT NULL,
+    deliverer_id UUID REFERENCES deliverer(id) NOT NULL,
+    is_active BOOLEAN NOT NULL DEFAULT true,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
     modified_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
     is_deleted BOOLEAN NOT NULL DEFAULT false,
     notes TEXT
 );
-
-CREATE TRIGGER update_parent_modified_at
-BEFORE UPDATE ON parent
-FOR EACH ROW
-EXECUTE FUNCTION update_modified_at();
 
 DROP TABLE IF EXISTS kid CASCADE;
 CREATE TABLE kid (
@@ -37,7 +34,7 @@ CREATE TABLE kid (
     first_name TEXT NOT NULL,
     last_name TEXT NOT NULL,
     gender TEXT NOT NULL,
-    birth_date DATE NOT NULL,
+    birth_date DATE,
     diaper_size TEXT NOT NULL,
     is_active BOOLEAN NOT NULL,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
@@ -45,11 +42,6 @@ CREATE TABLE kid (
     is_deleted BOOLEAN NOT NULL DEFAULT false,
     notes TEXT
 );
-
-CREATE TRIGGER update_kid_modified_at
-BEFORE UPDATE ON kid
-FOR EACH ROW
-EXECUTE FUNCTION update_modified_at();
 
 DROP TABLE IF EXISTS deliverer CASCADE;
 CREATE TABLE deliverer (
@@ -64,11 +56,6 @@ CREATE TABLE deliverer (
     notes TEXT
 );
 
-CREATE TRIGGER update_deliverer_modified_at
-BEFORE UPDATE ON deliverer
-FOR EACH ROW
-EXECUTE FUNCTION update_modified_at();
-
 DROP TABLE IF EXISTS order_record CASCADE;
 CREATE TABLE order_record (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -79,11 +66,6 @@ CREATE TABLE order_record (
     is_deleted BOOLEAN NOT NULL DEFAULT false,
     notes TEXT
 );
-
-CREATE TRIGGER update_order_record_modified_at
-BEFORE UPDATE ON order_record
-FOR EACH ROW
-EXECUTE FUNCTION update_modified_at();
 
 DROP TABLE IF EXISTS order_parent CASCADE;
 CREATE TABLE order_parent (
@@ -147,3 +129,5 @@ LEFT JOIN kid k ON k.parent_id = op.parent_id AND NOT k.is_deleted
 LEFT JOIN order_kid ok ON ok.kid_id = k.id
 GROUP BY op.parent_id, p.id, op.deliverer_id, d.id, op.order_id
 ORDER BY op.order_id, p.first_name, p.last_name;
+
+-- use the output of scripts/generateTriggersAndPolicies.js to add triggers and policies

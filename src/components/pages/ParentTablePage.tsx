@@ -34,7 +34,7 @@ const columns: GridColDef<ParentViewRow>[] = [
     field: 'phone_number',
     headerName: 'Phone',
     renderCell: anchor('tel'),
-    width: 100,
+    width: 120,
   },
   {
     field: 'activeKids',
