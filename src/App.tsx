@@ -14,6 +14,7 @@ import {FinishedOrderPage} from './components/pages/FinishedOrderPage/FinishedOr
 import {NewOrderPage} from './components/pages/NewOrderPage/NewOrderPage.tsx';
 import {ChangePasswordPage} from './components/pages/ChangePasswordPage.tsx';
 import {LabelPage} from './components/pages/LabelPage.tsx';
+import {KidTablePage} from './components/pages/KidTablePage.tsx';
 
 const PageWrapper = ({children}: {children: JSX.Element}) => (
   <Box sx={{flexGrow: 1}}>
@@ -64,6 +65,10 @@ const routes = [
   {
     path: `/changePassword`,
     element: <ChangePasswordPage />,
+  },
+  {
+    path: '/kids',
+    element: <KidTablePage />,
   },
 ].map((r) => ({
   ...r,

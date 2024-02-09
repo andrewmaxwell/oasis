@@ -15,7 +15,7 @@ import {UseFormReset} from 'react-hook-form';
 import {OasisTable} from '../OasisTable.tsx';
 import {getDelivererOptions} from '../../utils/getDelivererOptions.ts';
 import {GridColDef} from '@mui/x-data-grid';
-import {bool, linkButton} from '../cellRenderers.tsx';
+import {birthDate, bool, linkButton} from '../cellRenderers.tsx';
 
 const parentFields: FormField<Parent>[] = [
   {id: 'first_name', label: 'First Name', required: true, width: 4},
@@ -55,7 +55,12 @@ const kidColumns: GridColDef<Kid>[] = [
     valueGetter: ({row}) => `${row.first_name} ${row.last_name}`,
     width: 250,
   },
-  {field: 'birth_date', headerName: 'Birth Date', width: 150},
+  {
+    field: 'birth_date',
+    headerName: 'Birth Date',
+    width: 150,
+    renderCell: birthDate,
+  },
   {field: 'diaper_size', headerName: 'Diaper Size', width: 100},
   {field: 'is_active', headerName: 'Active', renderCell: bool, width: 100},
 ];

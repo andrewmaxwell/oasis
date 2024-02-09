@@ -1,9 +1,6 @@
 TODO:
-- Make labels the right size/shape/layout
 - User management
 - Read only mode
-- Generate kid report (sorted oldest to youngest with an indicator for kids over 2 years old)
-- Improve print appearance for finished orders
 
 Brennan's original notes:
 

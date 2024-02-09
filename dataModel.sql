@@ -33,7 +33,7 @@ CREATE TABLE kid (
     parent_id UUID REFERENCES parent(id) ON DELETE CASCADE,
     first_name TEXT NOT NULL,
     last_name TEXT NOT NULL,
-    gender TEXT NOT NULL,
+    gender TEXT,
     birth_date DATE,
     diaper_size TEXT NOT NULL,
     is_active BOOLEAN NOT NULL,
@@ -123,11 +123,59 @@ SELECT
   d.email as deliverer_email,
   COALESCE(json_agg(ok) FILTER (WHERE ok IS NOT NULL), '[]'::json) as order_kids
 FROM order_parent op
-LEFT JOIN deliverer d ON d.id = op.deliverer_id AND NOT d.is_deleted
-LEFT JOIN parent p ON op.parent_id = p.id AND NOT p.is_deleted
-LEFT JOIN kid k ON k.parent_id = op.parent_id AND NOT k.is_deleted
-LEFT JOIN order_kid ok ON ok.kid_id = k.id AND ok.order_id = op.order_id
+LEFT JOIN deliverer d 
+  ON d.id = op.deliverer_id 
+  AND NOT d.is_deleted
+LEFT JOIN parent p 
+  ON op.parent_id = p.id 
+  AND NOT p.is_deleted
+LEFT JOIN kid k 
+  ON k.parent_id = op.parent_id 
+  AND NOT k.is_deleted
+LEFT JOIN order_kid ok 
+  ON ok.kid_id = k.id 
+  AND ok.order_id = op.order_id
 GROUP BY op.parent_id, p.id, op.deliverer_id, d.id, op.order_id
 ORDER BY op.order_id, p.first_name, p.last_name;
+
+DROP VIEW IF EXISTS kid_view;
+CREATE VIEW kid_view AS
+SELECT
+  k.id,
+  k.first_name || ' ' || k.last_name as name,
+  k.gender,
+  k.birth_date,
+  k.diaper_size,
+  k.is_active,
+  k.notes,
+  parent_id,
+  p.first_name || ' ' || p.last_name as parent_name
+FROM kid k
+JOIN parent p 
+  ON p.id = k.parent_id
+WHERE 
+  NOT k.is_deleted
+  AND NOT p.is_deleted
+ORDER BY k.birth_date ASC, k.first_name, k.last_name;
+
+DROP VIEW IF EXISTS parent_options;
+CREATE VIEW parent_options AS
+SELECT 
+  id as value,
+  first_name || ' ' || last_name as label
+FROM parent
+WHERE NOT is_deleted;
+
+DROP VIEW IF EXISTS deliverer_options;
+CREATE VIEW deliverer_options AS
+SELECT
+ id as value,
+ CASE
+  WHEN is_active THEN name
+  ELSE name || ' (INACTIVE)'
+ END AS label
+FROM deliverer
+WHERE NOT is_deleted
+ORDER BY is_active, name;
 
 -- use the output of scripts/generateTriggersAndPolicies.js to add triggers and policies

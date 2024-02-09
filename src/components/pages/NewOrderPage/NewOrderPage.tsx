@@ -20,7 +20,9 @@ import {OasisForm} from '../../OasisForm.tsx';
 import {orderFields} from './orderFields.ts';
 
 const getDeliverers = async () =>
-  (await getAllRecords('deliverer')) as Deliverer[];
+  ((await getAllRecords('deliverer')) as Deliverer[]).sort((a, b) =>
+    a.name.localeCompare(b.name),
+  );
 
 const finishOrder = async (
   formData: Partial<OrderRecord>,
@@ -103,23 +105,22 @@ export const NewOrderPage = () => {
               </TableRow>
             </TableHead>
             <TableBody>
-              {deliverers
-                .filter((d) => d.is_active)
-                .sort((a, b) => a.name.localeCompare(b.name))
-                .map((d) => {
-                  const families = parents.filter(
-                    (p) => p.is_active && p.deliverer_id === d.id,
-                  );
-                  return (
-                    <TableRow key={d.id}>
-                      <TableCell>
-                        <Link to={`/deliverer/${d.id}`}> {d.name}</Link>
-                      </TableCell>
-                      <TableCell>{calcDiaperSizes(families)}</TableCell>
-                      <TableCell>{families.length}</TableCell>
-                    </TableRow>
-                  );
-                })}
+              {deliverers.map((d) => {
+                const families = parents.filter(
+                  (p) => p.is_active && p.deliverer_id === d.id,
+                );
+                return (
+                  <TableRow key={d.id}>
+                    <TableCell>
+                      <Link to={`/deliverer/${d.id}`}>
+                        {d.name + (d.is_active ? '' : ' (INACTIVE)')}
+                      </Link>
+                    </TableCell>
+                    <TableCell>{calcDiaperSizes(families)}</TableCell>
+                    <TableCell>{families.length}</TableCell>
+                  </TableRow>
+                );
+              })}
             </TableBody>
           </Table>
         </Paper>

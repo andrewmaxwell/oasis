@@ -1,17 +1,8 @@
-import {getAllRecords} from '../supabase.ts';
+import {getView} from '../supabase.ts';
 import memoize from 'memoizee';
+import {Option} from '../types.ts';
 
 export const getDelivererOptions = memoize(
-  async () =>
-    (await getAllRecords('deliverer'))!
-      .map((d) => ({
-        value: d.id,
-        label: d.name + (d.is_active ? '' : ` (INACTIVE)`),
-      }))
-      .sort(
-        (a, b) =>
-          Number(a.label === 'Unassigned') - Number(b.label === 'Unassigned') ||
-          a.label.localeCompare(b.label),
-      ),
+  async () => (await getView('deliverer_options')) as Option[],
   {promise: true, maxAge: 30000},
 );

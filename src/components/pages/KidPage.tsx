@@ -3,12 +3,12 @@ import {useEffect, useState} from 'react';
 import {Link, useNavigate, useParams, useSearchParams} from 'react-router-dom';
 import {
   deleteRecord,
-  getAllRecords,
   getRecord,
+  getView,
   insertRecord,
   updateRecord,
 } from '../../supabase.ts';
-import {FormField, Kid} from '../../types.ts';
+import {FormField, Kid, Option} from '../../types.ts';
 import {getDifference} from '../../utils/getDifference.ts';
 import {OasisForm} from '../OasisForm.tsx';
 
@@ -21,16 +21,11 @@ const kidFields: FormField<Kid>[] = [
     required: true,
     width: 4,
     type: 'select',
-    options: async () =>
-      (await getAllRecords('parent'))!.map((p) => ({
-        value: p.id,
-        label: `${p.first_name} ${p.last_name}`,
-      })),
+    options: async () => (await getView('parent_options')) as Option[],
   },
   {
     id: 'gender',
     label: 'Gender',
-    required: true,
     width: 3,
     type: 'select',
     options: [
@@ -38,13 +33,7 @@ const kidFields: FormField<Kid>[] = [
       {value: 'F', label: 'F'},
     ],
   },
-  {
-    id: 'birth_date',
-    label: 'Birth Date',
-    required: true,
-    width: 3,
-    type: 'date',
-  },
+  {id: 'birth_date', label: 'Birth Date', width: 3, type: 'date'},
   {
     id: 'diaper_size',
     label: 'Diaper Size',
@@ -80,12 +69,17 @@ export const KidPage = () => {
   if (!origData) return <CircularProgress />;
 
   const onSubmit = async (formData: Partial<Kid>) => {
-    if (formData.id) {
-      await updateRecord('kid', formData.id, getDifference(formData, origData));
-    } else {
-      await insertRecord('kid', formData);
+    const success = formData.id
+      ? await updateRecord(
+          'kid',
+          formData.id,
+          getDifference(formData, origData),
+        )
+      : await insertRecord('kid', formData);
+
+    if (success) {
+      navigate(`/parent/${formData.parent_id}`, {replace: true});
     }
-    navigate(`/parent/${formData.parent_id}`, {replace: true});
   };
 
   const deleteKid = async () => {
@@ -97,13 +91,16 @@ export const KidPage = () => {
 
   return (
     <>
-      <Button
-        component={Link}
-        to={`/parent/${origData.parent_id}`}
-        sx={{mb: 1}}
-      >
-        Back to Parent
-      </Button>
+      {origData.id && (
+        <Button
+          component={Link}
+          to={`/parent/${origData.parent_id}`}
+          sx={{mb: 1}}
+        >
+          Back to Parent
+        </Button>
+      )}
+
       <Paper sx={{p: 2}}>
         <Typography variant="h5" pb={2}>
           Kid Info

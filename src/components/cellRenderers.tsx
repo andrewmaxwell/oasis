@@ -1,3 +1,4 @@
+import {Typography} from '@mui/material';
 import {GridRenderCellParams} from '@mui/x-data-grid';
 import {Link} from 'react-router-dom';
 
@@ -26,3 +27,12 @@ export const mapAnchor = ({value, row}: GridRenderCellParams) => (
 );
 
 export const bool = ({value}: GridRenderCellParams) => (value ? 'Y' : 'N');
+
+const twoYears = 2 * 365 * 24 * 3600000;
+
+export const birthDate = ({value}: GridRenderCellParams) =>
+  Date.parse(value) < Date.now() - twoYears ? (
+    <Typography color="error">{value}</Typography>
+  ) : (
+    value
+  );

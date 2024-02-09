@@ -136,5 +136,5 @@ export const getDelivererParents = async (delivererId: string) => {
     .eq('is_active', true)
     .eq('deliverer_id', delivererId);
   if (error) log(error);
-  return data || [];
+  return data ?? [];
 };
