@@ -4,20 +4,7 @@ import {CircularProgress} from '@mui/material';
 import {consolidateOrderKids} from '../../utils/consolidateOrderKids';
 import {getOrderParents} from '../../supabase';
 import {OrderParent} from '../../types';
-
-//  Info: Parent name, Address, Phone #, QTYs and sizes of diapers ordered that month and assigned deliverer (SORT by assigned deliverer)
-
-const labelStyle = {
-  width: '3.5in',
-  height: '2in',
-  textAlign: 'center',
-  border: '1px solid black',
-  borderRadius: '0.25in',
-  padding: '0.25in',
-  color: 'black',
-  background: 'white',
-  float: 'left',
-};
+import {splitEvery} from '../../utils/splitEvery';
 
 export const LabelPage = () => {
   const [orderParents, setOrderParents] = useState<OrderParent[]>();
@@ -25,24 +12,79 @@ export const LabelPage = () => {
 
   useEffect(() => {
     if (orderId) {
-      getOrderParents(orderId).then((p) =>
-        setOrderParents(
-          p.sort((a, b) => a.deliverer_name.localeCompare(b.deliverer_name)),
-        ),
-      );
+      getOrderParents(orderId).then(setOrderParents);
     }
   }, [orderId]);
 
+  useEffect(() => {
+    const styleTag = document.createElement('style');
+    styleTag.innerHTML = `
+      body {
+        margin: 0;
+        padding: 0;
+        color: black;
+        background: white;
+      }
+      .page {
+        page-break-after: always;
+        position: relative;
+        width: 8.5in;
+        height: 11in;
+        outline: 1px solid black;
+        padding: 0.5in 0 0.49in 0.166in
+      }
+      .label {
+        outline: 1px dashed #AAA;
+        width: 4in;
+        height: 2in;
+        float: left;
+        box-sizing: border-box;
+        padding: 0.1in 0 0 0.2in;
+        margin-right: 0.167in;
+        border-radius: 0.1in;
+      }
+      .page-break {
+        clear: left;
+        display: block;
+        page-break-before: always;
+      }
+      
+      @media print {
+        .page, .label {outline: 0}
+      }
+      `;
+    document.head.append(styleTag);
+
+    return () => styleTag.remove();
+  }, []);
+
   if (!orderParents) return <CircularProgress />;
-  return orderParents.map((p) => (
-    <div key={p.parent_id} style={labelStyle as any}>
-      <div>{p.parent_name}</div>
-      <div>{p.address}</div>
-      <div>
-        {p.city} {p.zip}
-      </div>
-      <div style={{marginTop: '1em'}}>{consolidateOrderKids(p.order_kids)}</div>
-      <div>Deliverer: {p.deliverer_name}</div>
+
+  return splitEvery(
+    10,
+    orderParents.toSorted((a, b) =>
+      a.deliverer_name.localeCompare(b.deliverer_name),
+    ),
+  ).map((arr) => (
+    <div key={arr[0].parent_id} className="page">
+      {arr.map((p) => (
+        <div key={p.parent_id} className="label">
+          <div>{p.parent_name}</div>
+          <div>{p.address}</div>
+          <div>
+            {p.city} {p.zip}
+          </div>
+          {p.phone_number && p.phone_number !== '???' && (
+            <div>{p.phone_number}</div>
+          )}
+          <div>{consolidateOrderKids(p.order_kids)}</div>
+          <div>
+            Deliverer:{' '}
+            {p.deliverer_name === 'Unassigned' ? '' : p.deliverer_name}
+          </div>
+        </div>
+      ))}
+      <div className="pageBreak" />
     </div>
   ));
 };
