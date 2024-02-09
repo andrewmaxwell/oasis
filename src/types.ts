@@ -6,7 +6,7 @@ export type Kid = {
   first_name: string;
   last_name: string;
   gender: 'M' | 'F';
-  birth_date?: string;
+  birth_date?: string | null;
   diaper_size: string;
   is_active: boolean;
   created_at: string;

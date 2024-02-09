@@ -69,6 +69,9 @@ export const KidPage = () => {
   if (!origData) return <CircularProgress />;
 
   const onSubmit = async (formData: Partial<Kid>) => {
+    if (!formData.birth_date) {
+      formData.birth_date = null;
+    }
     const success = formData.id
       ? await updateRecord(
           'kid',
