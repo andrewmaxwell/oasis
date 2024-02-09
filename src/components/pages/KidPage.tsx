@@ -70,7 +70,7 @@ export const KidPage = () => {
 
   const onSubmit = async (formData: Partial<Kid>) => {
     if (!formData.birth_date) {
-      formData.birth_date = null;
+      formData.birth_date = null; // birth date can't be ''
     }
     const success = formData.id
       ? await updateRecord(

@@ -34,7 +34,7 @@ export type Parent = {
   zip: string;
   phone_number?: string;
   country_of_origin: string;
-  rough_family_income?: number;
+  rough_family_income?: number | null;
   is_active: boolean;
   created_at: string;
   modified_at: string;

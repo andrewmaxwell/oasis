@@ -1,5 +1,12 @@
 const modifiedAtTables = ['parent', 'deliverer', 'kid', 'order_record'];
 const allTables = [...modifiedAtTables, 'order_parent', 'order_kid'];
+const views = [
+  'parent_view',
+  'finished_order_view',
+  'kid_view',
+  'parent_options',
+  'deliverer_options',
+];
 
 const triggers = modifiedAtTables
   .map(
@@ -13,18 +20,28 @@ EXECUTE FUNCTION update_modified_at();
   .join('\n');
 console.log(triggers);
 
-const policies = allTables
+const tablePolicies = allTables
   .map(
     (t) => `
+ALTER TABLE ${t} ENABLE ROW LEVEL SECURITY;
 DROP POLICY IF EXISTS access_for_logged_in_users ON ${t};
 CREATE POLICY access_for_logged_in_users ON ${t}
-AS PERMISSIVE
 FOR ALL
-TO PUBLIC
-USING (auth.uid() IS NOT NULL)
-WITH CHECK (auth.uid() IS NOT NULL);
-`,
+TO authenticated
+USING (true)
+WITH CHECK (true);
+REVOKE ALL ON TABLE ${t} FROM anon;`,
   )
   .join('\n');
 
-console.log(policies);
+console.log(tablePolicies);
+
+const viewGrants = views
+  .map(
+    (v) => `
+GRANT SELECT ON ${v} TO authenticated;
+REVOKE ALL ON ${v} FROM anon;`,
+  )
+  .join('\n');
+
+console.log(viewGrants);

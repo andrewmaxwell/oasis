@@ -98,6 +98,9 @@ export const ParentPage = () => {
     formData: Partial<Parent>,
     reset: UseFormReset<Partial<Parent>>,
   ) => {
+    if (!formData.rough_family_income) {
+      formData.rough_family_income = null; // value can't be ''
+    }
     if (formData.id) {
       await updateRecord('parent', formData.id, {
         ...getDifference(formData, parentData),

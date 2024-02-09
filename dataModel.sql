@@ -1,4 +1,4 @@
--- use the output of scripts/generateTriggersAndPolicies.js to add triggers and policies
+-- use the output of scripts/generateTriggersAndPolicies.js to add triggers, policies, and grants
 
 CREATE OR REPLACE FUNCTION update_modified_at()
 RETURNS TRIGGER AS $$
@@ -178,4 +178,4 @@ FROM deliverer
 WHERE NOT is_deleted
 ORDER BY is_active, name;
 
--- use the output of scripts/generateTriggersAndPolicies.js to add triggers and policies
+-- use the output of scripts/generateTriggersAndPolicies.js to add triggers, policies, and grants
