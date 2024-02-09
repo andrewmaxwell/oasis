@@ -16,6 +16,7 @@ export const OasisToolbar = () => {
             height="50px"
             style={{marginRight: 10}}
             title="Go home"
+            alt="logo"
           />
         </Link>
 

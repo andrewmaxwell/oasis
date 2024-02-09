@@ -1,6 +1,6 @@
 import {Button, CircularProgress, Paper, Typography} from '@mui/material';
 import {useEffect, useState} from 'react';
-import {useNavigate, useParams} from 'react-router-dom';
+import {Link, useNavigate, useParams} from 'react-router-dom';
 import {
   deleteRecord,
   getKidsForParent,
@@ -66,8 +66,8 @@ const getParent = async (parentId: string) => {
     getKidsForParent(parentId),
   ]);
 
-  parent.kid = kid.sort((a, b) =>
-    (b.birth_date || '').localeCompare(a.birth_date || ''),
+  parent.kid = kid.toSorted((a, b) =>
+    (b.birth_date ?? '').localeCompare(a.birth_date ?? ''),
   );
   parent.deliverer_id = parent.deliverer_id || '';
   return parent;
@@ -114,7 +114,7 @@ export const ParentPage = () => {
 
   return (
     <>
-      <Button onClick={() => navigate('/parents')} sx={{mb: 1}}>
+      <Button component={Link} to={'/parents'} sx={{mb: 1}}>
         Back to Parents
       </Button>
 

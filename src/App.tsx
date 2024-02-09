@@ -10,7 +10,7 @@ import {Box, Container} from '@mui/material';
 import {LandingPage} from './components/pages/LandingPage.tsx';
 import {DelivererPage} from './components/pages/DelivererPage.tsx';
 import {OrderTablePage} from './components/pages/OrderTablePage.tsx';
-import {FinishedOrderPage} from './components/pages/FinishedOrderPage.tsx';
+import {FinishedOrderPage} from './components/pages/FinishedOrderPage/FinishedOrderPage.tsx';
 import {NewOrderPage} from './components/pages/NewOrderPage/NewOrderPage.tsx';
 import {ChangePasswordPage} from './components/pages/ChangePasswordPage.tsx';
 import {LabelPage} from './components/pages/LabelPage.tsx';

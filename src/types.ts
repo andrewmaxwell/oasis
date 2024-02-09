@@ -18,7 +18,7 @@ export type Deliverer = {
   id: string;
   name: string;
   email: string;
-  phone_number: string;
+  phone_number?: string;
   is_active: boolean;
   created_at: string;
   modified_at: string;
@@ -32,7 +32,7 @@ export type Parent = {
   address: string;
   city: string;
   zip: string;
-  phone_number: string;
+  phone_number?: string;
   country_of_origin: string;
   rough_family_income?: number;
   is_active: boolean;
@@ -86,7 +86,7 @@ export type OrderParent = {
   address: string;
   city: string;
   zip: string;
-  phone_number: string;
+  phone_number?: string;
   deliverer_id: string;
   deliverer_name: string;
   deliverer_email: string;

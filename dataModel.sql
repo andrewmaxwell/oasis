@@ -16,7 +16,7 @@ CREATE TABLE parent (
     address TEXT NOT NULL,
     city TEXT NOT NULL,
     zip TEXT NOT NULL,
-    phone_number TEXT NOT NULL,
+    phone_number TEXT,
     country_of_origin TEXT,
     rough_family_income NUMERIC,
     deliverer_id UUID REFERENCES deliverer(id) NOT NULL,
@@ -48,7 +48,7 @@ CREATE TABLE deliverer (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     name TEXT NOT NULL,
     email TEXT NOT NULL,
-    phone_number TEXT NOT NULL,
+    phone_number TEXT,
     is_active BOOLEAN NOT NULL,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
     modified_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
@@ -126,7 +126,7 @@ FROM order_parent op
 LEFT JOIN deliverer d ON d.id = op.deliverer_id AND NOT d.is_deleted
 LEFT JOIN parent p ON op.parent_id = p.id AND NOT p.is_deleted
 LEFT JOIN kid k ON k.parent_id = op.parent_id AND NOT k.is_deleted
-LEFT JOIN order_kid ok ON ok.kid_id = k.id
+LEFT JOIN order_kid ok ON ok.kid_id = k.id AND ok.order_id = op.order_id
 GROUP BY op.parent_id, p.id, op.deliverer_id, d.id, op.order_id
 ORDER BY op.order_id, p.first_name, p.last_name;
 

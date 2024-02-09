@@ -1,6 +1,6 @@
 import {Button, CircularProgress, Paper, Typography} from '@mui/material';
 import {useEffect, useState} from 'react';
-import {useNavigate, useParams, useSearchParams} from 'react-router-dom';
+import {Link, useNavigate, useParams, useSearchParams} from 'react-router-dom';
 import {
   deleteRecord,
   getAllRecords,
@@ -69,8 +69,8 @@ export const KidPage = () => {
       setOrigData({
         is_active: true,
         diaper_size: '',
-        parent_id: searchParams.get('parent_id') || undefined,
-        last_name: searchParams.get('last_name') || undefined,
+        parent_id: searchParams.get('parent_id') ?? undefined,
+        last_name: searchParams.get('last_name') ?? undefined,
       });
     }
   }, [id, searchParams]);
@@ -97,6 +97,13 @@ export const KidPage = () => {
 
   return (
     <>
+      <Button
+        component={Link}
+        to={`/parent/${origData.parent_id}`}
+        sx={{mb: 1}}
+      >
+        Back to Parent
+      </Button>
       <Paper sx={{p: 2}}>
         <Typography variant="h5" pb={2}>
           Kid Info

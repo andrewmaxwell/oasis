@@ -1,14 +1,15 @@
 import {useEffect, useMemo, useState} from 'react';
-import {OrderParent, OrderRecord} from '../../types.ts';
+import {OrderParent, OrderRecord} from '../../../types.ts';
 import {useNavigate, useParams} from 'react-router-dom';
 import {
   deleteRecord,
   getOrderParents,
   getRecord,
   updateRecord,
-} from '../../supabase.ts';
+} from '../../../supabase.ts';
 import {
   Button,
+  CircularProgress,
   Grid,
   Paper,
   Table,
@@ -18,48 +19,17 @@ import {
   TableRow,
   Typography,
 } from '@mui/material';
-import {consolidateOrderKids} from '../../utils/consolidateOrderKids.ts';
-import {OasisForm} from '../OasisForm.tsx';
-import {getDifference} from '../../utils/getDifference.ts';
-import {orderFields} from './NewOrderPage/orderFields.ts';
-import {groupBy} from '../../utils/groupBy.ts';
+import {consolidateOrderKids} from '../../../utils/consolidateOrderKids.ts';
+import {OasisForm} from '../../OasisForm.tsx';
+import {getDifference} from '../../../utils/getDifference.ts';
+import {orderFields} from '../NewOrderPage/orderFields.ts';
+import {generateEmails} from './generateEmails.ts';
 
 // Date of next diaper pickup day
 // Who they will be picking up for (Name, address, phone, Size)
 // When they can pick up
 // Contact info of Selia for questions
 // Invite to provide size feedback for next month
-
-const generateEmails = (
-  orderRecord: OrderRecord,
-  orderParents: OrderParent[],
-) => {
-  const grouped = groupBy(orderParents, (p) => p.deliverer_email);
-
-  for (const [email, orderParents] of Object.entries(grouped)) {
-    const parentDetails = orderParents.map(
-      (p) => `Name: ${p.parent_name}
-Address: ${p.address}, ${p.city} ${p.zip}
-Phone: ${p.phone_number}
-Diapers: ${consolidateOrderKids(p.order_kids)}`,
-    );
-
-    const body = `Date of Next Pickup: ${orderRecord.date_of_pickup}
-
-${parentDetails.join('\n\n')}
-
-If you have questions, please contact Selia Buss at (952) 388-3057 or Brennan.seliabuss@gmail.com
-
-Please provide feedback on diaper sizes for next month.
-
-Thank you for your service!`;
-
-    window.open(
-      `mailto:${email}?subject=Oasis Diaper Ministry Delivery Details&body=${encodeURIComponent(body)}`,
-      '_blank',
-    );
-  }
-};
 
 const ParentTable = ({orderParents}: {orderParents: OrderParent[]}) => (
   <Table size="small">
@@ -111,18 +81,19 @@ export const FinishedOrderPage = () => {
     [orderParents],
   );
 
+  if (!orderRecord || !orderParents || !sortedByDeliverer)
+    return <CircularProgress />;
+
+  const totals = consolidateOrderKids(orderParents.flatMap((p) => p.order_kids))
+    .split(', ')
+    .map((r) => <div key={r}>{r}</div>);
+
   const deleteOrder = async () => {
     const msg = `Are you sure you want to delete this order? This cannot be undone.`;
     if (!orderId || !confirm(msg)) return;
     await deleteRecord('order_record', orderId);
     navigate(`/orders`);
   };
-
-  const totals =
-    orderParents &&
-    consolidateOrderKids(orderParents.flatMap((p) => p.order_kids))
-      .split(', ')
-      .map((r) => <div key={r}>{r}</div>);
 
   return (
     <>
@@ -134,54 +105,47 @@ export const FinishedOrderPage = () => {
         >
           Generate Labels
         </Button>
-        {orderRecord && orderParents && (
-          <Button
-            variant="contained"
-            onClick={() => generateEmails(orderRecord, orderParents)}
-          >
-            Generate Deliverer Emails
-          </Button>
-        )}
+
+        <Button
+          variant="contained"
+          onClick={() => generateEmails(orderRecord, orderParents)}
+        >
+          Generate Deliverer Emails
+        </Button>
       </Grid>
 
-      {orderRecord && (
-        <Paper sx={{p: 2, mt: 2}}>
-          <Typography variant="h5" mb={2}>
-            Order Info
-          </Typography>
+      <Paper sx={{p: 2, mt: 2}}>
+        <Typography variant="h5" mb={2}>
+          Order Info
+        </Typography>
 
-          <OasisForm
-            origData={orderRecord}
-            onSubmit={(formData) =>
-              updateRecord(
-                'order_record',
-                orderRecord.id,
-                getDifference(formData, orderRecord),
-              )
-            }
-            fields={orderFields}
-          />
-        </Paper>
-      )}
+        <OasisForm
+          origData={orderRecord}
+          onSubmit={(formData) =>
+            updateRecord(
+              'order_record',
+              orderRecord.id,
+              getDifference(formData, orderRecord),
+            )
+          }
+          fields={orderFields}
+        />
+      </Paper>
 
       <Paper sx={{p: 2, mt: 2}}>
         <Typography variant="h5">Totals</Typography>
         {totals}
       </Paper>
 
-      {orderParents && (
-        <Paper sx={{p: 2, mt: 2}}>
-          <Typography variant="h5">Sorted By Family</Typography>
-          <ParentTable orderParents={orderParents} />
-        </Paper>
-      )}
+      <Paper sx={{p: 2, mt: 2}}>
+        <Typography variant="h5">Sorted By Family</Typography>
+        <ParentTable orderParents={orderParents} />
+      </Paper>
 
-      {sortedByDeliverer && (
-        <Paper sx={{p: 2, mt: 2}}>
-          <Typography variant="h5">Sorted By Deliverer</Typography>
-          <ParentTable orderParents={sortedByDeliverer} />
-        </Paper>
-      )}
+      <Paper sx={{p: 2, mt: 2}}>
+        <Typography variant="h5">Sorted By Deliverer</Typography>
+        <ParentTable orderParents={sortedByDeliverer} />
+      </Paper>
 
       <Button color="error" sx={{mt: 4}} onClick={deleteOrder}>
         Delete Order

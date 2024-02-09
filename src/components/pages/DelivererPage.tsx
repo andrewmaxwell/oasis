@@ -1,6 +1,6 @@
 import {Button, CircularProgress, Paper, Typography} from '@mui/material';
 import {useEffect, useState} from 'react';
-import {useNavigate, useParams} from 'react-router-dom';
+import {Link, useNavigate, useParams} from 'react-router-dom';
 import {
   deleteRecord,
   getDelivererParents,
@@ -18,12 +18,7 @@ import {GridColDef} from '@mui/x-data-grid';
 const delivererFields: FormField<Deliverer>[] = [
   {id: 'name', label: 'Name', required: true, width: 6},
   {id: 'email', label: 'Email', required: true, width: 6},
-  {
-    id: 'phone_number',
-    label: 'Phone Number',
-    required: true,
-    width: 3,
-  },
+  {id: 'phone_number', label: 'Phone Number', width: 3},
   {id: 'is_active', label: 'Active', type: 'switch', width: 3},
   {id: 'notes', label: 'Notes', width: 12, multiline: true},
 ];
@@ -83,6 +78,10 @@ export const DelivererPage = () => {
 
   return (
     <>
+      <Button component={Link} to={'/deliverers'} sx={{mb: 1}}>
+        Back to Deliverers
+      </Button>
+
       <Paper sx={{p: 2, mb: 2}}>
         <Typography variant="h5" pb={2}>
           Deliverer Info
