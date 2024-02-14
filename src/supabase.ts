@@ -6,8 +6,9 @@ import {
 } from '@supabase/supabase-js';
 import {Kid, OrderParent, TableName} from './types.ts';
 
+const supabaseUrl = 'https://lsagjnicdssonuenzunb.supabase.co';
 const supabase = createClient(
-  'https://lsagjnicdssonuenzunb.supabase.co',
+  supabaseUrl,
   'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxzYWdqbmljZHNzb251ZW56dW5iIiwicm9sZSI6ImFub24iLCJpYXQiOjE3MDY0NzUyNTcsImV4cCI6MjAyMjA1MTI1N30.1VkzEeHTTL7YChYnv4oGnEY811yRU2hnOD8YffCXuh8',
 );
 
@@ -86,6 +87,7 @@ export const updateRecord = async (
 ) => {
   const {error} = await supabase.from(tableName).update(updates).eq('id', id);
   if (error) log(error);
+  else return true;
 };
 
 export const deleteRecord = async (tableName: TableName, id: string) => {
@@ -137,4 +139,13 @@ export const getDelivererParents = async (delivererId: string) => {
     .eq('deliverer_id', delivererId);
   if (error) log(error);
   return data ?? [];
+};
+
+export const userManagement = async (token: string, payload: object) => {
+  const response = await fetch(supabaseUrl + '/functions/v1/user-management', {
+    method: 'post',
+    headers: {Authorization: `Bearer ${token}`},
+    body: JSON.stringify(payload),
+  });
+  return await response.json();
 };

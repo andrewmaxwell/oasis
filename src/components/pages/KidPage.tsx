@@ -11,6 +11,7 @@ import {
 import {FormField, Kid, Option} from '../../types.ts';
 import {getDifference} from '../../utils/getDifference.ts';
 import {OasisForm} from '../OasisForm.tsx';
+import {useCanWrite} from '../../utils/useAccessLevel.ts';
 
 const kidFields: FormField<Kid>[] = [
   {id: 'first_name', label: 'First Name', required: true, width: 4},
@@ -50,6 +51,7 @@ export const KidPage = () => {
   const [origData, setOrigData] = useState<Partial<Kid> | undefined>();
   const {id} = useParams();
   const [searchParams] = useSearchParams();
+  const canWrite = useCanWrite();
 
   useEffect(() => {
     if (id && id !== 'new') {
@@ -108,10 +110,15 @@ export const KidPage = () => {
         <Typography variant="h5" pb={2}>
           Kid Info
         </Typography>
-        <OasisForm origData={origData} onSubmit={onSubmit} fields={kidFields} />
+        <OasisForm
+          origData={origData}
+          onSubmit={onSubmit}
+          fields={kidFields}
+          disabled={!canWrite}
+        />
       </Paper>
 
-      {origData.id && (
+      {canWrite && origData.id && (
         <Button color="error" sx={{mt: 4}} onClick={deleteKid}>
           Delete {origData.first_name} {origData.last_name}
         </Button>

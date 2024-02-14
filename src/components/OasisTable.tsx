@@ -7,17 +7,29 @@ import {
   GridToolbarQuickFilter,
   GridValidRowModel,
 } from '@mui/x-data-grid';
+import {useCanWrite} from '../utils/useAccessLevel';
 
-type CustomToolbarProps = {label: string; newItemUrl?: string};
-const CustomToolbar = ({label, newItemUrl}: CustomToolbarProps) => {
+type CustomToolbarProps = {
+  label: string;
+  newItemUrl?: string;
+  secondaryLabel: string;
+};
+const CustomToolbar = ({
+  label,
+  newItemUrl,
+  secondaryLabel = '',
+}: CustomToolbarProps) => {
   const navigate = useNavigate();
+  const canWrite = useCanWrite();
   return (
     <Grid container justifyContent="space-between" p={1}>
       <Grid item>
-        <Typography variant="h5">{label}s</Typography>
+        <Typography variant="h5">
+          {label}s{secondaryLabel}
+        </Typography>
       </Grid>
       <Grid item>
-        {newItemUrl && (
+        {canWrite && newItemUrl && (
           <Button
             variant="contained"
             onClick={() => navigate(newItemUrl)}
@@ -38,6 +50,7 @@ type OasisTableProps<T extends GridValidRowModel> = {
   label: string;
   columns: readonly GridColDef<T>[];
   newItemUrl?: string;
+  secondaryLabel?: string;
 };
 
 export const OasisTable = <T extends {id: string}>({
@@ -45,6 +58,7 @@ export const OasisTable = <T extends {id: string}>({
   label,
   columns,
   newItemUrl,
+  secondaryLabel,
 }: OasisTableProps<T>) => {
   if (!data) return <CircularProgress />;
   return (
@@ -54,7 +68,7 @@ export const OasisTable = <T extends {id: string}>({
         rows={data}
         columns={columns}
         slots={{toolbar: CustomToolbar}}
-        slotProps={{toolbar: {label, newItemUrl}}}
+        slotProps={{toolbar: {label, newItemUrl, secondaryLabel}}}
       />
     </Paper>
   );

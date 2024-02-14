@@ -1,4 +1,4 @@
-import {Button, Grid} from '@mui/material';
+import {Button, CircularProgress, Grid} from '@mui/material';
 import {FieldError, FieldValues, UseFormReset, useForm} from 'react-hook-form';
 import {OasisTextField} from './OasisTextField.tsx';
 import {OasisSwitch} from './OasisSwitch.tsx';
@@ -12,18 +12,18 @@ type OasisFormProps<T> = {
     reset: UseFormReset<Partial<T>>,
   ) => Promise<void> | void;
   fields: FormField<T>[];
-  disableSave?: boolean;
+  disabled?: boolean;
 };
 export const OasisForm = <T extends FieldValues>({
   origData,
   onSubmit,
   fields,
-  disableSave,
+  disabled,
 }: OasisFormProps<T>) => {
   const {
     register,
     handleSubmit,
-    formState: {errors, isDirty},
+    formState: {errors, isDirty, isSubmitting},
     control,
     reset,
   } = useForm({values: origData});
@@ -35,7 +35,12 @@ export const OasisForm = <T extends FieldValues>({
           ({id, label, required, type, width, options, multiline}) => (
             <Grid key={id} item md={width} xs={12}>
               {type === 'switch' ? (
-                <OasisSwitch name={id} label={label} control={control} />
+                <OasisSwitch
+                  name={id}
+                  label={label}
+                  control={control}
+                  disabled={disabled}
+                />
               ) : type === 'select' && options ? (
                 <OasisSelect
                   name={id}
@@ -44,6 +49,7 @@ export const OasisForm = <T extends FieldValues>({
                   options={options}
                   required={required}
                   error={errors[id] as FieldError}
+                  disabled={disabled}
                 />
               ) : (
                 <OasisTextField
@@ -52,21 +58,24 @@ export const OasisForm = <T extends FieldValues>({
                   error={errors[id] as FieldError}
                   type={type}
                   multiline={multiline}
+                  disabled={disabled}
                 />
               )}
             </Grid>
           ),
         )}
 
-        <Grid item xs={12} sx={{display: 'flex', justifyContent: 'flex-end'}}>
-          <Button
-            type="submit"
-            variant="contained"
-            disabled={!isDirty || disableSave}
-          >
-            Save
-          </Button>
-        </Grid>
+        {!disabled && (
+          <Grid item xs={12} sx={{display: 'flex', justifyContent: 'flex-end'}}>
+            <Button
+              type="submit"
+              variant="contained"
+              disabled={!isDirty || isSubmitting}
+            >
+              {isSubmitting ? <CircularProgress /> : 'Save'}
+            </Button>
+          </Grid>
+        )}
       </Grid>
     </form>
   );

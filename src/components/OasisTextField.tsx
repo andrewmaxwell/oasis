@@ -8,6 +8,7 @@ type OasisTextFieldProps<T extends string> = {
   error: FieldError | undefined;
   type?: HTMLInputTypeAttribute;
   multiline?: boolean;
+  disabled?: boolean;
 };
 
 export const OasisTextField = <T extends string>({
@@ -16,6 +17,7 @@ export const OasisTextField = <T extends string>({
   error,
   type,
   multiline,
+  disabled,
 }: OasisTextFieldProps<T>) => (
   <TextField
     label={label}
@@ -25,6 +27,7 @@ export const OasisTextField = <T extends string>({
     helperText={String(error?.message || '')}
     InputLabelProps={type === 'date' ? {shrink: true} : {}}
     multiline={multiline}
+    disabled={disabled}
     {...props}
   />
 );

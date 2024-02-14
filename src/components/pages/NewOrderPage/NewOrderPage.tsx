@@ -18,6 +18,7 @@ import {Deliverer, OrderRecord, Parent} from '../../../types.ts';
 import {Link, NavigateFunction, useNavigate} from 'react-router-dom';
 import {OasisForm} from '../../OasisForm.tsx';
 import {orderFields} from './orderFields.ts';
+import {useCanWrite} from '../../../utils/useAccessLevel.ts';
 
 const getDeliverers = async () =>
   ((await getAllRecords('deliverer')) as Deliverer[]).sort((a, b) =>
@@ -68,6 +69,7 @@ export const NewOrderPage = () => {
   const navigate = useNavigate();
   const parents = useParentsWithAtLeastOneKid();
   const deliverers = useData(getDeliverers);
+  const canWrite = useCanWrite();
 
   return (
     <>
@@ -135,6 +137,7 @@ export const NewOrderPage = () => {
           origData={{}}
           onSubmit={(formData) => finishOrder(formData, parents, navigate)}
           fields={orderFields}
+          disabled={canWrite}
         />
       </Paper>
     </>

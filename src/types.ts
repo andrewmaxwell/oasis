@@ -92,3 +92,11 @@ export type OrderParent = {
   deliverer_email: string;
   order_kids: {kid_id: string; diaper_size: string; diaper_quantity: number}[];
 };
+
+export type AppUser = {
+  id: string;
+  name: string;
+  email: string;
+  access_level: string;
+  notes: string;
+};

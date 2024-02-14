@@ -16,6 +16,7 @@ import {OasisTable} from '../OasisTable.tsx';
 import {getDelivererOptions} from '../../utils/getDelivererOptions.ts';
 import {GridColDef} from '@mui/x-data-grid';
 import {birthDate, bool, linkButton} from '../cellRenderers.tsx';
+import {useCanWrite} from '../../utils/useAccessLevel.ts';
 
 const parentFields: FormField<Parent>[] = [
   {id: 'first_name', label: 'First Name', required: true, width: 4},
@@ -81,6 +82,7 @@ const getParent = async (parentId: string) => {
 export const ParentPage = () => {
   const [parentData, setParentData] = useState<Partial<Parent> | undefined>();
   const {id} = useParams();
+  const canWrite = useCanWrite();
 
   useEffect(() => {
     if (id && id !== 'new') {
@@ -134,6 +136,7 @@ export const ParentPage = () => {
           origData={parentData}
           onSubmit={onSubmit}
           fields={parentFields}
+          disabled={!canWrite}
         />
       </Paper>
 
@@ -146,7 +149,7 @@ export const ParentPage = () => {
         />
       )}
 
-      {parentData.id && (
+      {canWrite && parentData.id && (
         <Button color="error" sx={{mt: 4}} onClick={deleteParent}>
           Delete {parentData.first_name} {parentData.last_name}
         </Button>

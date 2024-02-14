@@ -5,11 +5,13 @@ type OasisSwitchProps<T extends FieldValues> = {
   name: Path<T>;
   label: string;
   control: Control<T>;
+  disabled?: boolean;
 };
 export const OasisSwitch = <T extends FieldValues>({
   name,
   label,
   control,
+  disabled,
 }: OasisSwitchProps<T>) => (
   <Controller
     name={name}
@@ -17,7 +19,9 @@ export const OasisSwitch = <T extends FieldValues>({
     render={({field: {onChange, value}}) => (
       <FormControlLabel
         sx={{p: 1}}
-        control={<Switch checked={!!value} onChange={onChange} />}
+        control={
+          <Switch checked={!!value} onChange={onChange} disabled={disabled} />
+        }
         label={label}
       />
     )}

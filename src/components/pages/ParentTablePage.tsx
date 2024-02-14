@@ -65,11 +65,17 @@ const columns: GridColDef<ParentViewRow>[] = [
 const getParents = async () =>
   (await getView('parent_view')) as ParentViewRow[];
 
-export const ParentTablePage = () => (
-  <OasisTable
-    data={useData(getParents)}
-    label="Parent"
-    columns={columns}
-    newItemUrl="/parent/new"
-  />
-);
+export const ParentTablePage = () => {
+  const parents = useData(getParents);
+  const activeParents = parents?.filter((p) => p.is_active);
+  const numKids = activeParents?.flatMap((p) => p.diaper_sizes).length;
+  return (
+    <OasisTable
+      data={parents}
+      label="Parent"
+      secondaryLabel={` (${activeParents?.length} active parents, ${numKids} kids)`}
+      columns={columns}
+      newItemUrl="/parent/new"
+    />
+  );
+};

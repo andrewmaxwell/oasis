@@ -40,7 +40,7 @@ const columns: GridColDef<KidViewRow>[] = [
     width: 250,
     renderCell: linkButton('parent', 'parent_id'),
   },
-  {field: 'notes', headerName: 'notes', width: 400},
+  {field: 'notes', headerName: 'Notes', width: 400},
 ];
 
 export const KidTablePage = () => (

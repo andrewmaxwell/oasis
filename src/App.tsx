@@ -15,6 +15,8 @@ import {NewOrderPage} from './components/pages/NewOrderPage/NewOrderPage.tsx';
 import {ChangePasswordPage} from './components/pages/ChangePasswordPage.tsx';
 import {LabelPage} from './components/pages/LabelPage.tsx';
 import {KidTablePage} from './components/pages/KidTablePage.tsx';
+import {UserTablePage} from './components/pages/UserTablePage.tsx';
+import {UserPage} from './components/pages/UserPage.tsx';
 
 const PageWrapper = ({children}: {children: JSX.Element}) => (
   <Box sx={{flexGrow: 1}}>
@@ -70,6 +72,14 @@ const routes = [
     path: '/kids',
     element: <KidTablePage />,
   },
+  {
+    path: '/users',
+    element: <UserTablePage />,
+  },
+  {
+    path: '/user/:id',
+    element: <UserPage />,
+  },
 ].map((r) => ({
   ...r,
   element: <PageWrapper>{r.element}</PageWrapper>,
@@ -82,5 +92,7 @@ routes.push({
 
 const router = createHashRouter(routes);
 
-export const App = () =>
-  useSession() ? <RouterProvider router={router} /> : <SignInForm />;
+export const App = () => {
+  const session = useSession();
+  return session ? <RouterProvider router={router} /> : <SignInForm />;
+};

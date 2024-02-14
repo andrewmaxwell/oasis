@@ -164,7 +164,8 @@ SELECT
   id as value,
   first_name || ' ' || last_name as label
 FROM parent
-WHERE NOT is_deleted;
+WHERE NOT is_deleted
+ORDER BY first_name, last_name;
 
 DROP VIEW IF EXISTS deliverer_options;
 CREATE VIEW deliverer_options AS

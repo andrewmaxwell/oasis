@@ -24,6 +24,7 @@ import {OasisForm} from '../../OasisForm.tsx';
 import {getDifference} from '../../../utils/getDifference.ts';
 import {orderFields} from '../NewOrderPage/orderFields.ts';
 import {generateEmails} from './generateEmails.ts';
+import {useCanWrite} from '../../../utils/useAccessLevel.ts';
 
 // Date of next diaper pickup day
 // Who they will be picking up for (Name, address, phone, Size)
@@ -65,6 +66,7 @@ export const FinishedOrderPage = () => {
   const [orderParents, setOrderParents] = useState<OrderParent[]>();
   const {id: orderId} = useParams();
   const navigate = useNavigate();
+  const canWrite = useCanWrite();
 
   useEffect(() => {
     if (orderId) {
@@ -106,12 +108,14 @@ export const FinishedOrderPage = () => {
           Generate Labels
         </Button>
 
-        <Button
-          variant="contained"
-          onClick={() => generateEmails(orderRecord, orderParents)}
-        >
-          Generate Deliverer Emails
-        </Button>
+        {canWrite && (
+          <Button
+            variant="contained"
+            onClick={() => generateEmails(orderRecord, orderParents)}
+          >
+            Generate Deliverer Emails
+          </Button>
+        )}
       </Grid>
 
       <Paper sx={{p: 2, mt: 2}}>
@@ -121,14 +125,15 @@ export const FinishedOrderPage = () => {
 
         <OasisForm
           origData={orderRecord}
-          onSubmit={(formData) =>
+          onSubmit={(formData) => {
             updateRecord(
               'order_record',
               orderRecord.id,
               getDifference(formData, orderRecord),
-            )
-          }
+            );
+          }}
           fields={orderFields}
+          disabled={!canWrite}
         />
       </Paper>
 
@@ -147,9 +152,11 @@ export const FinishedOrderPage = () => {
         <ParentTable orderParents={sortedByDeliverer} />
       </Paper>
 
-      <Button color="error" sx={{mt: 4}} onClick={deleteOrder}>
-        Delete Order
-      </Button>
+      {canWrite && (
+        <Button color="error" sx={{mt: 4}} onClick={deleteOrder}>
+          Delete Order
+        </Button>
+      )}
     </>
   );
 };

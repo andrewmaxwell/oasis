@@ -14,6 +14,7 @@ import {OasisForm} from '../OasisForm.tsx';
 import {OasisTable} from '../OasisTable.tsx';
 import {linkButton, mapAnchor} from '../cellRenderers.tsx';
 import {GridColDef} from '@mui/x-data-grid';
+import {useCanWrite} from '../../utils/useAccessLevel.ts';
 
 const delivererFields: FormField<Deliverer>[] = [
   {id: 'name', label: 'Name', required: true, width: 6},
@@ -42,6 +43,7 @@ export const DelivererPage = () => {
     Parent[] | undefined
   >();
   const {id} = useParams();
+  const canWrite = useCanWrite();
 
   useEffect(() => {
     if (id && id !== 'new') {
@@ -90,6 +92,7 @@ export const DelivererPage = () => {
           origData={origData}
           onSubmit={onSubmit}
           fields={delivererFields}
+          disabled={!canWrite}
         />
       </Paper>
 
@@ -103,7 +106,7 @@ export const DelivererPage = () => {
         <Typography>No families assigned for delivery</Typography>
       )}
 
-      {origData.id && (
+      {canWrite && origData.id && (
         <Button color="error" sx={{mt: 2}} onClick={deleteDeliverer}>
           Delete {origData.name}
         </Button>
