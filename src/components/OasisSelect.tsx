@@ -13,7 +13,7 @@ import {
   Path,
 } from 'react-hook-form';
 import {Option} from '../types.ts';
-import {useEffect, useState} from 'react';
+import {useOptions} from '../hooks/useOptions.ts';
 
 type OasisSelectProps<T extends FieldValues> = {
   name: Path<T>;
@@ -33,15 +33,7 @@ export const OasisSelect = <T extends FieldValues>({
   error,
   disabled,
 }: OasisSelectProps<T>) => {
-  const [options, setOptions] = useState<Option[]>();
-
-  useEffect(() => {
-    if (Array.isArray(optsOrGetOpts)) {
-      setOptions(optsOrGetOpts);
-    } else {
-      optsOrGetOpts().then(setOptions);
-    }
-  }, [optsOrGetOpts]);
+  const options = useOptions(optsOrGetOpts);
 
   if (!options) return <CircularProgress />;
   const labelId = `${name}-label`;

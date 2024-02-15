@@ -1,11 +1,11 @@
 import {Box, Button, CircularProgress, Paper, Typography} from '@mui/material';
-import {useEffect, useState} from 'react';
 import {Link, useNavigate, useParams} from 'react-router-dom';
 import {userManagement} from '../../supabase.ts';
 import {FormField, AppUser} from '../../types.ts';
 import {OasisForm} from '../OasisForm.tsx';
-import {useSession} from '../../utils/useSession.ts';
-import {useIsAdmin} from '../../utils/useAccessLevel.ts';
+import {useSession} from '../../hooks/useSession.ts';
+import {useIsAdmin} from '../../hooks/useAccessLevel.ts';
+import {useUser} from '../../hooks/useUser.ts';
 
 const userFields: FormField<AppUser>[] = [
   {id: 'name', label: 'Name', required: true, width: 4},
@@ -26,33 +26,14 @@ const userFields: FormField<AppUser>[] = [
 ];
 
 export const UserPage = () => {
-  const [origData, setOrigData] = useState<Partial<AppUser>>();
   const {id} = useParams();
   const session = useSession();
+  const user = useUser(id, session?.access_token);
   const isAdmin = useIsAdmin();
-
-  useEffect(() => {
-    if (!session?.access_token) return;
-    if (id && id !== 'new') {
-      userManagement(session?.access_token, {
-        action: 'getUserById',
-        args: [id],
-      }).then(({user}) =>
-        setOrigData({
-          id: user.id,
-          email: user.email,
-          access_level: '',
-          ...user.user_metadata,
-        }),
-      );
-    } else {
-      setOrigData({access_level: ''});
-    }
-  }, [id, session?.access_token]);
 
   const navigate = useNavigate();
 
-  if (!origData) return <CircularProgress />;
+  if (!user) return <CircularProgress />;
 
   if (!isAdmin) return <p>Access Denied</p>;
 
@@ -100,10 +81,10 @@ export const UserPage = () => {
 
   const deleteUser = async () => {
     const msg = `Are you sure you want to delete this user? This cannot be undone.`;
-    if (!origData.id || !session?.access_token || !confirm(msg)) return;
+    if (!user.id || !session?.access_token || !confirm(msg)) return;
     await userManagement(session.access_token, {
       action: 'deleteUser',
-      args: [origData.id],
+      args: [user.id],
     });
     navigate(`/users`);
   };
@@ -118,7 +99,7 @@ export const UserPage = () => {
 
   return (
     <>
-      {origData.id && (
+      {user.id && (
         <Button component={Link} to={`/users`} sx={{mb: 1}}>
           Back to Users
         </Button>
@@ -128,11 +109,7 @@ export const UserPage = () => {
         <Typography variant="h5" pb={2}>
           User Info
         </Typography>
-        <OasisForm
-          origData={origData}
-          onSubmit={onSubmit}
-          fields={userFields}
-        />
+        <OasisForm origData={user} onSubmit={onSubmit} fields={userFields} />
       </Paper>
 
       <ul>
@@ -149,10 +126,10 @@ export const UserPage = () => {
         </li>
       </ul>
 
-      {origData.id && (
+      {user.id && (
         <Box mt={4}>
           <Button color="error" onClick={deleteUser}>
-            Delete {origData.name}
+            Delete {user.name}
           </Button>
 
           {/* <Button onClick={sendPasswordReset}>Send Password Reset</Button> */}

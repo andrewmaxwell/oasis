@@ -1,11 +1,10 @@
-import {userManagement} from '../../supabase.ts';
 import {AppUser} from '../../types.ts';
 import {OasisTable} from '../OasisTable.tsx';
 import {GridColDef} from '@mui/x-data-grid';
 import {anchor, linkButton} from '../cellRenderers.tsx';
-import {useEffect, useState} from 'react';
-import {useSession} from '../../utils/useSession.ts';
-import {useIsAdmin} from '../../utils/useAccessLevel.ts';
+import {useSession} from '../../hooks/useSession.ts';
+import {useIsAdmin} from '../../hooks/useAccessLevel.ts';
+import {useUserList} from '../../hooks/useUserList.ts';
 
 const columns: GridColDef<AppUser>[] = [
   {
@@ -41,23 +40,15 @@ const columns: GridColDef<AppUser>[] = [
 ];
 
 export const UserTablePage = () => {
-  const [users, setUsers] = useState<AppUser[]>();
   const session = useSession();
+  const userList = useUserList(session?.access_token);
   const isAdmin = useIsAdmin();
-
-  useEffect(() => {
-    if (!session?.access_token) return;
-    userManagement(session?.access_token, {action: 'listUsers'}).then(
-      ({users}) =>
-        setUsers(users.map((u: any) => ({...u, ...u.user_metadata}))),
-    );
-  }, [session?.access_token]);
 
   if (!isAdmin) return <p>Access Denied</p>;
 
   return (
     <OasisTable
-      data={users}
+      data={userList}
       label="User"
       columns={columns}
       newItemUrl="/user/new"

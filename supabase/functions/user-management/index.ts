@@ -24,8 +24,6 @@ Deno.serve(async (req) => {
     return new Response('ok', {headers: corsHeaders});
   }
 
-  // TODO: is it possible to call this without being logged in?
-
   try {
     const supabase = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',

@@ -15,6 +15,7 @@ const supabase = createClient(
 const log = (error: {message: string}) => {
   console.error(error);
   alert(error.message);
+  throw error;
 };
 
 export const signIn = async (email: string, password: string) => {
@@ -90,14 +91,16 @@ export const updateRecord = async (
   else return true;
 };
 
-export const deleteRecord = async (tableName: TableName, id: string) => {
-  // const {error} = await supabase.from(tableName).delete().eq('id', id);
-
-  // soft delete!
+export const softDelete = async (tableName: TableName, id: string) => {
   const {error} = await supabase
     .from(tableName)
     .update({is_deleted: true})
     .eq('id', id);
+  if (error) log(error);
+};
+
+export const hardDelete = async (tableName: TableName, id: string) => {
+  const {error} = await supabase.from(tableName).delete().eq('id', id);
   if (error) log(error);
 };
 

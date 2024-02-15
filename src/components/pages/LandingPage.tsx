@@ -7,7 +7,7 @@ import {
 } from '@mui/icons-material';
 import {Button, Grid} from '@mui/material';
 import {Link} from 'react-router-dom';
-import {useIsAdmin} from '../../utils/useAccessLevel';
+import {useIsAdmin} from '../../hooks/useAccessLevel';
 
 const sections = [
   {label: 'Parents', url: 'parents', Icon: FamilyRestroom},

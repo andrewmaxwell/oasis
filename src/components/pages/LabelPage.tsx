@@ -1,21 +1,11 @@
-import {useEffect, useState} from 'react';
+import {useEffect} from 'react';
 import {useParams} from 'react-router-dom';
 import {CircularProgress} from '@mui/material';
 import {consolidateOrderKids} from '../../utils/consolidateOrderKids';
-import {getOrderParents} from '../../supabase';
-import {OrderParent} from '../../types';
 import {splitEvery} from '../../utils/splitEvery';
+import {useOrderParents} from '../../hooks/useOrderParents';
 
-export const LabelPage = () => {
-  const [orderParents, setOrderParents] = useState<OrderParent[]>();
-  const {id: orderId} = useParams();
-
-  useEffect(() => {
-    if (orderId) {
-      getOrderParents(orderId).then(setOrderParents);
-    }
-  }, [orderId]);
-
+const useLabelStyles = () => {
   useEffect(() => {
     const styleTag = document.createElement('style');
     styleTag.innerHTML = `
@@ -57,6 +47,12 @@ export const LabelPage = () => {
 
     return () => styleTag.remove();
   }, []);
+};
+
+export const LabelPage = () => {
+  const {id: orderId} = useParams();
+  const orderParents = useOrderParents(orderId);
+  useLabelStyles();
 
   if (!orderParents) return <CircularProgress />;
 

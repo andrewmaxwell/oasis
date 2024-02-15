@@ -1,12 +1,6 @@
-import {useEffect, useMemo, useState} from 'react';
-import {OrderParent, OrderRecord} from '../../../types.ts';
+import {OrderParent} from '../../../types.ts';
 import {useNavigate, useParams} from 'react-router-dom';
-import {
-  deleteRecord,
-  getOrderParents,
-  getRecord,
-  updateRecord,
-} from '../../../supabase.ts';
+import {softDelete, updateRecord} from '../../../supabase.ts';
 import {
   Button,
   CircularProgress,
@@ -24,7 +18,8 @@ import {OasisForm} from '../../OasisForm.tsx';
 import {getDifference} from '../../../utils/getDifference.ts';
 import {orderFields} from '../NewOrderPage/orderFields.ts';
 import {generateEmails} from './generateEmails.ts';
-import {useCanWrite} from '../../../utils/useAccessLevel.ts';
+import {useCanWrite} from '../../../hooks/useAccessLevel.ts';
+import {useOrderRecordWithParents} from '../../../hooks/useOrderRecordWithParents.ts';
 
 // Date of next diaper pickup day
 // Who they will be picking up for (Name, address, phone, Size)
@@ -62,26 +57,11 @@ const ParentTable = ({orderParents}: {orderParents: OrderParent[]}) => (
 );
 
 export const FinishedOrderPage = () => {
-  const [orderRecord, setOrderRecord] = useState<OrderRecord>();
-  const [orderParents, setOrderParents] = useState<OrderParent[]>();
   const {id: orderId} = useParams();
+  const {orderRecord, orderParents, sortedByDeliverer} =
+    useOrderRecordWithParents(orderId);
   const navigate = useNavigate();
   const canWrite = useCanWrite();
-
-  useEffect(() => {
-    if (orderId) {
-      getRecord('order_record', orderId).then(setOrderRecord);
-      getOrderParents(orderId).then(setOrderParents);
-    }
-  }, [orderId]);
-
-  const sortedByDeliverer = useMemo(
-    () =>
-      orderParents?.toSorted((a, b) =>
-        a.deliverer_name.localeCompare(b.deliverer_name),
-      ),
-    [orderParents],
-  );
 
   if (!orderRecord || !orderParents || !sortedByDeliverer)
     return <CircularProgress />;
@@ -93,7 +73,7 @@ export const FinishedOrderPage = () => {
   const deleteOrder = async () => {
     const msg = `Are you sure you want to delete this order? This cannot be undone.`;
     if (!orderId || !confirm(msg)) return;
-    await deleteRecord('order_record', orderId);
+    await softDelete('order_record', orderId);
     navigate(`/orders`);
   };
 

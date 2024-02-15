@@ -1,5 +1,5 @@
 import {AppBar, Toolbar, Typography} from '@mui/material';
-import {useSession} from '../utils/useSession.ts';
+import {useSession} from '../hooks/useSession.ts';
 import {AccountMenu} from './AccountMenu.tsx';
 import {Link, useNavigate} from 'react-router-dom';
 

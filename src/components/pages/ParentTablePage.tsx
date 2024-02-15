@@ -1,5 +1,5 @@
 import {OasisTable} from '../OasisTable.tsx';
-import {useData} from '../../utils/useData.ts';
+import {useData} from '../../hooks/useData.ts';
 import {getView} from '../../supabase.ts';
 import {GridColDef} from '@mui/x-data-grid';
 import {anchor, bool, linkButton, mapAnchor} from '../cellRenderers.tsx';

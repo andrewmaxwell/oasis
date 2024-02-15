@@ -1,4 +1,4 @@
-import {useSession} from './utils/useSession.ts';
+import {useSession} from './hooks/useSession.ts';
 import {SignInForm} from './components/SignInForm.tsx';
 import {ParentTablePage} from './components/pages/ParentTablePage.tsx';
 import {createHashRouter, RouterProvider} from 'react-router-dom';

@@ -1,9 +1,7 @@
 import {Button, CircularProgress, Paper, Typography} from '@mui/material';
-import {useEffect, useState} from 'react';
-import {Link, useNavigate, useParams, useSearchParams} from 'react-router-dom';
+import {Link, useNavigate, useParams} from 'react-router-dom';
 import {
-  deleteRecord,
-  getRecord,
+  softDelete,
   getView,
   insertRecord,
   updateRecord,
@@ -11,7 +9,8 @@ import {
 import {FormField, Kid, Option} from '../../types.ts';
 import {getDifference} from '../../utils/getDifference.ts';
 import {OasisForm} from '../OasisForm.tsx';
-import {useCanWrite} from '../../utils/useAccessLevel.ts';
+import {useCanWrite} from '../../hooks/useAccessLevel.ts';
+import {useKid} from '../../hooks/useKid.ts';
 
 const kidFields: FormField<Kid>[] = [
   {id: 'first_name', label: 'First Name', required: true, width: 4},
@@ -48,38 +47,20 @@ const kidFields: FormField<Kid>[] = [
 ];
 
 export const KidPage = () => {
-  const [origData, setOrigData] = useState<Partial<Kid> | undefined>();
   const {id} = useParams();
-  const [searchParams] = useSearchParams();
+  const kid = useKid(id);
   const canWrite = useCanWrite();
-
-  useEffect(() => {
-    if (id && id !== 'new') {
-      getRecord('kid', id).then(setOrigData);
-    } else {
-      setOrigData({
-        is_active: true,
-        diaper_size: '',
-        parent_id: searchParams.get('parent_id') ?? undefined,
-        last_name: searchParams.get('last_name') ?? undefined,
-      });
-    }
-  }, [id, searchParams]);
 
   const navigate = useNavigate();
 
-  if (!origData) return <CircularProgress />;
+  if (!kid) return <CircularProgress />;
 
   const onSubmit = async (formData: Partial<Kid>) => {
     if (!formData.birth_date) {
       formData.birth_date = null; // birth date can't be ''
     }
     const success = formData.id
-      ? await updateRecord(
-          'kid',
-          formData.id,
-          getDifference(formData, origData),
-        )
+      ? await updateRecord('kid', formData.id, getDifference(formData, kid))
       : await insertRecord('kid', formData);
 
     if (success) {
@@ -88,20 +69,16 @@ export const KidPage = () => {
   };
 
   const deleteKid = async () => {
-    const msg = `Are you sure you want to delete ${origData.first_name} ${origData.last_name}? This cannot be undone.`;
-    if (!origData.id || !confirm(msg)) return;
-    await deleteRecord('kid', origData.id);
-    navigate(`/parent/${origData.parent_id}`);
+    const msg = `Are you sure you want to delete ${kid.first_name} ${kid.last_name}? This cannot be undone.`;
+    if (!id || !confirm(msg)) return;
+    await softDelete('kid', id);
+    navigate(`/parent/${kid.parent_id}`);
   };
 
   return (
     <>
-      {origData.id && (
-        <Button
-          component={Link}
-          to={`/parent/${origData.parent_id}`}
-          sx={{mb: 1}}
-        >
+      {id && (
+        <Button component={Link} to={`/parent/${kid.parent_id}`} sx={{mb: 1}}>
           Back to Parent
         </Button>
       )}
@@ -111,16 +88,16 @@ export const KidPage = () => {
           Kid Info
         </Typography>
         <OasisForm
-          origData={origData}
+          origData={kid}
           onSubmit={onSubmit}
           fields={kidFields}
           disabled={!canWrite}
         />
       </Paper>
 
-      {canWrite && origData.id && (
+      {canWrite && id && (
         <Button color="error" sx={{mt: 4}} onClick={deleteKid}>
-          Delete {origData.first_name} {origData.last_name}
+          Delete {kid.first_name} {kid.last_name}
         </Button>
       )}
     </>

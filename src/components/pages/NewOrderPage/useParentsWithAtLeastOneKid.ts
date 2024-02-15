@@ -1,6 +1,6 @@
 import {useMemo} from 'react';
 import {Kid, Parent} from '../../../types.ts';
-import {useTable} from '../../../utils/useTable.ts';
+import {useTable} from '../../../hooks/useTable.ts';
 import {groupBy} from '../../../utils/groupBy.ts';
 
 export const useParentsWithAtLeastOneKid = () => {

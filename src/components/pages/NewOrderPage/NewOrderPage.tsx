@@ -7,7 +7,7 @@ import {
   TableRow,
   Typography,
 } from '@mui/material';
-import {useData} from '../../../utils/useData.ts';
+import {useData} from '../../../hooks/useData.ts';
 import {useParentsWithAtLeastOneKid} from './useParentsWithAtLeastOneKid.ts';
 import {
   calcDiaperSizes,
@@ -18,7 +18,7 @@ import {Deliverer, OrderRecord, Parent} from '../../../types.ts';
 import {Link, NavigateFunction, useNavigate} from 'react-router-dom';
 import {OasisForm} from '../../OasisForm.tsx';
 import {orderFields} from './orderFields.ts';
-import {useCanWrite} from '../../../utils/useAccessLevel.ts';
+import {useCanWrite} from '../../../hooks/useAccessLevel.ts';
 
 const getDeliverers = async () =>
   ((await getAllRecords('deliverer')) as Deliverer[]).sort((a, b) =>

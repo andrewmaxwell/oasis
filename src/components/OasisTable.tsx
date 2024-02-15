@@ -7,7 +7,7 @@ import {
   GridToolbarQuickFilter,
   GridValidRowModel,
 } from '@mui/x-data-grid';
-import {useCanWrite} from '../utils/useAccessLevel';
+import {useCanWrite} from '../hooks/useAccessLevel';
 
 type CustomToolbarProps = {
   label: string;

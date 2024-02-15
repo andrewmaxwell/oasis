@@ -1,7 +1,7 @@
 import {getAllRecords} from '../../supabase.ts';
 import {Deliverer} from '../../types.ts';
 import {OasisTable} from '../OasisTable.tsx';
-import {useData} from '../../utils/useData.ts';
+import {useData} from '../../hooks/useData.ts';
 import {GridColDef} from '@mui/x-data-grid';
 import {anchor, bool, linkButton} from '../cellRenderers.tsx';
 
