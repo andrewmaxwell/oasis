@@ -28,10 +28,10 @@ export const mapAnchor = ({value, row}: GridRenderCellParams) => (
 
 export const bool = ({value}: GridRenderCellParams) => (value ? 'Y' : 'N');
 
-const twoYears = 2 * 365 * 24 * 3600000;
+const threeYears = 3 * 365 * 24 * 3600000;
 
 export const birthDate = ({value}: GridRenderCellParams) =>
-  Date.parse(value) < Date.now() - twoYears ? (
+  Date.parse(value) < Date.now() - threeYears ? (
     <Typography color="error">{value}</Typography>
   ) : (
     value

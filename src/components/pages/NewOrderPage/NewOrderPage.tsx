@@ -137,7 +137,7 @@ export const NewOrderPage = () => {
           origData={{}}
           onSubmit={(formData) => finishOrder(formData, parents, navigate)}
           fields={orderFields}
-          disabled={canWrite}
+          disabled={!canWrite}
         />
       </Paper>
     </>
