@@ -65,7 +65,7 @@ const finishOrder = async (
   navigate(`/order/${orderId}`);
 };
 
-export const NewOrderPage = () => {
+const NewOrderPage = () => {
   const navigate = useNavigate();
   const parents = useParentsWithAtLeastOneKid();
   const deliverers = useData(getDeliverers);
@@ -143,3 +143,5 @@ export const NewOrderPage = () => {
     </>
   );
 };
+
+export default NewOrderPage;

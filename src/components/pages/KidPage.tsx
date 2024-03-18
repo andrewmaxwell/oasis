@@ -46,7 +46,7 @@ const kidFields: FormField<Kid>[] = [
   {id: 'notes', label: 'Notes', width: 12, multiline: true},
 ];
 
-export const KidPage = () => {
+const KidPage = () => {
   const {id} = useParams();
   const kid = useKid(id);
   const canWrite = useCanWrite();
@@ -103,3 +103,5 @@ export const KidPage = () => {
     </>
   );
 };
+
+export default KidPage;

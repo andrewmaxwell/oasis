@@ -33,7 +33,7 @@ const columns: GridColDef<Deliverer>[] = [
   },
 ];
 
-export const DelivererTablePage = () => (
+const DelivererTablePage = () => (
   <OasisTable
     data={useData(getDeliverers)}
     label="Deliverer"
@@ -41,3 +41,5 @@ export const DelivererTablePage = () => (
     newItemUrl="/deliverer/new"
   />
 );
+
+export default DelivererTablePage;

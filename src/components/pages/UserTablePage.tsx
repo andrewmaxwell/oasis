@@ -39,7 +39,7 @@ const columns: GridColDef<AppUser>[] = [
   },
 ];
 
-export const UserTablePage = () => {
+const UserTablePage = () => {
   const session = useSession();
   const userList = useUserList(session?.access_token);
   const isAdmin = useIsAdmin();
@@ -55,3 +55,5 @@ export const UserTablePage = () => {
     />
   );
 };
+
+export default UserTablePage;

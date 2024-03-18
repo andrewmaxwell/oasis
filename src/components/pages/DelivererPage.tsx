@@ -31,7 +31,7 @@ const columns: GridColDef<Parent>[] = [
   {field: 'zip', headerName: 'Zip', width: 100},
 ];
 
-export const DelivererPage = () => {
+const DelivererPage = () => {
   const {id} = useParams();
   const {deliverer, delivererParents} = useDelivererWithParents(id);
   const canWrite = useCanWrite();
@@ -96,3 +96,5 @@ export const DelivererPage = () => {
     </>
   );
 };
+
+export default DelivererPage;

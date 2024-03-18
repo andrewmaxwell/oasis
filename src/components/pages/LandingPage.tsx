@@ -17,7 +17,7 @@ const sections = [
   {label: 'Users', url: 'users', Icon: People, isAdminOnly: true},
 ];
 
-export const LandingPage = () => {
+const LandingPage = () => {
   const isAdmin = useIsAdmin();
   return (
     <Grid container spacing={2}>
@@ -41,3 +41,5 @@ export const LandingPage = () => {
     </Grid>
   );
 };
+
+export default LandingPage;

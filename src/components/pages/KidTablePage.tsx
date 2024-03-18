@@ -43,7 +43,7 @@ const columns: GridColDef<KidViewRow>[] = [
   {field: 'notes', headerName: 'Notes', width: 400},
 ];
 
-export const KidTablePage = () => (
+const KidTablePage = () => (
   <OasisTable
     data={useData(getKids)}
     label="Kid"
@@ -51,3 +51,5 @@ export const KidTablePage = () => (
     newItemUrl="/kid/new"
   />
 );
+
+export default KidTablePage;

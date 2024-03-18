@@ -49,7 +49,7 @@ const useLabelStyles = () => {
   }, []);
 };
 
-export const LabelPage = () => {
+const LabelPage = () => {
   const {id: orderId} = useParams();
   const orderParents = useOrderParents(orderId);
   useLabelStyles();
@@ -84,3 +84,5 @@ export const LabelPage = () => {
     </div>
   ));
 };
+
+export default LabelPage;

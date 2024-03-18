@@ -4,7 +4,7 @@ import {FieldError, useForm} from 'react-hook-form';
 import {OasisTextField} from '../OasisTextField.tsx';
 import {useNavigate} from 'react-router-dom';
 
-export const ChangePasswordPage = () => {
+const ChangePasswordPage = () => {
   const navigate = useNavigate();
   const {
     handleSubmit,
@@ -55,3 +55,5 @@ export const ChangePasswordPage = () => {
     </Box>
   );
 };
+
+export default ChangePasswordPage;

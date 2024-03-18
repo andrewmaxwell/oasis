@@ -56,7 +56,7 @@ const ParentTable = ({orderParents}: {orderParents: OrderParent[]}) => (
   </Table>
 );
 
-export const FinishedOrderPage = () => {
+const FinishedOrderPage = () => {
   const {id: orderId} = useParams();
   const {orderRecord, orderParents, sortedByDeliverer} =
     useOrderRecordWithParents(orderId);
@@ -140,3 +140,5 @@ export const FinishedOrderPage = () => {
     </>
   );
 };
+
+export default FinishedOrderPage;

@@ -24,7 +24,7 @@ const getOrders = async () =>
     b.date_of_order.localeCompare(a.date_of_order),
   );
 
-export const OrderTablePage = () => (
+const OrderTablePage = () => (
   <OasisTable
     data={useData(getOrders)}
     label="Order"
@@ -32,3 +32,5 @@ export const OrderTablePage = () => (
     newItemUrl="/order/new"
   />
 );
+
+export default OrderTablePage;

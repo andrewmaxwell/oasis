@@ -65,7 +65,7 @@ const kidColumns: GridColDef<Kid>[] = [
   {field: 'is_active', headerName: 'Active', renderCell: bool, width: 100},
 ];
 
-export const ParentPage = () => {
+const ParentPage = () => {
   const {id} = useParams();
   const parentData = useParent(id);
   const canWrite = useCanWrite();
@@ -135,3 +135,5 @@ export const ParentPage = () => {
     </>
   );
 };
+
+export default ParentPage;

@@ -25,7 +25,7 @@ const userFields: FormField<AppUser>[] = [
   {id: 'notes', label: 'Notes', width: 12, multiline: true},
 ];
 
-export const UserPage = () => {
+const UserPage = () => {
   const {id} = useParams();
   const session = useSession();
   const user = useUser(id, session?.access_token);
@@ -138,3 +138,5 @@ export const UserPage = () => {
     </>
   );
 };
+
+export default UserPage;
