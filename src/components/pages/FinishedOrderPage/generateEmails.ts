@@ -21,7 +21,7 @@ Diapers: ${consolidateOrderKids(p.order_kids)}`,
 
 ${parentDetails.join('\n\n')}
 
-If you have questions, please contact Selia Buss at (952) 388-3057 or Brennan.seliabuss@gmail.com
+If you have questions, please contact Selia Buss at selia.buss@oasis4refugees.org
 
 Please provide feedback on diaper sizes for next month.
 
