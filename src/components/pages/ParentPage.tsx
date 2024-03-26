@@ -6,7 +6,7 @@ import {
   insertRecord,
   updateRecord,
 } from '../../supabase.ts';
-import {FormField, Kid, Parent} from '../../types.ts';
+import {FormField, Kid, Parent, ParentOrderRow} from '../../types.ts';
 import {getDifference} from '../../utils/getDifference.ts';
 import {OasisForm} from '../OasisForm.tsx';
 import {UseFormReset} from 'react-hook-form';
@@ -16,6 +16,7 @@ import {GridColDef} from '@mui/x-data-grid';
 import {birthDate, bool, linkButton} from '../cellRenderers.tsx';
 import {useCanWrite} from '../../hooks/useAccessLevel.ts';
 import {useParent} from '../../hooks/useParent.ts';
+import {consolidateOrderKids} from '../../utils/consolidateOrderKids.ts';
 
 const parentFields: FormField<Parent>[] = [
   {id: 'first_name', label: 'First Name', required: true, width: 4},
@@ -65,14 +66,36 @@ const kidColumns: GridColDef<Kid>[] = [
   {field: 'is_active', headerName: 'Active', renderCell: bool, width: 100},
 ];
 
+const parentOrderColumns: GridColDef<ParentOrderRow>[] = [
+  {
+    field: 'date_of_order',
+    headerName: 'Order Date',
+    renderCell: linkButton('order', 'id'),
+    width: 150,
+  },
+  {
+    field: 'deliverer_name',
+    headerName: 'Deliverer',
+    renderCell: linkButton('deliverer', 'deliverer_id'),
+    width: 150,
+  },
+  {field: 'order_notes', headerName: 'Order Notes', width: 400},
+  {
+    field: 'diaper_sizes',
+    headerName: 'Quantities',
+    valueGetter: ({row}) => consolidateOrderKids(row.order_kids),
+    width: 400,
+  },
+];
+
 const ParentPage = () => {
   const {id} = useParams();
-  const parentData = useParent(id);
+  const {parent, parentOrders} = useParent(id);
   const canWrite = useCanWrite();
 
   const navigate = useNavigate();
 
-  if (!parentData) return <CircularProgress />;
+  if (!parent) return <CircularProgress />;
 
   const onSubmit = async (
     formData: Partial<Parent>,
@@ -83,7 +106,7 @@ const ParentPage = () => {
     }
     if (formData.id) {
       await updateRecord('parent', formData.id, {
-        ...getDifference(formData, parentData),
+        ...getDifference(formData, parent),
         kid: undefined,
       });
       reset(await getRecord('parent', formData.id));
@@ -94,9 +117,9 @@ const ParentPage = () => {
   };
 
   const deleteParent = async () => {
-    const msg = `Are you sure you want to delete ${parentData.first_name} ${parentData.last_name} and their kids forever? This cannot be undone.`;
-    if (!parentData.id || !confirm(msg)) return;
-    await softDelete('parent', parentData.id);
+    const msg = `Are you sure you want to delete ${parent.first_name} ${parent.last_name} and their kids forever? This cannot be undone.`;
+    if (!parent.id || !confirm(msg)) return;
+    await softDelete('parent', parent.id);
     navigate('/parents');
   };
 
@@ -111,25 +134,33 @@ const ParentPage = () => {
           Parent Info
         </Typography>
         <OasisForm
-          origData={parentData}
+          origData={parent}
           onSubmit={onSubmit}
           fields={parentFields}
           disabled={!canWrite}
         />
       </Paper>
 
-      {parentData.kid && (
+      {parent.kid && (
         <OasisTable
-          data={parentData.kid}
+          data={parent.kid}
           label="Kid"
           columns={kidColumns}
-          newItemUrl={`/kid/new?parent_id=${parentData.id}&last_name=${parentData.last_name}`}
+          newItemUrl={`/kid/new?parent_id=${parent.id}&last_name=${parent.last_name}`}
         />
       )}
 
-      {canWrite && parentData.id && (
+      {parentOrders && (
+        <OasisTable
+          data={parentOrders}
+          label="Past Order"
+          columns={parentOrderColumns}
+        />
+      )}
+
+      {canWrite && parent.id && (
         <Button color="error" sx={{mt: 4}} onClick={deleteParent}>
-          Delete {parentData.first_name} {parentData.last_name}
+          Delete {parent.first_name} {parent.last_name}
         </Button>
       )}
     </>

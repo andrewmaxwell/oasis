@@ -179,4 +179,48 @@ FROM deliverer
 WHERE NOT is_deleted
 ORDER BY is_active, name;
 
+DROP VIEW IF EXISTS kid_order_view;
+CREATE VIEW kid_order_view AS
+SELECT 
+  ok.order_id as id,
+  ok.kid_id,
+  ok.diaper_size,
+  ok.diaper_quantity,
+  o.date_of_order,
+  o.notes AS order_notes
+FROM order_kid ok
+LEFT JOIN order_record o 
+  ON o.id = ok.order_id
+WHERE NOT ok.is_deleted
+AND NOT o.is_deleted
+ORDER BY o.date_of_order DESC;
+
+DROP VIEW IF EXISTS parent_order_view;
+CREATE VIEW parent_order_view AS
+SELECT
+  o.id,
+  o.date_of_order,
+  o.notes as order_notes,
+  op.parent_id,
+  op.deliverer_id,
+  d.name as deliverer_name,
+  COALESCE(json_agg(ok) FILTER (WHERE ok IS NOT NULL), '[]'::json) as order_kids
+FROM order_parent op
+LEFT JOIN deliverer d 
+  ON d.id = op.deliverer_id 
+  AND NOT d.is_deleted
+LEFT JOIN kid k 
+  ON k.parent_id = op.parent_id 
+  AND NOT k.is_deleted
+LEFT JOIN order_kid ok 
+  ON ok.kid_id = k.id 
+  AND ok.order_id = op.order_id
+LEFT JOIN order_record o
+  ON o.id = op.order_id
+WHERE NOT ok.is_deleted
+  AND NOT o.is_deleted
+GROUP BY o.id, op.parent_id, op.deliverer_id, d.name
+ORDER BY o.date_of_order DESC;
+
+
 -- use the output of scripts/generateTriggersAndPolicies.js to add triggers, policies, and grants

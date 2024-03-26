@@ -1,6 +1,6 @@
 import {useEffect, useState} from 'react';
-import {getKidsForParent, getRecord} from '../supabase';
-import {Parent} from '../types';
+import {getKidsForParent, getParentOrders, getRecord} from '../supabase';
+import {Parent, ParentOrderRow} from '../types';
 
 const getParent = async (parentId: string) => {
   const [parent, kid] = await Promise.all([
@@ -17,14 +17,16 @@ const getParent = async (parentId: string) => {
 
 export const useParent = (id?: string) => {
   const [parent, setParent] = useState<Partial<Parent> | undefined>();
+  const [parentOrders, setParentOrders] = useState<ParentOrderRow[]>();
 
   useEffect(() => {
     if (id && id !== 'new') {
       getParent(id).then(setParent);
+      getParentOrders(id).then(setParentOrders);
     } else {
       setParent({is_active: true, deliverer_id: ''});
     }
   }, [id]);
 
-  return parent;
+  return {parent, parentOrders};
 };

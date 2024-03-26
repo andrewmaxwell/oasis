@@ -1,16 +1,18 @@
 import {useEffect, useState} from 'react';
-import {Kid} from '../types';
+import {Kid, KidOrderRow} from '../types';
 import {useSearchParams} from 'react-router-dom';
-import {getRecord} from '../supabase';
+import {getKidOrders, getRecord} from '../supabase';
 
 export const useKid = (id?: string) => {
   const [kid, setKid] = useState<Partial<Kid> | undefined>();
+  const [kidOrders, setKidOrders] = useState<KidOrderRow[]>();
 
   const [searchParams] = useSearchParams();
 
   useEffect(() => {
     if (id && id !== 'new') {
       getRecord('kid', id).then(setKid);
+      getKidOrders(id).then(setKidOrders);
     } else {
       setKid({
         is_active: true,
@@ -21,5 +23,5 @@ export const useKid = (id?: string) => {
     }
   }, [id, searchParams]);
 
-  return kid;
+  return {kid, kidOrders};
 };

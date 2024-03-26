@@ -6,11 +6,14 @@ import {
   insertRecord,
   updateRecord,
 } from '../../supabase.ts';
-import {FormField, Kid, Option} from '../../types.ts';
+import {FormField, Kid, KidOrderRow, Option} from '../../types.ts';
 import {getDifference} from '../../utils/getDifference.ts';
 import {OasisForm} from '../OasisForm.tsx';
 import {useCanWrite} from '../../hooks/useAccessLevel.ts';
 import {useKid} from '../../hooks/useKid.ts';
+import {OasisTable} from '../OasisTable.tsx';
+import {GridColDef} from '@mui/x-data-grid';
+import {linkButton} from '../cellRenderers.tsx';
 
 const kidFields: FormField<Kid>[] = [
   {id: 'first_name', label: 'First Name', required: true, width: 4},
@@ -46,9 +49,21 @@ const kidFields: FormField<Kid>[] = [
   {id: 'notes', label: 'Notes', width: 12, multiline: true},
 ];
 
+const kidOrderColumns: GridColDef<KidOrderRow>[] = [
+  {
+    field: 'date_of_order',
+    headerName: 'Order Date',
+    renderCell: linkButton('order', 'id'),
+    width: 150,
+  },
+  {field: 'diaper_size', headerName: 'Size', width: 100},
+  {field: 'diaper_quantity', headerName: 'Quantity', width: 100},
+  {field: 'order_notes', headerName: 'Order Notes', width: 400},
+];
+
 const KidPage = () => {
   const {id} = useParams();
-  const kid = useKid(id);
+  const {kid, kidOrders} = useKid(id);
   const canWrite = useCanWrite();
 
   const navigate = useNavigate();
@@ -94,6 +109,14 @@ const KidPage = () => {
           disabled={!canWrite}
         />
       </Paper>
+
+      {kidOrders && (
+        <OasisTable
+          data={kidOrders}
+          label="Past Order"
+          columns={kidOrderColumns}
+        />
+      )}
 
       {canWrite && id && (
         <Button color="error" sx={{mt: 4}} onClick={deleteKid}>

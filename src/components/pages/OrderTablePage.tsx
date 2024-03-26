@@ -17,6 +17,11 @@ const columns: GridColDef<OrderRecord>[] = [
     width: 200,
     headerName: 'Pickup',
   },
+  {
+    field: 'notes',
+    width: 400,
+    headerName: 'Notes',
+  },
 ];
 
 const getOrders = async () =>

@@ -4,7 +4,13 @@ import {
   Session,
   createClient,
 } from '@supabase/supabase-js';
-import {Kid, OrderParent, TableName} from './types.ts';
+import {
+  Kid,
+  KidOrderRow,
+  OrderParent,
+  ParentOrderRow,
+  TableName,
+} from './types.ts';
 
 const supabaseUrl = 'https://lsagjnicdssonuenzunb.supabase.co';
 const supabase = createClient(
@@ -131,6 +137,24 @@ export const getOrderParents = async (orderId: string) => {
     .eq('order_id', orderId);
   if (error) log(error);
   return data as unknown as OrderParent[];
+};
+
+export const getKidOrders = async (kidId: string) => {
+  const {data, error} = await supabase
+    .from('kid_order_view')
+    .select()
+    .eq('kid_id', kidId);
+  if (error) log(error);
+  return data as KidOrderRow[];
+};
+
+export const getParentOrders = async (parentId: string) => {
+  const {data, error} = await supabase
+    .from('parent_order_view')
+    .select()
+    .eq('parent_id', parentId);
+  if (error) log(error);
+  return data as unknown as ParentOrderRow[];
 };
 
 export const getDelivererParents = async (delivererId: string) => {

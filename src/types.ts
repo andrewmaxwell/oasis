@@ -100,3 +100,20 @@ export type AppUser = {
   access_level: string;
   notes: string;
 };
+
+export type KidOrderRow = {
+  id: string;
+  date_of_order: string;
+  diaper_size: string;
+  diaper_quantity: string;
+  order_notes: string | null;
+};
+
+export type ParentOrderRow = {
+  id: string;
+  date_of_order: string;
+  order_notes: string | null;
+  deliverer_id: string;
+  deliverer_name: string;
+  order_kids: {kid_id: string; diaper_size: string; diaper_quantity: number}[];
+};

@@ -6,6 +6,8 @@ const views = [
   'kid_view',
   'parent_options',
   'deliverer_options',
+  'kid_order_view',
+  'parent_order_view',
 ];
 
 const triggers = modifiedAtTables
