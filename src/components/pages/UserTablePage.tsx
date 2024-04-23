@@ -23,14 +23,14 @@ const columns: GridColDef<AppUser>[] = [
     field: 'access_level',
     headerName: 'Access Level',
     width: 150,
-    valueGetter: ({value}) =>
+    valueGetter: (value) =>
       (
         ({
           admin: 'Admin',
           readWrite: 'Read+Write',
           readOnly: 'Read Only',
         }) as any
-      )[value] || value,
+      )[value as any] || value,
   },
   {
     field: 'notes',

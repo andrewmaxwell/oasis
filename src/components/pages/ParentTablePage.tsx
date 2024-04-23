@@ -39,7 +39,7 @@ const columns: GridColDef<ParentViewRow>[] = [
   {
     field: 'activeKids',
     headerName: 'Kids',
-    valueGetter: ({row}) => row.diaper_sizes.length,
+    valueGetter: (_, row) => row.diaper_sizes.length,
     width: 50,
   },
   {
@@ -51,7 +51,7 @@ const columns: GridColDef<ParentViewRow>[] = [
   {
     field: 'diaper_sizes',
     headerName: 'Quantities',
-    valueGetter: ({row}) =>
+    valueGetter: (_, row) =>
       consolidateOrderKids(
         row.diaper_sizes.map((diaper_size) => ({
           diaper_size,

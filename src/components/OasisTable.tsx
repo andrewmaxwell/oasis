@@ -67,7 +67,7 @@ export const OasisTable = <T extends {id: string}>({
         style={{border: 0}}
         rows={data}
         columns={columns}
-        slots={{toolbar: CustomToolbar}}
+        slots={{toolbar: CustomToolbar as any}}
         slotProps={{toolbar: {label, newItemUrl, secondaryLabel}}}
       />
     </Paper>

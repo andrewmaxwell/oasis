@@ -58,7 +58,7 @@ const ParentTable = ({orderParents}: {orderParents: OrderParent[]}) => (
 
 const FinishedOrderPage = () => {
   const {id: orderId} = useParams();
-  const {orderRecord, orderParents, sortedByDeliverer} =
+  const {orderRecord, orderParents, sortedByDeliverer, groupedByZip} =
     useOrderRecordWithParents(orderId);
   const navigate = useNavigate();
   const canWrite = useCanWrite();
@@ -120,6 +120,30 @@ const FinishedOrderPage = () => {
       <Paper sx={{p: 2, mt: 2}}>
         <Typography variant="h5">Totals</Typography>
         {totals}
+      </Paper>
+
+      <Paper sx={{p: 2, mt: 2}}>
+        <Typography variant="h5">Summary by Zip Code</Typography>
+        <Table size="small">
+          <TableHead>
+            <TableRow>
+              <TableCell>Zip</TableCell>
+              <TableCell>Deliveries</TableCell>
+              <TableCell>Kids</TableCell>
+              <TableCell>Diapers</TableCell>
+            </TableRow>
+          </TableHead>
+          <TableBody>
+            {groupedByZip?.map((p) => (
+              <TableRow key={p.zip}>
+                <TableCell>{p.zip}</TableCell>
+                <TableCell>{p.parents}</TableCell>
+                <TableCell>{p.kids}</TableCell>
+                <TableCell>{consolidateOrderKids(p.order_kids)}</TableCell>
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
       </Paper>
 
       <Paper sx={{p: 2, mt: 2}}>

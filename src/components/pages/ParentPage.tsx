@@ -53,7 +53,7 @@ const kidColumns: GridColDef<Kid>[] = [
     field: 'name',
     headerName: 'Name',
     renderCell: linkButton('kid'),
-    valueGetter: ({row}) => `${row.first_name} ${row.last_name}`,
+    valueGetter: (_, row) => `${row.first_name} ${row.last_name}`,
     width: 250,
   },
   {
@@ -83,7 +83,7 @@ const parentOrderColumns: GridColDef<ParentOrderRow>[] = [
   {
     field: 'diaper_sizes',
     headerName: 'Quantities',
-    valueGetter: ({row}) => consolidateOrderKids(row.order_kids),
+    valueGetter: (_, row) => consolidateOrderKids(row.order_kids),
     width: 400,
   },
 ];

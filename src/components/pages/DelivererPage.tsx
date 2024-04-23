@@ -22,7 +22,7 @@ const columns: GridColDef<Parent>[] = [
   {
     field: 'name',
     headerName: 'Name',
-    valueGetter: ({row}) => `${row.first_name} ${row.last_name}`,
+    valueGetter: (_, row) => `${row.first_name} ${row.last_name}`,
     renderCell: linkButton('parent'),
     width: 250,
   },
