@@ -83,7 +83,7 @@ CREATE TABLE order_kid (
 );
 
 DROP VIEW IF EXISTS parent_view;
-CREATE VIEW parent_view AS
+CREATE VIEW parent_view WITH (security_invoker = ON) AS
 SELECT
   p.id,
   p.first_name || ' ' || p.last_name as name,
@@ -109,7 +109,7 @@ GROUP BY p.id, d.id
 ORDER BY p.is_active DESC, p.first_name, p.last_name;
 
 DROP VIEW IF EXISTS finished_order_view;
-CREATE VIEW finished_order_view AS
+CREATE VIEW finished_order_view WITH (security_invoker = ON) AS
 SELECT
   op.order_id,
   op.parent_id,
@@ -139,7 +139,7 @@ GROUP BY op.parent_id, p.id, op.deliverer_id, d.id, op.order_id
 ORDER BY op.order_id, p.first_name, p.last_name;
 
 DROP VIEW IF EXISTS kid_view;
-CREATE VIEW kid_view AS
+CREATE VIEW kid_view WITH (security_invoker = ON) AS
 SELECT
   k.id,
   k.first_name || ' ' || k.last_name as name,
@@ -159,7 +159,7 @@ WHERE
 ORDER BY k.birth_date ASC, k.first_name, k.last_name;
 
 DROP VIEW IF EXISTS parent_options;
-CREATE VIEW parent_options AS
+CREATE VIEW parent_options WITH (security_invoker = ON) AS
 SELECT 
   id as value,
   first_name || ' ' || last_name as label
@@ -168,7 +168,7 @@ WHERE NOT is_deleted
 ORDER BY first_name, last_name;
 
 DROP VIEW IF EXISTS deliverer_options;
-CREATE VIEW deliverer_options AS
+CREATE VIEW deliverer_options WITH (security_invoker = ON) AS
 SELECT
  id as value,
  CASE
@@ -180,7 +180,7 @@ WHERE NOT is_deleted
 ORDER BY is_active, name;
 
 DROP VIEW IF EXISTS kid_order_view;
-CREATE VIEW kid_order_view AS
+CREATE VIEW kid_order_view WITH (security_invoker = ON) AS
 SELECT 
   ok.order_id as id,
   ok.kid_id,
@@ -196,7 +196,7 @@ AND NOT o.is_deleted
 ORDER BY o.date_of_order DESC;
 
 DROP VIEW IF EXISTS parent_order_view;
-CREATE VIEW parent_order_view AS
+CREATE VIEW parent_order_view WITH (security_invoker = ON) AS
 SELECT
   o.id,
   o.date_of_order,
