@@ -58,8 +58,8 @@ const LabelPage = () => {
 
   return splitEvery(
     10,
-    orderParents.toSorted((a, b) =>
-      a.deliverer_name.localeCompare(b.deliverer_name),
+    orderParents.sort((a, b) =>
+      String(a.deliverer_name).localeCompare(String(b.deliverer_name)),
     ),
   ).map((arr) => (
     <div key={arr[0].parent_id} className="page">

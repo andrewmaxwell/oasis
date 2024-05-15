@@ -16,8 +16,8 @@ export const useOrderRecordWithParents = (orderId?: string) => {
 
   const sortedByDeliverer = useMemo(
     () =>
-      orderParents?.toSorted((a, b) =>
-        a.deliverer_name.localeCompare(b.deliverer_name),
+      orderParents?.sort((a, b) =>
+        String(a.deliverer_name).localeCompare(String(b.deliverer_name)),
       ),
     [orderParents],
   );

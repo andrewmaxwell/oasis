@@ -88,7 +88,7 @@ export type OrderParent = {
   zip: string;
   phone_number?: string;
   deliverer_id: string;
-  deliverer_name: string;
+  deliverer_name?: string;
   deliverer_email: string;
   order_kids: {kid_id: string; diaper_size: string; diaper_quantity: number}[];
 };

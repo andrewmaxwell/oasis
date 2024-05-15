@@ -3,12 +3,12 @@ import {getKidsForParent, getParentOrders, getRecord} from '../supabase';
 import {Parent, ParentOrderRow} from '../types';
 
 const getParent = async (parentId: string) => {
-  const [parent, kid] = await Promise.all([
+  const [parent, kids] = await Promise.all([
     getRecord('parent', parentId) as Promise<Parent>,
     getKidsForParent(parentId),
   ]);
 
-  parent.kid = kid.toSorted((a, b) =>
+  parent.kid = kids.sort((a, b) =>
     (b.birth_date ?? '').localeCompare(a.birth_date ?? ''),
   );
   parent.deliverer_id = parent.deliverer_id || '';

@@ -125,13 +125,10 @@ SELECT
 FROM order_parent op
 LEFT JOIN deliverer d 
   ON d.id = op.deliverer_id 
-  AND NOT d.is_deleted
 LEFT JOIN parent p 
   ON op.parent_id = p.id 
-  AND NOT p.is_deleted
 LEFT JOIN kid k 
   ON k.parent_id = op.parent_id 
-  AND NOT k.is_deleted
 LEFT JOIN order_kid ok 
   ON ok.kid_id = k.id 
   AND ok.order_id = op.order_id
@@ -208,10 +205,8 @@ SELECT
 FROM order_parent op
 LEFT JOIN deliverer d 
   ON d.id = op.deliverer_id 
-  AND NOT d.is_deleted
 LEFT JOIN kid k 
   ON k.parent_id = op.parent_id 
-  AND NOT k.is_deleted
 LEFT JOIN order_kid ok 
   ON ok.kid_id = k.id 
   AND ok.order_id = op.order_id
