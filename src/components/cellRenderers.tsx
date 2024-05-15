@@ -32,7 +32,9 @@ const threeYears = 3 * 365 * 24 * 3600000;
 
 export const birthDate = ({value}: GridRenderCellParams) =>
   Date.parse(value) < Date.now() - threeYears ? (
-    <Typography color="error">{value}</Typography>
+    <Typography color="error" component="span">
+      {value}
+    </Typography>
   ) : (
     value
   );
