@@ -28,10 +28,14 @@ export const mapAnchor = ({value, row}: GridRenderCellParams) => (
 
 export const bool = ({value}: GridRenderCellParams) => (value ? 'Y' : 'N');
 
-const threeYears = 3 * 365 * 24 * 3600000;
+const isMoreThanThreeYearsAgo = (dateString: string) => {
+  const threeYearsAgo = new Date();
+  threeYearsAgo.setFullYear(threeYearsAgo.getFullYear() - 3);
+  return new Date(dateString) <= threeYearsAgo;
+};
 
 export const birthDate = ({value}: GridRenderCellParams) =>
-  Date.parse(value) < Date.now() - threeYears ? (
+  isMoreThanThreeYearsAgo(value) ? (
     <Typography color="error" component="span">
       {value}
     </Typography>
