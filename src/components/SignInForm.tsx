@@ -28,13 +28,13 @@ export const SignInForm = () => {
       <OasisTextField
         label="Email Address"
         type="email"
-        props={register('email', {required: true})}
+        {...register('email', {required: true})}
         error={errors.email as FieldError}
       />
       <OasisTextField
         label="Password"
         type="password"
-        props={register('password', {required: true})}
+        {...register('password', {required: true})}
         error={errors.password as FieldError}
       />
       <Button type="submit" variant="contained" sx={{mt: 3, mb: 2}}>
