@@ -33,13 +33,13 @@ const ChangePasswordPage = () => {
       <OasisTextField
         label="New Password"
         type="password"
-        props={register('password', {required: true})}
+        {...register('password', {required: true})}
         error={errors.password as FieldError}
       />
       <OasisTextField
         label="Confirm New Password"
         type="password"
-        props={register('confirmPassword', {
+        {...register('confirmPassword', {
           required: true,
           validate: (val: string) => {
             if (watch('password') != val) {
