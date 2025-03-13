@@ -48,13 +48,13 @@ export const OasisForm = <T extends FieldValues>({
                   control={control}
                   options={options}
                   required={required}
-                  error={errors[id] as FieldError}
+                  error={(id ? errors[id] : undefined) as FieldError}
                   disabled={disabled}
                 />
               ) : (
                 <OasisTextField
                   label={label}
-                  props={register(id, {required})}
+                  {...register(id, {required})}
                   error={errors[id] as FieldError}
                   type={type}
                   multiline={multiline}
