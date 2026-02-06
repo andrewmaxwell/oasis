@@ -13,10 +13,8 @@ import {
   TableName,
 } from './types.ts';
 
-const supabaseUrl = 'https://lsagjnicdssonuenzunb.supabase.co';
-// TODO: Move this to .env (VITE_SUPABASE_KEY)
-const supabaseKey =
-  'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxzYWdqbmljZHNzb251ZW56dW5iIiwicm9sZSI6ImFub24iLCJpYXQiOjE3MDY0NzUyNTcsImV4cCI6MjAyMjA1MTI1N30.1VkzEeHTTL7YChYnv4oGnEY811yRU2hnOD8YffCXuh8';
+const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+const supabaseKey = import.meta.env.VITE_SUPABASE_KEY;
 
 const supabase = createClient<Database>(supabaseUrl, supabaseKey);
 
@@ -73,6 +71,14 @@ export const getAllRecords = async <T extends TableWithSoftDelete>(
   const {data, error} = await from(tableName).select().eq('is_deleted', false);
   if (error) log(error);
   return data as Database['public']['Tables'][T]['Row'][];
+};
+
+export const getTableCount = async (tableName: TableWithSoftDelete) => {
+  const {count, error} = await from(tableName)
+    .select('*', {count: 'exact', head: true})
+    .eq('is_deleted', false);
+  if (error) log(error);
+  return count || 0;
 };
 
 export const getView = async (viewName: string) => {
