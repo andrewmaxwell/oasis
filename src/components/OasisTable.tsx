@@ -1,11 +1,19 @@
-import {Button, CircularProgress, Grid, Paper, Typography} from '@mui/material';
+import {
+  Button,
+  CircularProgress,
+  Paper,
+  Typography,
+  Grid,
+  Box,
+} from '@mui/material';
 import {useNavigate} from 'react-router-dom';
-import {Add} from '@mui/icons-material';
+import {Add, Search} from '@mui/icons-material';
 import {
   DataGrid,
   GridColDef,
-  GridToolbarQuickFilter,
   GridValidRowModel,
+  QuickFilter,
+  QuickFilterControl,
 } from '@mui/x-data-grid';
 import {useCanWrite} from '../hooks/useAccessLevel';
 
@@ -22,26 +30,50 @@ const CustomToolbar = ({
   const navigate = useNavigate();
   const canWrite = useCanWrite();
   return (
-    <Grid container justifyContent="space-between" p={1}>
-      <Grid item>
-        <Typography variant="h5">
-          {label}s{secondaryLabel}
-        </Typography>
+    <Box
+      sx={{
+        p: 1,
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        width: '100%',
+      }}
+    >
+      <Grid container justifyContent="space-between" width="100%">
+        <Grid>
+          <Typography variant="h5">
+            {label}s{secondaryLabel}
+          </Typography>
+        </Grid>
+        <Grid sx={{display: 'flex', alignItems: 'center', gap: 1}}>
+          {canWrite && newItemUrl && (
+            <Button
+              variant="contained"
+              onClick={() => navigate(newItemUrl)}
+              startIcon={<Add />}
+            >
+              {label}
+            </Button>
+          )}
+          <QuickFilter>
+            <QuickFilterControl
+              size="small"
+              placeholder="Search..."
+              slotProps={{
+                input: {
+                  startAdornment: (
+                    <Search
+                      fontSize="small"
+                      sx={{mr: 1, color: 'text.secondary'}}
+                    />
+                  ),
+                },
+              }}
+            />
+          </QuickFilter>
+        </Grid>
       </Grid>
-      <Grid item>
-        {canWrite && newItemUrl && (
-          <Button
-            variant="contained"
-            onClick={() => navigate(newItemUrl)}
-            startIcon={<Add />}
-            sx={{transform: 'translate(-10px, -3px)'}}
-          >
-            {label}
-          </Button>
-        )}
-        <GridToolbarQuickFilter />
-      </Grid>
-    </Grid>
+    </Box>
   );
 };
 
@@ -67,6 +99,7 @@ export const OasisTable = <T extends {id: string}>({
         style={{border: 0}}
         rows={data}
         columns={columns}
+        showToolbar
         slots={{toolbar: CustomToolbar as any}}
         slotProps={{toolbar: {label, newItemUrl, secondaryLabel} as any}}
       />

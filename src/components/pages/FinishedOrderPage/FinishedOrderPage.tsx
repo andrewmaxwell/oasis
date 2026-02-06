@@ -79,23 +79,35 @@ const FinishedOrderPage = () => {
 
   return (
     <>
-      <Grid item xs={12} sx={{display: 'flex', justifyContent: 'flex-end'}}>
-        <Button
-          variant="contained"
-          onClick={() => navigate(`/labels/${orderId}`)}
-          sx={{mr: 1}}
-        >
-          Generate Labels
-        </Button>
-
-        {canWrite && (
+      <Grid container spacing={2} sx={{p: 2}}>
+        <Grid size={12} sx={{display: 'flex', justifyContent: 'flex-end'}}>
+          {canWrite && (
+            <Button
+              variant="contained"
+              color="error"
+              onClick={deleteOrder}
+              sx={{mr: 2}}
+            >
+              Delete Order
+            </Button>
+          )}
           <Button
             variant="contained"
-            onClick={() => generateEmails(orderRecord, orderParents)}
+            onClick={() => navigate(`/labels/${orderId}`)}
+            sx={{mr: 1}}
           >
-            Generate Deliverer Emails
+            Generate Labels
           </Button>
-        )}
+          {canWrite && (
+            <Button
+              variant="contained"
+              onClick={() => generateEmails(orderRecord, orderParents)}
+              sx={{ml: 1}}
+            >
+              Generate Deliverer Emails
+            </Button>
+          )}
+        </Grid>
       </Grid>
 
       <Paper sx={{p: 2, mt: 2}}>

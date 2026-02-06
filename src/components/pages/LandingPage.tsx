@@ -24,7 +24,7 @@ const LandingPage = () => {
       {sections
         .filter((s) => !s.isAdminOnly || isAdmin)
         .map(({label, url, Icon}) => (
-          <Grid key={label} item xs={12} md={4}>
+          <Grid key={label} size={{xs: 12, md: 4}}>
             <Button
               component={Link}
               to={url}
