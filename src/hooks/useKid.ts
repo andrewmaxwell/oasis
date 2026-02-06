@@ -1,5 +1,5 @@
 import {useEffect, useState} from 'react';
-import {Kid, KidOrderRow} from '../types';
+import {DiaperSize, Kid, KidOrderRow} from '../types';
 import {useSearchParams} from 'react-router-dom';
 import {getKidOrders, getRecord} from '../supabase';
 
@@ -16,7 +16,7 @@ export const useKid = (id?: string) => {
     } else {
       setKid({
         is_active: true,
-        diaper_size: '',
+        diaper_size: '' as DiaperSize,
         parent_id: searchParams.get('parent_id') ?? undefined,
         last_name: searchParams.get('last_name') ?? undefined,
       });

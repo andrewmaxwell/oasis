@@ -5,6 +5,7 @@ import {GridColDef} from '@mui/x-data-grid';
 import {anchor, bool, linkButton, mapAnchor} from '../cellRenderers.tsx';
 import {getDiaperQuantity} from '../../utils/calcDiaperSizes.ts';
 import {consolidateOrderKids} from '../../utils/consolidateOrderKids.ts';
+import {DiaperSize} from '../../types.ts';
 
 type ParentViewRow = {
   id: string;
@@ -16,7 +17,7 @@ type ParentViewRow = {
   deliverer_id: string;
   deliverer_name: string;
   is_active: boolean;
-  diaper_sizes: string[];
+  diaper_sizes: DiaperSize[];
 };
 
 const columns: GridColDef<ParentViewRow>[] = [

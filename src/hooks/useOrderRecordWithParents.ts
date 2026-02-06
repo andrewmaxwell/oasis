@@ -1,11 +1,11 @@
 import {useEffect, useMemo, useState} from 'react';
-import {OrderParent, OrderRecord} from '../types';
+import {OrderParentViewRow, OrderRecord} from '../types';
 import {getOrderParents, getRecord} from '../supabase';
 import {groupBy} from '../utils/groupBy';
 
 export const useOrderRecordWithParents = (orderId?: string) => {
   const [orderRecord, setOrderRecord] = useState<OrderRecord>();
-  const [orderParents, setOrderParents] = useState<OrderParent[]>();
+  const [orderParents, setOrderParents] = useState<OrderParentViewRow[]>();
 
   useEffect(() => {
     if (orderId) {

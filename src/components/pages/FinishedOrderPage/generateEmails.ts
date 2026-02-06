@@ -1,10 +1,10 @@
-import {OrderParent, OrderRecord} from '../../../types.ts';
-import {consolidateOrderKids} from '../../../utils/consolidateOrderKids.ts';
-import {groupBy} from '../../../utils/groupBy.ts';
+import {OrderParentViewRow, OrderRecord} from '../../../types';
+import {consolidateOrderKids} from '../../../utils/consolidateOrderKids';
+import {groupBy} from '../../../utils/groupBy';
 
 export const generateEmails = (
   orderRecord: OrderRecord,
-  orderParents: OrderParent[],
+  orderParents: OrderParentViewRow[],
 ) => {
   const grouped = groupBy(orderParents, (p) => p.deliverer_email);
 

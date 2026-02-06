@@ -5,18 +5,32 @@ import {
   createClient,
 } from '@supabase/supabase-js';
 import {
+  Database,
   Kid,
   KidOrderRow,
-  OrderParent,
+  OrderParentViewRow,
   ParentOrderRow,
   TableName,
 } from './types.ts';
 
 const supabaseUrl = 'https://lsagjnicdssonuenzunb.supabase.co';
-const supabase = createClient(
-  supabaseUrl,
-  'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxzYWdqbmljZHNzb251ZW56dW5iIiwicm9sZSI6ImFub24iLCJpYXQiOjE3MDY0NzUyNTcsImV4cCI6MjAyMjA1MTI1N30.1VkzEeHTTL7YChYnv4oGnEY811yRU2hnOD8YffCXuh8',
-);
+// TODO: Move this to .env (VITE_SUPABASE_KEY)
+const supabaseKey =
+  'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxzYWdqbmljZHNzb251ZW56dW5iIiwicm9sZSI6ImFub24iLCJpYXQiOjE3MDY0NzUyNTcsImV4cCI6MjAyMjA1MTI1N30.1VkzEeHTTL7YChYnv4oGnEY811yRU2hnOD8YffCXuh8';
+
+const supabase = createClient<Database>(supabaseUrl, supabaseKey);
+
+type TableWithId = 'parent' | 'kid' | 'deliverer' | 'order_record';
+export type TableWithSoftDelete =
+  | 'parent'
+  | 'kid'
+  | 'deliverer'
+  | 'order_record'
+  | 'order_kid';
+
+// Helper to bypass strict union checks in generic functions
+
+const from = (table: string) => supabase.from(table) as any;
 
 const log = (error: {message: string}) => {
   console.error(error);
@@ -53,13 +67,12 @@ export const getKidsForParent = async (parentId: string) => {
   return data as Kid[];
 };
 
-export const getAllRecords = async (tableName: TableName) => {
-  const {data, error} = await supabase
-    .from(tableName)
-    .select()
-    .eq('is_deleted', false);
+export const getAllRecords = async <T extends TableWithSoftDelete>(
+  tableName: T,
+) => {
+  const {data, error} = await from(tableName).select().eq('is_deleted', false);
   if (error) log(error);
-  return data;
+  return data as Database['public']['Tables'][T]['Row'][];
 };
 
 export const getView = async (viewName: string) => {
@@ -68,45 +81,49 @@ export const getView = async (viewName: string) => {
   return data;
 };
 
-export const getRecord = async (tableName: TableName, id: string) => {
-  const {data, error} = await supabase
-    .from(tableName)
+export const getRecord = async <T extends TableWithId>(
+  tableName: T,
+  id: string,
+) => {
+  const {data, error} = await from(tableName)
     .select()
     .eq('id', id)
     .eq('is_deleted', false);
   if (error) log(error);
-  return data?.[0];
+  return data?.[0] as Database['public']['Tables'][T]['Row'] | undefined;
 };
 
-export const insertRecord = async (tableName: TableName, newRecord: object) => {
-  const {data, error} = await supabase
-    .from(tableName)
-    .insert(newRecord)
-    .select();
-  if (error) log(error);
-  return data?.[0];
-};
-
-export const updateRecord = async (
-  tableName: TableName,
-  id: string,
-  updates: object,
+export const insertRecord = async <T extends TableName>(
+  tableName: T,
+  newRecord:
+    | Database['public']['Tables'][T]['Insert']
+    | Database['public']['Tables'][T]['Insert'][],
 ) => {
-  const {error} = await supabase.from(tableName).update(updates).eq('id', id);
+  const {data, error} = await from(tableName).insert(newRecord).select();
+  if (error) log(error);
+  return data?.[0] as Database['public']['Tables'][T]['Row'] | undefined;
+};
+
+export const updateRecord = async <T extends TableWithId>(
+  tableName: T,
+  id: string,
+  updates: Database['public']['Tables'][T]['Update'],
+) => {
+  const {error} = await from(tableName).update(updates).eq('id', id);
   if (error) log(error);
   else return true;
 };
 
-export const softDelete = async (tableName: TableName, id: string) => {
-  const {error} = await supabase
-    .from(tableName)
-    .update({is_deleted: true})
-    .eq('id', id);
+export const softDelete = async (
+  tableName: TableWithSoftDelete,
+  id: string,
+) => {
+  const {error} = await from(tableName).update({is_deleted: true}).eq('id', id);
   if (error) log(error);
 };
 
-export const hardDelete = async (tableName: TableName, id: string) => {
-  const {error} = await supabase.from(tableName).delete().eq('id', id);
+export const hardDelete = async (tableName: TableWithId, id: string) => {
+  const {error} = await from(tableName).delete().eq('id', id);
   if (error) log(error);
 };
 
@@ -136,7 +153,7 @@ export const getOrderParents = async (orderId: string) => {
     .select()
     .eq('order_id', orderId);
   if (error) log(error);
-  return data as unknown as OrderParent[];
+  return data as unknown as OrderParentViewRow[];
 };
 
 export const getKidOrders = async (kidId: string) => {

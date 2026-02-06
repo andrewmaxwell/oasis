@@ -1,12 +1,14 @@
 import {useEffect, useState} from 'react';
-import {TableName} from '../types.ts';
+import {TableWithSoftDelete} from '../supabase.ts'; // Need to export this
 import {getAllRecords, subscribe} from '../supabase.ts';
 
-export const useTable = <T extends {id: string}>(tableName: TableName) => {
+export const useTable = <T extends {id: string}>(
+  tableName: TableWithSoftDelete,
+) => {
   const [data, setData] = useState<T[]>();
 
   useEffect(() => {
-    (async () => setData((await getAllRecords(tableName)) as T[]))();
+    (async () => setData((await getAllRecords(tableName)) as unknown as T[]))();
 
     return subscribe(tableName, ({eventType, old, new: newRecord}) => {
       if (eventType === 'DELETE') {

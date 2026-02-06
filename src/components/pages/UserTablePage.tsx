@@ -6,6 +6,12 @@ import {useSession} from '../../hooks/useSession.ts';
 import {useIsAdmin} from '../../hooks/useAccessLevel.ts';
 import {useUserList} from '../../hooks/useUserList.ts';
 
+const accessLevels = {
+  admin: 'Admin',
+  readWrite: 'Read+Write',
+  readOnly: 'Read Only',
+};
+
 const columns: GridColDef<AppUser>[] = [
   {
     field: 'name',
@@ -23,14 +29,7 @@ const columns: GridColDef<AppUser>[] = [
     field: 'access_level',
     headerName: 'Access Level',
     width: 150,
-    valueGetter: (value) =>
-      (
-        ({
-          admin: 'Admin',
-          readWrite: 'Read+Write',
-          readOnly: 'Read Only',
-        }) as any
-      )[value as any] || value,
+    valueGetter: (value) => accessLevels[value] || value,
   },
   {
     field: 'notes',

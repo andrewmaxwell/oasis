@@ -1,7 +1,7 @@
 import {Button, CircularProgress, Paper, Typography} from '@mui/material';
 import {Link, useNavigate, useParams} from 'react-router-dom';
 import {softDelete, insertRecord, updateRecord} from '../../supabase.ts';
-import {FormField, Deliverer, Parent} from '../../types.ts';
+import {Database, FormField, Deliverer, Parent} from '../../types.ts';
 import {getDifference} from '../../utils/getDifference.ts';
 import {OasisForm} from '../OasisForm.tsx';
 import {OasisTable} from '../OasisTable.tsx';
@@ -48,7 +48,10 @@ const DelivererPage = () => {
         getDifference(formData, deliverer),
       );
     } else {
-      await insertRecord('deliverer', formData);
+      await insertRecord(
+        'deliverer',
+        formData as unknown as Database['public']['Tables']['deliverer']['Insert'],
+      );
     }
     navigate(`/deliverers`, {replace: true});
   };

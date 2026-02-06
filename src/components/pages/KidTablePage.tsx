@@ -3,13 +3,14 @@ import {OasisTable} from '../OasisTable.tsx';
 import {useData} from '../../hooks/useData.ts';
 import {GridColDef} from '@mui/x-data-grid';
 import {birthDate, bool, linkButton} from '../cellRenderers.tsx';
+import {DiaperSize} from '../../types.ts';
 
 type KidViewRow = {
   id: string;
   name: string;
   gender: string;
   birth_date?: string;
-  diaper_size: string;
+  diaper_size: DiaperSize;
   is_active: boolean;
   notes?: string;
   parent_id: string;

@@ -4,6 +4,7 @@ import {CircularProgress} from '@mui/material';
 import {consolidateOrderKids} from '../../utils/consolidateOrderKids';
 import {splitEvery} from '../../utils/splitEvery';
 import {useOrderParents} from '../../hooks/useOrderParents';
+import {OrderParentViewRow} from '../../types';
 
 const useLabelStyles = () => {
   useEffect(() => {
@@ -61,7 +62,7 @@ const LabelPage = () => {
     orderParents.sort((a, b) =>
       String(a.deliverer_name).localeCompare(String(b.deliverer_name)),
     ),
-  ).map((arr) => (
+  ).map((arr: OrderParentViewRow[]) => (
     <div key={arr[0].parent_id} className="page">
       {arr.map((p) => (
         <div key={p.parent_id} className="label">

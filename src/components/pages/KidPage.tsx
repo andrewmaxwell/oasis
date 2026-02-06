@@ -6,7 +6,14 @@ import {
   insertRecord,
   updateRecord,
 } from '../../supabase.ts';
-import {FormField, Kid, KidOrderRow, Option} from '../../types.ts';
+import {
+  Database,
+  DIAPER_SIZES,
+  FormField,
+  Kid,
+  KidOrderRow,
+  Option,
+} from '../../types.ts';
 import {getDifference} from '../../utils/getDifference.ts';
 import {OasisForm} from '../OasisForm.tsx';
 import {useCanWrite} from '../../hooks/useAccessLevel.ts';
@@ -43,7 +50,7 @@ const kidFields: FormField<Kid>[] = [
     required: true,
     width: 3,
     type: 'select',
-    options: 'N1234567'.split('').map((s) => ({label: s, value: s})),
+    options: DIAPER_SIZES.map((s) => ({label: s, value: s})),
   },
   {id: 'is_active', label: 'Active', type: 'switch', width: 3},
   {id: 'notes', label: 'Notes', width: 12, multiline: true},
@@ -76,7 +83,10 @@ const KidPage = () => {
     }
     const success = formData.id
       ? await updateRecord('kid', formData.id, getDifference(formData, kid))
-      : await insertRecord('kid', formData);
+      : await insertRecord(
+          'kid',
+          formData as unknown as Database['public']['Tables']['kid']['Insert'],
+        );
 
     if (success) {
       navigate(`/parent/${formData.parent_id}`, {replace: true});

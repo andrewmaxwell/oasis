@@ -1,9 +1,9 @@
 import {useEffect, useState} from 'react';
-import {OrderParent} from '../types';
+import {OrderParentViewRow} from '../types';
 import {getOrderParents} from '../supabase';
 
 export const useOrderParents = (orderId?: string) => {
-  const [orderParents, setOrderParents] = useState<OrderParent[]>();
+  const [orderParents, setOrderParents] = useState<OrderParentViewRow[]>();
 
   useEffect(() => {
     if (orderId) getOrderParents(orderId).then(setOrderParents);

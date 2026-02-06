@@ -1,4 +1,4 @@
-import {OrderParent} from '../../../types.ts';
+import {OrderParentViewRow} from '../../../types.ts';
 import {useNavigate, useParams} from 'react-router-dom';
 import {softDelete, updateRecord} from '../../../supabase.ts';
 import {
@@ -27,7 +27,7 @@ import {useOrderRecordWithParents} from '../../../hooks/useOrderRecordWithParent
 // Contact info of Selia for questions
 // Invite to provide size feedback for next month
 
-const ParentTable = ({orderParents}: {orderParents: OrderParent[]}) => (
+const ParentTable = ({orderParents}: {orderParents: OrderParentViewRow[]}) => (
   <Table size="small">
     <TableHead>
       <TableRow>

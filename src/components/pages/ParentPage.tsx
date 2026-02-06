@@ -6,7 +6,7 @@ import {
   insertRecord,
   updateRecord,
 } from '../../supabase.ts';
-import {FormField, Kid, Parent, ParentOrderRow} from '../../types.ts';
+import {Database, FormField, Kid, Parent, ParentOrderRow} from '../../types.ts';
 import {getDifference} from '../../utils/getDifference.ts';
 import {OasisForm} from '../OasisForm.tsx';
 import {UseFormReset} from 'react-hook-form';
@@ -111,8 +111,13 @@ const ParentPage = () => {
       });
       reset(await getRecord('parent', formData.id));
     } else {
-      const {id} = await insertRecord('parent', formData);
-      navigate(`/parent/${id}`, {replace: true});
+      const newParent = await insertRecord(
+        'parent',
+        formData as unknown as Database['public']['Tables']['parent']['Insert'],
+      );
+      if (newParent) {
+        navigate(`/parent/${newParent.id}`, {replace: true});
+      }
     }
   };
 

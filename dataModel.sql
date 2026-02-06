@@ -79,7 +79,8 @@ CREATE TABLE order_kid (
     order_id UUID REFERENCES order_record(id) ON DELETE CASCADE,
     kid_id UUID REFERENCES kid(id),
     diaper_size TEXT NOT NULL,
-    diaper_quantity NUMERIC
+    diaper_quantity NUMERIC,
+    is_deleted BOOLEAN NOT NULL DEFAULT false,
 );
 
 DROP VIEW IF EXISTS parent_view;

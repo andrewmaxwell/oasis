@@ -14,7 +14,7 @@ import {
   getDiaperQuantity,
 } from '../../../utils/calcDiaperSizes.ts';
 import {getAllRecords, insertRecord} from '../../../supabase.ts';
-import {Deliverer, OrderRecord, Parent} from '../../../types.ts';
+import {Database, Deliverer, OrderRecord, Parent} from '../../../types.ts';
 import {Link, NavigateFunction, useNavigate} from 'react-router-dom';
 import {OasisForm} from '../../OasisForm.tsx';
 import {orderFields} from './orderFields.ts';
@@ -32,7 +32,12 @@ const finishOrder = async (
 ) => {
   if (!parents) return;
 
-  const {id: orderId} = await insertRecord('order_record', formData);
+  const orderRecord = await insertRecord(
+    'order_record',
+    formData as unknown as Database['public']['Tables']['order_record']['Insert'],
+  );
+  if (!orderRecord) return;
+  const {id: orderId} = orderRecord;
 
   const filteredParents = parents.filter(
     (p) => p.is_active && p.kid.some((k) => k.is_active),
@@ -45,7 +50,7 @@ const finishOrder = async (
         order_id: orderId,
         parent_id: p.id,
         deliverer_id: p.deliverer_id,
-      })),
+      })) as unknown as Database['public']['Tables']['order_parent']['Insert'][],
     ),
     insertRecord(
       'order_kid',
@@ -58,7 +63,7 @@ const finishOrder = async (
             diaper_size: k.diaper_size,
             diaper_quantity: getDiaperQuantity(k.diaper_size),
           })),
-      ),
+      ) as unknown as Database['public']['Tables']['order_kid']['Insert'][],
     ),
   ]);
 
