@@ -102,7 +102,7 @@ const KidPage = () => {
 
   return (
     <>
-      {id && (
+      {kid.parent_id && (
         <Button component={Link} to={`/parent/${kid.parent_id}`} sx={{mb: 1}}>
           Back to Parent
         </Button>

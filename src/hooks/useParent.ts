@@ -24,7 +24,9 @@ export const useParent = (id?: string) => {
       getParent(id).then(setParent);
       getParentOrders(id).then(setParentOrders);
     } else {
-      setParent({is_active: true, deliverer_id: ''});
+      Promise.resolve().then(() =>
+        setParent({is_active: true, deliverer_id: ''}),
+      );
     }
   }, [id]);
 

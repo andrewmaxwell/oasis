@@ -13,7 +13,7 @@ export const useDelivererWithParents = (id?: string) => {
       getRecord('deliverer', id).then(setDeliverer);
       getDelivererParents(id).then(setDelivererParents);
     } else {
-      setDeliverer({is_active: true});
+      Promise.resolve().then(() => setDeliverer({is_active: true}));
     }
   }, [id]);
 

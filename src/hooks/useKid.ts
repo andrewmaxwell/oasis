@@ -14,11 +14,13 @@ export const useKid = (id?: string) => {
       getRecord('kid', id).then(setKid);
       getKidOrders(id).then(setKidOrders);
     } else {
-      setKid({
-        is_active: true,
-        diaper_size: '' as DiaperSize,
-        parent_id: searchParams.get('parent_id') ?? undefined,
-        last_name: searchParams.get('last_name') ?? undefined,
+      Promise.resolve().then(() => {
+        setKid({
+          is_active: true,
+          diaper_size: '' as DiaperSize,
+          parent_id: searchParams.get('parent_id') ?? undefined,
+          last_name: searchParams.get('last_name') ?? undefined,
+        });
       });
     }
   }, [id, searchParams]);

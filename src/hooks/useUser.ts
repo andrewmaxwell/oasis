@@ -20,7 +20,7 @@ export const useUser = (id?: string, accessToken?: string) => {
         }),
       );
     } else {
-      setUser({access_level: ''});
+      Promise.resolve().then(() => setUser({access_level: ''}));
     }
   }, [id, accessToken]);
 

@@ -9,7 +9,7 @@ const ChangePasswordPage = () => {
   const {
     handleSubmit,
     register,
-    watch,
+    getValues,
     formState: {errors},
   } = useForm();
 
@@ -42,7 +42,7 @@ const ChangePasswordPage = () => {
         {...register('confirmPassword', {
           required: true,
           validate: (val: string) => {
-            if (watch('password') != val) {
+            if (getValues('password') != val) {
               return 'Your passwords do not match.';
             }
           },

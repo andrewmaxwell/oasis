@@ -112,22 +112,29 @@ const NewOrderPage = () => {
               </TableRow>
             </TableHead>
             <TableBody>
-              {deliverers.map((d) => {
-                const families = parents.filter(
-                  (p) => p.is_active && p.deliverer_id === d.id,
-                );
-                return (
-                  <TableRow key={d.id}>
-                    <TableCell>
-                      <Link to={`/deliverer/${d.id}`}>
-                        {d.name + (d.is_active ? '' : ' (INACTIVE)')}
-                      </Link>
-                    </TableCell>
-                    <TableCell>{calcDiaperSizes(families)}</TableCell>
-                    <TableCell>{families.length}</TableCell>
-                  </TableRow>
-                );
-              })}
+              {deliverers
+                // hide inactive deliverers who don't have any active families
+                .filter(
+                  (d) =>
+                    d.is_active ||
+                    parents.some((p) => p.is_active && p.deliverer_id === d.id),
+                )
+                .map((d) => {
+                  const families = parents.filter(
+                    (p) => p.is_active && p.deliverer_id === d.id,
+                  );
+                  return (
+                    <TableRow key={d.id}>
+                      <TableCell>
+                        <Link to={`/deliverer/${d.id}`}>
+                          {d.name + (d.is_active ? '' : ' (INACTIVE)')}
+                        </Link>
+                      </TableCell>
+                      <TableCell>{calcDiaperSizes(families)}</TableCell>
+                      <TableCell>{families.length}</TableCell>
+                    </TableRow>
+                  );
+                })}
             </TableBody>
           </Table>
         </Paper>

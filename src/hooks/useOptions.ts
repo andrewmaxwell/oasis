@@ -4,15 +4,13 @@ import {Option} from '../types.ts';
 export const useOptions = (
   optsOrGetOpts: Option[] | (() => Promise<Option[]>),
 ) => {
-  const [options, setOptions] = useState<Option[]>();
+  const [asyncOptions, setAsyncOptions] = useState<Option[]>();
 
   useEffect(() => {
-    if (Array.isArray(optsOrGetOpts)) {
-      setOptions(optsOrGetOpts);
-    } else {
-      optsOrGetOpts().then(setOptions);
+    if (!Array.isArray(optsOrGetOpts)) {
+      optsOrGetOpts().then(setAsyncOptions);
     }
   }, [optsOrGetOpts]);
 
-  return options;
+  return Array.isArray(optsOrGetOpts) ? optsOrGetOpts : asyncOptions;
 };
