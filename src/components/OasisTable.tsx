@@ -1,27 +1,31 @@
-import {
-  Button,
-  CircularProgress,
-  Paper,
-  Typography,
-  Grid,
-  Box,
-} from '@mui/material';
+import {Button, Paper, Typography, Box, InputAdornment} from '@mui/material';
 import {useNavigate} from 'react-router-dom';
 import {Add, Search} from '@mui/icons-material';
 import {
   DataGrid,
   GridColDef,
+  GridToolbarProps,
   GridValidRowModel,
   QuickFilter,
   QuickFilterControl,
+  Toolbar,
 } from '@mui/x-data-grid';
 import {useCanWrite} from '../hooks/useAccessLevel';
 
-type CustomToolbarProps = {
+declare module '@mui/x-data-grid' {
+  interface ToolbarPropsOverrides {
+    label: string;
+    newItemUrl?: string;
+    secondaryLabel?: string;
+  }
+}
+
+interface CustomToolbarProps extends GridToolbarProps {
   label: string;
   newItemUrl?: string;
-  secondaryLabel: string;
-};
+  secondaryLabel?: string;
+}
+
 const CustomToolbar = ({
   label,
   newItemUrl,
@@ -30,50 +34,58 @@ const CustomToolbar = ({
   const navigate = useNavigate();
   const canWrite = useCanWrite();
   return (
-    <Box
-      sx={{
-        p: 1,
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'space-between',
-        width: '100%',
-      }}
-    >
-      <Grid container justifyContent="space-between" width="100%">
-        <Grid>
-          <Typography variant="h5">
-            {label}s{secondaryLabel}
+    <Toolbar style={{padding: '0 0 10px 0'}}>
+      <Box
+        sx={{
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          flexWrap: 'wrap',
+          gap: 2,
+          width: '100%',
+        }}
+      >
+        <Box>
+          <Typography variant="h5" fontWeight="bold">
+            {label}s
           </Typography>
-        </Grid>
-        <Grid sx={{display: 'flex', alignItems: 'center', gap: 1}}>
+          <Typography variant="body2" color="text.secondary">
+            {secondaryLabel}
+          </Typography>
+        </Box>
+        <Box sx={{display: 'flex', alignItems: 'center', gap: 2}}>
+          <Box>
+            <QuickFilter>
+              <QuickFilterControl
+                // @ts-expect-error: variant/size passed to TextField
+                variant="outlined"
+                size="small"
+                placeholder="Search..."
+                slotProps={{
+                  input: {
+                    startAdornment: (
+                      <InputAdornment position="start">
+                        <Search />
+                      </InputAdornment>
+                    ),
+                  },
+                }}
+              />
+            </QuickFilter>
+          </Box>
           {canWrite && newItemUrl && (
             <Button
               variant="contained"
-              onClick={() => navigate(newItemUrl)}
+              onClick={() => newItemUrl && navigate(newItemUrl)}
               startIcon={<Add />}
+              disableElevation
             >
-              {label}
+              Add {label}
             </Button>
           )}
-          <QuickFilter>
-            <QuickFilterControl
-              size="small"
-              placeholder="Search..."
-              slotProps={{
-                input: {
-                  startAdornment: (
-                    <Search
-                      fontSize="small"
-                      sx={{mr: 1, color: 'text.secondary'}}
-                    />
-                  ),
-                },
-              }}
-            />
-          </QuickFilter>
-        </Grid>
-      </Grid>
-    </Box>
+        </Box>
+      </Box>
+    </Toolbar>
   );
 };
 
@@ -91,18 +103,16 @@ export const OasisTable = <T extends {id: string}>({
   columns,
   newItemUrl,
   secondaryLabel,
-}: OasisTableProps<T>) => {
-  if (!data) return <CircularProgress />;
-  return (
-    <Paper sx={{mt: 2, p: 2}}>
-      <DataGrid
-        style={{border: 0}}
-        rows={data}
-        columns={columns}
-        showToolbar
-        slots={{toolbar: CustomToolbar as any}}
-        slotProps={{toolbar: {label, newItemUrl, secondaryLabel} as any}}
-      />
-    </Paper>
-  );
-};
+}: OasisTableProps<T>) => (
+  <Paper sx={{mt: 2, p: 2}}>
+    <DataGrid
+      sx={{border: 0}}
+      loading={!data}
+      rows={data || []}
+      columns={columns}
+      showToolbar
+      slots={{toolbar: CustomToolbar}}
+      slotProps={{toolbar: {label, newItemUrl, secondaryLabel}}}
+    />
+  </Paper>
+);

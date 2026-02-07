@@ -12,7 +12,7 @@ const getDeliverers = async () =>
   );
 
 const columns: GridColDef<Deliverer>[] = [
-  {field: 'is_active', headerName: 'Active', width: 50, renderCell: bool},
+  {field: 'is_active', headerName: 'Active', width: 90, renderCell: bool},
   {
     field: 'name',
     headerName: 'Name',

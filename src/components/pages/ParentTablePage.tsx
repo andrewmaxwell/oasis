@@ -21,7 +21,7 @@ type ParentViewRow = {
 };
 
 const columns: GridColDef<ParentViewRow>[] = [
-  {field: 'is_active', headerName: 'Active', renderCell: bool, width: 50},
+  {field: 'is_active', headerName: 'Active', renderCell: bool, width: 90},
   {
     field: 'name',
     headerName: 'Name',

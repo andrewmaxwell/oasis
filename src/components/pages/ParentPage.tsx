@@ -63,7 +63,7 @@ const kidColumns: GridColDef<Kid>[] = [
     renderCell: birthDate,
   },
   {field: 'diaper_size', headerName: 'Diaper Size', width: 100},
-  {field: 'is_active', headerName: 'Active', renderCell: bool, width: 100},
+  {field: 'is_active', headerName: 'Active', renderCell: bool, width: 90},
 ];
 
 const parentOrderColumns: GridColDef<ParentOrderRow>[] = [

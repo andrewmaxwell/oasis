@@ -1,4 +1,4 @@
-import {Typography} from '@mui/material';
+import {Box, Chip, Typography} from '@mui/material';
 import {GridRenderCellParams} from '@mui/x-data-grid';
 import {Link} from 'react-router-dom';
 
@@ -26,7 +26,23 @@ export const mapAnchor = ({value, row}: GridRenderCellParams) => (
   </a>
 );
 
-export const bool = ({value}: GridRenderCellParams) => (value ? 'Y' : 'N');
+export const bool = ({value}: GridRenderCellParams) => (
+  <Box
+    sx={{
+      display: 'flex',
+      justifyContent: 'flex-start',
+      alignItems: 'center',
+      height: '100%',
+    }}
+  >
+    <Chip
+      label={value ? 'Active' : 'Inactive'}
+      color={value ? 'success' : 'default'}
+      size="small"
+      variant="outlined"
+    />
+  </Box>
+);
 
 const isMoreThanThreeYearsAgo = (dateString: string) => {
   const threeYearsAgo = new Date();

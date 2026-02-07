@@ -20,7 +20,7 @@ type KidViewRow = {
 const getKids = async () => (await getView('kid_view')) as KidViewRow[];
 
 const columns: GridColDef<KidViewRow>[] = [
-  {field: 'is_active', headerName: 'Active', width: 50, renderCell: bool},
+  {field: 'is_active', headerName: 'Active', width: 90, renderCell: bool},
   {
     field: 'name',
     headerName: 'Name',
