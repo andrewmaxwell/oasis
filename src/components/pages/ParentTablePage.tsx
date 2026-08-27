@@ -6,6 +6,7 @@ import {anchor, bool, linkButton, mapAnchor} from '../cellRenderers.tsx';
 import {getDiaperQuantity} from '../../utils/calcDiaperSizes.ts';
 import {consolidateOrderKids} from '../../utils/consolidateOrderKids.ts';
 import {DiaperSize} from '../../types.ts';
+import {queryKeys} from '../../queryClient.ts';
 
 type ParentViewRow = {
   id: string;
@@ -67,7 +68,11 @@ const getParents = async () =>
   (await getView('parent_view')) as ParentViewRow[];
 
 const ParentTablePage = () => {
-  const parents = useData(getParents);
+  const {
+    data: parents,
+    error,
+    refetch,
+  } = useData(queryKeys.view('parent_view'), getParents);
   const activeParents = parents?.filter((p) => p.is_active);
   const numKids = activeParents?.flatMap((p) => p.diaper_sizes).length;
   return (
@@ -81,6 +86,9 @@ const ParentTablePage = () => {
       }
       columns={columns}
       newItemUrl="/parent/new"
+      emptyMessage="No families yet — add your first one."
+      error={error}
+      onRetry={refetch}
     />
   );
 };

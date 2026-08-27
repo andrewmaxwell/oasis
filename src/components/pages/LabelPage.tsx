@@ -52,8 +52,19 @@ const useLabelStyles = () => {
 
 const LabelPage = () => {
   const {id: orderId} = useParams();
-  const orderParents = useOrderParents(orderId);
+  const {orderParents, error} = useOrderParents(orderId);
   useLabelStyles();
+
+  // This route renders bare for printing, so there is no toolbar or error boundary chrome
+  // around it — say what went wrong in plain text rather than spinning forever.
+  if (error) {
+    return (
+      <p>
+        Could not load the labels for this order:{' '}
+        {error instanceof Error ? error.message : 'unknown error'}
+      </p>
+    );
+  }
 
   if (!orderParents) return <CircularProgress />;
 

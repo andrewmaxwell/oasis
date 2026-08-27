@@ -54,21 +54,27 @@ export type TableWithActiveFlag = 'parent' | 'kid' | 'deliverer';
 
 const from = (table: string) => supabase.from(table) as any;
 
-const log = (error: {message: string}) => {
+/**
+ * Every query funnels its failure through here. It throws rather than returning, which is
+ * what lets react-query see the rejection and drive retries, the inline `<ErrorState>`, and
+ * the error toast. It used to also `alert()`, which blocked the thread and left the page on
+ * a spinner behind the dialog (ISSUES #9) — the UI layer owns that presentation now.
+ */
+const fail = (error: {message: string}): never => {
   console.error(error);
-  alert(error.message);
-  throw error;
+  // Supabase's auth errors are already Error instances; its Postgrest errors are plain
+  // objects, and react-query's consumers expect something with a stack.
+  throw error instanceof Error ? error : new Error(error.message);
 };
 
 export const signIn = async (email: string, password: string) => {
   const {error} = await supabase.auth.signInWithPassword({email, password});
-  if (error) log(error);
+  if (error) fail(error);
 };
 
 export const updatePassword = async (password: string) => {
   const {error} = await supabase.auth.updateUser({password});
-  if (error) log(error);
-  return !error;
+  if (error) fail(error);
 };
 
 export const logOut = () => supabase.auth.signOut();
@@ -85,16 +91,16 @@ export const getKidsForParent = async (parentId: string) => {
     .select()
     .eq('parent_id', parentId)
     .eq('is_deleted', false);
-  if (error) log(error);
-  return data as Kid[];
+  if (error) fail(error);
+  return (data ?? []) as Kid[];
 };
 
 export const getAllRecords = async <T extends TableWithSoftDelete>(
   tableName: T,
 ) => {
   const {data, error} = await from(tableName).select().eq('is_deleted', false);
-  if (error) log(error);
-  return data as Database['public']['Tables'][T]['Row'][];
+  if (error) fail(error);
+  return (data ?? []) as Database['public']['Tables'][T]['Row'][];
 };
 
 /**
@@ -107,14 +113,14 @@ export const getTableCount = async (tableName: TableWithActiveFlag) => {
     .select('*', {count: 'exact', head: true})
     .eq('is_deleted', false)
     .eq('is_active', true);
-  if (error) log(error);
+  if (error) fail(error);
   return count || 0;
 };
 
 export const getView = async (viewName: string) => {
   const {data, error} = await supabase.from(viewName).select();
-  if (error) log(error);
-  return data;
+  if (error) fail(error);
+  return data ?? [];
 };
 
 export const getRecord = async <T extends TableWithId>(
@@ -125,8 +131,11 @@ export const getRecord = async <T extends TableWithId>(
     .select()
     .eq('id', id)
     .eq('is_deleted', false);
-  if (error) log(error);
-  return data?.[0] as Database['public']['Tables'][T]['Row'] | undefined;
+  if (error) fail(error);
+  // A missing id used to return undefined, which every caller rendered as a spinner that
+  // never resolved. Throwing lets the page show "not found" and offer a way back.
+  if (!data?.length) throw new Error(`No ${tableName} found with id ${id}`);
+  return data[0] as Database['public']['Tables'][T]['Row'];
 };
 
 export const insertRecord = async <T extends TableName>(
@@ -136,8 +145,10 @@ export const insertRecord = async <T extends TableName>(
     | Database['public']['Tables'][T]['Insert'][],
 ) => {
   const {data, error} = await from(tableName).insert(newRecord).select();
-  if (error) log(error);
-  return data?.[0] as Database['public']['Tables'][T]['Row'] | undefined;
+  if (error) fail(error);
+  if (!data?.length)
+    throw new Error(`Insert into ${tableName} returned no row`);
+  return data[0] as Database['public']['Tables'][T]['Row'];
 };
 
 export const updateRecord = async <T extends TableWithId>(
@@ -146,8 +157,8 @@ export const updateRecord = async <T extends TableWithId>(
   updates: Database['public']['Tables'][T]['Update'],
 ) => {
   const {error} = await from(tableName).update(updates).eq('id', id);
-  if (error) log(error);
-  else return true;
+  if (error) fail(error);
+  return true;
 };
 
 export const softDelete = async (
@@ -155,12 +166,12 @@ export const softDelete = async (
   id: string,
 ) => {
   const {error} = await from(tableName).update({is_deleted: true}).eq('id', id);
-  if (error) log(error);
+  if (error) fail(error);
 };
 
 export const hardDelete = async (tableName: TableWithId, id: string) => {
   const {error} = await from(tableName).delete().eq('id', id);
-  if (error) log(error);
+  if (error) fail(error);
 };
 
 export const subscribe = (
@@ -188,8 +199,8 @@ export const getOrderParents = async (orderId: string) => {
     .from('finished_order_view')
     .select()
     .eq('order_id', orderId);
-  if (error) log(error);
-  return data as unknown as OrderParentViewRow[];
+  if (error) fail(error);
+  return (data ?? []) as unknown as OrderParentViewRow[];
 };
 
 export const getKidOrders = async (kidId: string) => {
@@ -197,8 +208,8 @@ export const getKidOrders = async (kidId: string) => {
     .from('kid_order_view')
     .select()
     .eq('kid_id', kidId);
-  if (error) log(error);
-  return data as KidOrderRow[];
+  if (error) fail(error);
+  return (data ?? []) as KidOrderRow[];
 };
 
 export const getParentOrders = async (parentId: string) => {
@@ -206,8 +217,8 @@ export const getParentOrders = async (parentId: string) => {
     .from('parent_order_view')
     .select()
     .eq('parent_id', parentId);
-  if (error) log(error);
-  return data as unknown as ParentOrderRow[];
+  if (error) fail(error);
+  return (data ?? []) as unknown as ParentOrderRow[];
 };
 
 export const getDelivererParents = async (delivererId: string) => {
@@ -217,7 +228,7 @@ export const getDelivererParents = async (delivererId: string) => {
     .eq('is_deleted', false)
     .eq('is_active', true)
     .eq('deliverer_id', delivererId);
-  if (error) log(error);
+  if (error) fail(error);
   return data ?? [];
 };
 

@@ -1,18 +1,25 @@
-import {useEffect, useMemo, useState} from 'react';
-import {OrderParentViewRow, OrderRecord} from '../types';
+import {useMemo} from 'react';
+import {useQuery} from '@tanstack/react-query';
+import {combineQueries} from './combineQueries.ts';
+import {OrderRecord} from '../types';
 import {getOrderParents, getRecord} from '../supabase';
 import {groupBy} from '../utils/groupBy';
+import {queryKeys} from '../queryClient';
 
 export const useOrderRecordWithParents = (orderId?: string) => {
-  const [orderRecord, setOrderRecord] = useState<OrderRecord>();
-  const [orderParents, setOrderParents] = useState<OrderParentViewRow[]>();
+  const recordQuery = useQuery({
+    queryKey: queryKeys.record('order_record', orderId ?? ''),
+    queryFn: () => getRecord('order_record', orderId as string),
+    enabled: !!orderId,
+  });
 
-  useEffect(() => {
-    if (orderId) {
-      getRecord('order_record', orderId).then(setOrderRecord);
-      getOrderParents(orderId).then(setOrderParents);
-    }
-  }, [orderId]);
+  const parentsQuery = useQuery({
+    queryKey: queryKeys.orderParents(orderId ?? ''),
+    queryFn: () => getOrderParents(orderId as string),
+    enabled: !!orderId,
+  });
+
+  const orderParents = parentsQuery.data;
 
   const sortedByDeliverer = useMemo(
     () =>
@@ -39,5 +46,11 @@ export const useOrderRecordWithParents = (orderId?: string) => {
       .sort((a, b) => a.zip.localeCompare(b.zip));
   }, [orderParents]);
 
-  return {orderRecord, orderParents, sortedByDeliverer, groupedByZip};
+  return {
+    orderRecord: recordQuery.data as OrderRecord | undefined,
+    orderParents,
+    sortedByDeliverer,
+    groupedByZip,
+    ...combineQueries(recordQuery, parentsQuery),
+  };
 };

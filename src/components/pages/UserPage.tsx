@@ -1,4 +1,9 @@
 import {Box, Button, CircularProgress, Paper, Typography} from '@mui/material';
+import {useMutation, useQueryClient} from '@tanstack/react-query';
+import {queryKeys} from '../../queryClient.ts';
+import {useToast} from '../../hooks/useToast.ts';
+import {useConfirm} from '../../hooks/useConfirm.ts';
+import {ErrorState, FormSkeleton} from '../PageStates.tsx';
 import {Link, useNavigate, useParams} from 'react-router-dom';
 import {userManagement} from '../../supabase.ts';
 import {
@@ -33,57 +38,97 @@ const UserPage = () => {
   const {id} = useParams();
   const {session, loaded} = useSessionState();
   const isAdmin = useIsAdmin();
-  const user = useUser(id, isAdmin ? session?.access_token : undefined);
+  const {user, error, refetch} = useUser(
+    id,
+    isAdmin ? session?.access_token : undefined,
+  );
+  const showToast = useToast();
+  const confirm = useConfirm();
+  const queryClient = useQueryClient();
 
   const navigate = useNavigate();
+
+  const saveUser = useMutation({
+    mutationFn: async (formData: Partial<AppUser>) => {
+      if (!session?.access_token) throw new Error('Not signed in');
+
+      // The edge function decides which bucket each field lands in: `access_level` goes to
+      // app_metadata (service-role only), name/notes to user_metadata.
+      const profile = {
+        email: formData.email,
+        name: formData.name,
+        access_level: formData.access_level,
+        notes: formData.notes,
+      };
+
+      const {error: fnError} = await userManagement(
+        session.access_token,
+        formData.id
+          ? {action: 'updateUserById', args: [formData.id, profile]}
+          : // Sends an invite email and creates the account with NO password, so it can
+            // only be signed into once the invitee sets one via the link.
+            {action: 'inviteUser', args: [profile]},
+      );
+      if (fnError) throw new Error(fnError);
+      return !formData.id;
+    },
+    onSuccess: (wasInvite) => {
+      queryClient.invalidateQueries({queryKey: queryKeys.users()});
+      if (id) queryClient.invalidateQueries({queryKey: queryKeys.user(id)});
+      showToast(wasInvite ? 'Invitation sent' : 'User saved');
+      navigate('/users');
+    },
+    onError: (e: Error) =>
+      showToast(`Could not save this user: ${e.message}`, {severity: 'error'}),
+  });
+
+  const deleteUser = useMutation({
+    mutationFn: async (userId: string) => {
+      if (!session?.access_token) throw new Error('Not signed in');
+      const {error: fnError} = await userManagement(session.access_token, {
+        action: 'deleteUser',
+        args: [userId],
+      });
+      if (fnError) throw new Error(fnError);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({queryKey: queryKeys.users()});
+      showToast('User deleted');
+      navigate('/users');
+    },
+    onError: (e: Error) =>
+      showToast(`Could not delete this user: ${e.message}`, {
+        severity: 'error',
+      }),
+  });
+
+  const onDeleteClick = async () => {
+    if (!user?.id) return;
+    const ok = await confirm({
+      title: 'Delete this user?',
+      // Unlike the domain tables, this really is permanent — it's an auth account.
+      message: `${user.name || user.email} will lose access immediately. Deleting an account cannot be undone; they would have to be invited again.`,
+      confirmLabel: 'Delete',
+      destructive: true,
+    });
+    if (ok) deleteUser.mutate(user.id);
+  };
 
   if (!loaded) return <CircularProgress />;
 
   if (!isAdmin) return <p>Access Denied</p>;
 
-  if (!user) return <CircularProgress />;
-
-  const onSubmit = async (formData: Partial<AppUser>) => {
-    if (!session?.access_token) return;
-
-    // The edge function decides which bucket each field lands in: `access_level` goes to
-    // app_metadata (service-role only), name/notes to user_metadata.
-    const profile = {
-      email: formData.email,
-      name: formData.name,
-      access_level: formData.access_level,
-      notes: formData.notes,
-    };
-
-    const {error} = await userManagement(
-      session.access_token,
-      formData.id
-        ? {action: 'updateUserById', args: [formData.id, profile]}
-        : // Sends an invite email and creates the account with NO password, so it can
-          // only be signed into once the invitee sets one via the link.
-          {action: 'inviteUser', args: [profile]},
+  if (error) {
+    return (
+      <ErrorState
+        error={error}
+        onRetry={refetch}
+        title="Could not load this user"
+      />
     );
+  }
 
-    if (error) {
-      alert(error);
-      return;
-    }
-    navigate(`/users`);
-  };
-
-  const deleteUser = async () => {
-    const msg = `Are you sure you want to delete this user? This cannot be undone.`;
-    if (!user.id || !session?.access_token || !confirm(msg)) return;
-    const {error} = await userManagement(session.access_token, {
-      action: 'deleteUser',
-      args: [user.id],
-    });
-    if (error) {
-      alert(error);
-      return;
-    }
-    navigate(`/users`);
-  };
+  if (!user) return <FormSkeleton rows={2} />;
 
   return (
     <>
@@ -97,7 +142,12 @@ const UserPage = () => {
         <Typography variant="h5" pb={2}>
           User Info
         </Typography>
-        <OasisForm origData={user} onSubmit={onSubmit} fields={userFields} />
+        <OasisForm
+          origData={user}
+          onSubmit={(formData) => saveUser.mutate(formData)}
+          fields={userFields}
+          submitting={saveUser.isPending}
+        />
       </Paper>
 
       <ul>
@@ -116,7 +166,11 @@ const UserPage = () => {
 
       {user.id && (
         <Box mt={4}>
-          <Button color="error" onClick={deleteUser}>
+          <Button
+            color="error"
+            onClick={onDeleteClick}
+            disabled={deleteUser.isPending}
+          >
             Delete {user.name}
           </Button>
         </Box>

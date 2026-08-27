@@ -8,6 +8,8 @@ type OasisTextFieldProps = {
   type?: HTMLInputTypeAttribute;
   multiline?: boolean;
   disabled?: boolean;
+  /** Passed through so password managers behave on the sign-in and password forms. */
+  autoComplete?: string;
 };
 
 export const OasisTextField = ({
@@ -16,6 +18,7 @@ export const OasisTextField = ({
   type,
   multiline,
   disabled,
+  autoComplete,
   ...props
 }: OasisTextFieldProps) => (
   <TextField
@@ -24,7 +27,8 @@ export const OasisTextField = ({
     type={type}
     error={!!error}
     helperText={String(error?.message || '')}
-    InputLabelProps={type === 'date' ? {shrink: true} : {}}
+    slotProps={type === 'date' ? {inputLabel: {shrink: true}} : {}}
+    autoComplete={autoComplete}
     multiline={multiline}
     disabled={disabled}
     {...props}

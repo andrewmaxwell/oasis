@@ -1,17 +1,17 @@
-import {Button, CircularProgress, Paper, Typography} from '@mui/material';
+import {Button, Paper, Typography} from '@mui/material';
 import {Link, useNavigate, useParams} from 'react-router-dom';
-import {
-  softDelete,
-  getRecord,
-  insertRecord,
-  updateRecord,
-} from '../../supabase.ts';
+import {softDelete, insertRecord, updateRecord} from '../../supabase.ts';
+import {useMutation, useQueryClient} from '@tanstack/react-query';
+import {queryKeys} from '../../queryClient.ts';
+import {useToast} from '../../hooks/useToast.ts';
+import {useConfirm} from '../../hooks/useConfirm.ts';
+import {ErrorState, FormSkeleton} from '../PageStates.tsx';
 import {Database, FormField, Kid, Parent, ParentOrderRow} from '../../types.ts';
 import {getDifference} from '../../utils/getDifference.ts';
 import {OasisForm} from '../OasisForm.tsx';
 import {UseFormReset} from 'react-hook-form';
 import {OasisTable} from '../OasisTable.tsx';
-import {getDelivererOptions} from '../../utils/getDelivererOptions.ts';
+import {delivererOptions} from '../../utils/delivererOptions.ts';
 import {GridColDef} from '@mui/x-data-grid';
 import {birthDate, bool, linkButton} from '../cellRenderers.tsx';
 import {useCanWrite} from '../../hooks/useAccessLevel.ts';
@@ -40,7 +40,7 @@ const parentFields: FormField<Parent>[] = [
     id: 'deliverer_id',
     label: 'Planned Deliverer',
     type: 'select',
-    options: getDelivererOptions,
+    options: delivererOptions,
     required: true,
     width: 4,
   },
@@ -90,43 +90,97 @@ const parentOrderColumns: GridColDef<ParentOrderRow>[] = [
 
 const ParentPage = () => {
   const {id} = useParams();
-  const {parent, parentOrders} = useParent(id);
+  const {parent, parentOrders, error, refetch} = useParent(id);
   const canWrite = useCanWrite();
+  const showToast = useToast();
+  const confirm = useConfirm();
+  const queryClient = useQueryClient();
 
   const navigate = useNavigate();
 
-  if (!parent) return <CircularProgress />;
-
-  const onSubmit = async (
-    formData: Partial<Parent>,
-    reset: UseFormReset<Partial<Parent>>,
-  ) => {
-    if (!formData.rough_family_income) {
-      formData.rough_family_income = null; // value can't be ''
-    }
-    if (formData.id) {
-      await updateRecord('parent', formData.id, {
-        ...getDifference(formData, parent),
-        kid: undefined,
-      });
-      reset(await getRecord('parent', formData.id));
-    } else {
+  const saveParent = useMutation({
+    mutationFn: async ({
+      formData,
+    }: {
+      formData: Partial<Parent>;
+      reset: UseFormReset<Partial<Parent>>;
+    }) => {
+      if (!formData.rough_family_income) {
+        formData.rough_family_income = null; // value can't be ''
+      }
+      if (formData.id) {
+        await updateRecord('parent', formData.id, {
+          ...getDifference(formData, parent ?? {}),
+          kid: undefined,
+        });
+        return {id: formData.id, isNew: false};
+      }
       const newParent = await insertRecord(
         'parent',
         formData as unknown as Database['public']['Tables']['parent']['Insert'],
       );
-      if (newParent) {
-        navigate(`/parent/${newParent.id}`, {replace: true});
-      }
-    }
+      return {id: newParent.id, isNew: true};
+    },
+    onSuccess: ({id: parentId, isNew}, {formData, reset}) => {
+      // Clear the dirty state without a second round-trip: the values just saved are the
+      // values on the server.
+      reset(formData);
+      queryClient.invalidateQueries({queryKey: queryKeys.view('parent_view')});
+      queryClient.invalidateQueries({
+        queryKey: queryKeys.record('parent', parentId),
+      });
+      queryClient.invalidateQueries({queryKey: queryKeys.count('parent')});
+      showToast('Family saved');
+      if (isNew) navigate(`/parent/${parentId}`, {replace: true});
+    },
+    onError: (e: Error) =>
+      showToast(`Could not save this family: ${e.message}`, {
+        severity: 'error',
+      }),
+  });
+
+  const deleteParent = useMutation({
+    mutationFn: (parentId: string) => softDelete('parent', parentId),
+    onSuccess: () => {
+      queryClient.invalidateQueries({queryKey: queryKeys.view('parent_view')});
+      queryClient.invalidateQueries({queryKey: queryKeys.count('parent')});
+      showToast('Family deleted');
+      navigate('/parents');
+    },
+    onError: (e: Error) =>
+      showToast(`Could not delete this family: ${e.message}`, {
+        severity: 'error',
+      }),
+  });
+
+  const onDeleteClick = async () => {
+    if (!parent?.id) return;
+    const ok = await confirm({
+      title: 'Delete this family?',
+      // Not "cannot be undone": softDelete only flips a flag (ISSUES #28).
+      message: `${parent.first_name} ${parent.last_name} and their kids will be removed from the app. Past orders keep their own copy of the data, and an administrator can restore the record.`,
+      confirmLabel: 'Delete',
+      destructive: true,
+    });
+    if (ok) deleteParent.mutate(parent.id);
   };
 
-  const deleteParent = async () => {
-    const msg = `Are you sure you want to delete ${parent.first_name} ${parent.last_name} and their kids forever? This cannot be undone.`;
-    if (!parent.id || !confirm(msg)) return;
-    await softDelete('parent', parent.id);
-    navigate('/parents');
-  };
+  if (error) {
+    return (
+      <>
+        <Button component={Link} to={'/parents'} sx={{mb: 1}}>
+          Back to Parents
+        </Button>
+        <ErrorState
+          error={error}
+          onRetry={refetch}
+          title="Could not load this family"
+        />
+      </>
+    );
+  }
+
+  if (!parent) return <FormSkeleton rows={4} />;
 
   return (
     <>
@@ -140,9 +194,10 @@ const ParentPage = () => {
         </Typography>
         <OasisForm
           origData={parent}
-          onSubmit={onSubmit}
+          onSubmit={(formData, reset) => saveParent.mutate({formData, reset})}
           fields={parentFields}
           disabled={!canWrite}
+          submitting={saveParent.isPending}
         />
       </Paper>
 
@@ -151,6 +206,7 @@ const ParentPage = () => {
           data={parent.kid}
           label="Kid"
           columns={kidColumns}
+          emptyMessage="No kids on this family yet."
           newItemUrl={`/kid/new?parent_id=${parent.id}&last_name=${parent.last_name}`}
         />
       )}
@@ -160,11 +216,17 @@ const ParentPage = () => {
           data={parentOrders}
           label="Past Order"
           columns={parentOrderColumns}
+          emptyMessage="This family hasn't been in an order yet."
         />
       )}
 
       {canWrite && parent.id && (
-        <Button color="error" sx={{mt: 4}} onClick={deleteParent}>
+        <Button
+          color="error"
+          sx={{mt: 4}}
+          onClick={onDeleteClick}
+          disabled={deleteParent.isPending}
+        >
           Delete {parent.first_name} {parent.last_name}
         </Button>
       )}

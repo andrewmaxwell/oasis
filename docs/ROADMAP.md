@@ -13,9 +13,9 @@ small-team, mobile-heavy, PII-holding non-profit tool.
 
 1. ~~**Fix ISSUES.md #1–#3** (auth).~~ Done and verified in production.
 2. ~~**§1 Navigation.**~~ Done, except breadcrumbs.
-3. **§2 Error and feedback layer.** Replaces `alert()`/spinner-forever with something users
-   can act on.
-4. **§6 Tests on `src/utils/`.** Locks down the diaper-quantity math before refactoring.
+3. ~~**§2 Error and feedback layer.**~~ Done, along with the §11 data-layer work it rested on.
+4. **§6 Tests on `src/utils/`.** Locks down the diaper-quantity math before refactoring —
+   and now also the toast/mutation wiring, which has no coverage at all.
 5. **§3 Mobile.** The delivery-day use case is currently unsupported.
 
 ---
@@ -30,19 +30,37 @@ Active section highlighted with `aria-current`. Closes ISSUES #24 and #32.
 to Parent" buttons on each page, which currently guess wrong when you arrived from the Kids
 table rather than from a parent.
 
-## 2. An error, loading, and feedback layer — M
+## 2. An error, loading, and feedback layer — M — ✅ done (2026-08-27)
 
 Three related gaps: errors alert-and-hang (ISSUES #9), saves give no confirmation
-(ISSUES #25), and loading is a bare centered spinner.
+(ISSUES #25), and loading is a bare centered spinner. All three are closed, built on top of
+the TanStack Query migration in §11.
 
-- **`<Snackbar>` provider** at the app root. `useToast()` for success ("Family saved"),
-  errors, and undo affordances.
-- **React error boundary** around the router, with a "Something went wrong / Reload" screen
-  instead of a white page.
-- **Skeleton loaders** instead of `<CircularProgress />`. `LandingPage` already uses
-  `<Skeleton>` for its numbers — extend that to table and form pages so layout doesn't jump.
-- **Empty states.** "No families yet — add your first one" beats an empty grid.
-- **Optimistic updates** on toggles like `is_active`, with rollback on failure.
+**Done:**
+- **`<Snackbar>` provider** — [`ToastProvider.tsx`](../src/components/ToastProvider.tsx) with
+  `useToast()` in [`hooks/useToast.ts`](../src/hooks/useToast.ts). Successes auto-hide after
+  4 s; errors stay until dismissed. Queued, so two results can't overwrite each other.
+  Supports a single inline action, which is the hook for an undo affordance (§5).
+- **React error boundary** — [`ErrorBoundary.tsx`](../src/components/ErrorBoundary.tsx)
+  around the router: "Something went wrong / Reload" instead of a white page.
+- **Skeleton loaders** — `FormSkeleton`, `BlockSkeleton`, and `EmptyState` in
+  [`PageStates.tsx`](../src/components/PageStates.tsx). Every form page, the order page, and
+  the option selects render a field-shaped placeholder rather than a centered spinner.
+- **Empty states.** `OasisTable` takes an `emptyMessage` and renders it as the grid's
+  no-rows overlay — "No families yet — add your first one."
+- **Inline error + retry.** `ErrorState` replaces the endless spinner on every page: a
+  failed load says what happened and offers Retry, on top of react-query's two automatic
+  retries. Closes ISSUES #9.
+- **Native dialogs are gone.** [`ConfirmProvider.tsx`](../src/components/ConfirmProvider.tsx)
+  provides a promise-based `useConfirm()`; `alert()` and `confirm()` no longer appear
+  anywhere in `src/`. Closes ISSUES #27, and the delete copy no longer claims a soft delete
+  "cannot be undone" (ISSUES #28).
+- **Save confirmation.** Every mutation toasts on success and on failure, so nobody presses
+  Save twice wondering. Closes ISSUES #25.
+
+**Still open:**
+- **Optimistic updates** on toggles like `is_active`, with rollback on failure. The
+  `onMutate`/`onError` rollback pattern is available now but not used anywhere.
 
 ## 3. Mobile and offline — M/L
 
@@ -158,10 +176,16 @@ above possible. The content items in this section are still open.
 
 ## 11. Data layer modernization — M
 
-- **TanStack Query** to replace the ~10 near-identical `useEffect` + `useState` + `.then()`
-  hooks in `src/hooks/`. Gets caching, refetch-on-focus, retries, mutation states, and
-  request deduplication — and it would fix the "spinner forever on error" class of bug
-  structurally rather than one call site at a time.
+- ~~**TanStack Query**~~ — ✅ done (2026-08-27). Every read hook in `src/hooks/` is now a
+  `useQuery`, and every write is a `useMutation` that invalidates what it changed. Keys live
+  in one place, [`src/queryClient.ts`](../src/queryClient.ts), so a save on one page updates
+  the table on another. This is what structurally fixed "spinner forever on error": a
+  rejected query retries twice, then renders `ErrorState`.
+  - The 30-second `memoize` on the deliverer options is gone — the option list is a cache entry
+    that adding a deliverer invalidates, so a new deliverer appears in the parent form
+    immediately. `memoizee` was the only consumer and has been dropped from `package.json`.
+  - `useTable`'s realtime subscription patches the query cache with `setQueryData` rather
+    than component state.
 - **Generated Supabase types** (ISSUES #37) so the `as any` in `supabase.ts:31` and every
   `as unknown as X` at the call sites can go.
 - **Migrations** in `supabase/migrations/` (ISSUES #38) so schema changes are reviewable and

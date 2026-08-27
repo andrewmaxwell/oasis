@@ -1,21 +1,35 @@
-import {useEffect, useState} from 'react';
-import {Deliverer, Parent} from '../types';
+import {useMemo} from 'react';
+import {useQuery} from '@tanstack/react-query';
+import {combineQueries} from './combineQueries.ts';
+import {Deliverer} from '../types';
 import {getDelivererParents, getRecord} from '../supabase';
+import {queryKeys} from '../queryClient';
 
 export const useDelivererWithParents = (id?: string) => {
-  const [deliverer, setDeliverer] = useState<Partial<Deliverer> | undefined>();
-  const [delivererParents, setDelivererParents] = useState<
-    Parent[] | undefined
-  >();
+  const isNew = !id || id === 'new';
 
-  useEffect(() => {
-    if (id && id !== 'new') {
-      getRecord('deliverer', id).then(setDeliverer);
-      getDelivererParents(id).then(setDelivererParents);
-    } else {
-      Promise.resolve().then(() => setDeliverer({is_active: true}));
-    }
-  }, [id]);
+  const delivererQuery = useQuery({
+    queryKey: queryKeys.record('deliverer', id ?? ''),
+    queryFn: () => getRecord('deliverer', id as string),
+    enabled: !isNew,
+  });
 
-  return {deliverer, delivererParents};
+  const parentsQuery = useQuery({
+    queryKey: queryKeys.delivererParents(id ?? ''),
+    queryFn: () => getDelivererParents(id as string),
+    enabled: !isNew,
+  });
+
+  const blankDeliverer = useMemo(
+    () => ({is_active: true}) as Partial<Deliverer>,
+    [],
+  );
+
+  return {
+    deliverer: isNew
+      ? blankDeliverer
+      : (delivererQuery.data as Partial<Deliverer> | undefined),
+    delivererParents: parentsQuery.data,
+    ...combineQueries(delivererQuery, parentsQuery),
+  };
 };

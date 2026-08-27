@@ -10,6 +10,9 @@ names the file and line so it can be picked up directly.
 > **#24 and #32 (navigation) were also fixed on 2026-08-27** — see ROADMAP §1. **#7, #8,
 > #16, #18, #21 and #22 were fixed on 2026-08-27** in a batch of small correctness fixes.
 >
+> **#9, #23, #25, #27, #28 and part of #5 were fixed on 2026-08-27** by the error-and-feedback
+> layer built on TanStack Query — see ROADMAP §2 and §11.
+>
 > **All Critical and High security issues are now closed and verified in production.** The
 > only recommended follow-up is rotating the anon key (#6). See
 > [SECURITY-FIX-DEPLOY.md](SECURITY-FIX-DEPLOY.md).
@@ -119,12 +122,15 @@ cryptographically random password server-side and never return it.
 
 `'Access-Control-Allow-Origin': '*'`. Restrict to the GitHub Pages origin and localhost.
 
-### 5. Medium — No password policy
+### 5. Medium — No password policy — *partly fixed*
 
-[ChangePasswordPage.tsx:36](../src/components/pages/ChangePasswordPage.tsx#L36) requires only
-a non-empty value matching the confirmation. Enforce a minimum length and set Supabase's
-password requirements in the dashboard. Also add `autoComplete="new-password"` /
-`autoComplete="current-password"` so password managers behave.
+[ChangePasswordPage.tsx](../src/components/pages/ChangePasswordPage.tsx) requires only
+a non-empty value matching the confirmation. **Still open:** enforce a minimum length and set
+Supabase's password requirements in the dashboard.
+
+> **Fixed 2026-08-27:** the `autoComplete` half. `OasisTextField` now forwards
+> `autoComplete`, and the sign-in and change-password forms pass `username` /
+> `current-password` / `new-password`, so password managers behave.
 
 ### 6. Low — Anon key is in git history
 
@@ -168,7 +174,13 @@ first screen users see are wrong.
 **Fix:** add `.eq('is_active', true)` to `getTableCount`, or relabel to "Families" / "Kids" /
 "Deliverers".
 
-### 9. High — All Supabase errors alert, throw, and hang the page
+### ✅ FIXED — 9. High — All Supabase errors alert, throw, and hang the page
+
+> **Fixed.** `log()` is now `fail()`: it logs and throws, but no longer calls `alert()`.
+> Every read goes through a react-query `useQuery`, so a rejection is caught by the library,
+> retried twice with backoff, and then rendered as `<ErrorState>` — the message plus a Retry
+> button — instead of leaving the page on a spinner. Writes go through `useMutation` and
+> report failure through the error toast. See ROADMAP §2.
 
 [src/supabase.ts:54-58](../src/supabase.ts#L54-L58)
 
@@ -301,12 +313,14 @@ with no `value`, producing a zero-height blank row and an out-of-range value war
 MUI. Use `<MenuItem value=""><em>None</em></MenuItem>`, and omit it entirely when the field
 is `required`.
 
-### 23. Low — Deprecated MUI API
+### 23. Low — Deprecated MUI API — *partly fixed*
 
-[OasisTextField.tsx:27](../src/components/OasisTextField.tsx#L27) uses `InputLabelProps`,
-deprecated in MUI v7 in favor of `slotProps={{inputLabel: {…}}}`. There's also a
-`@ts-expect-error` in [OasisTable.tsx:60](../src/components/OasisTable.tsx#L60) papering over
-`QuickFilterControl` prop typing.
+> **Fixed 2026-08-27:** `OasisTextField` uses `slotProps={{inputLabel: {shrink: true}}}`
+> instead of the deprecated `InputLabelProps`.
+
+**Still open:** the `@ts-expect-error` in
+[OasisTable.tsx](../src/components/OasisTable.tsx) papering over `QuickFilterControl` prop
+typing.
 
 ---
 
@@ -325,27 +339,30 @@ deprecated in MUI v7 in favor of `slotProps={{inputLabel: {…}}}`. There's also
 account menu. Reaching Kids from Deliverers means going home first, every time. This is the
 single biggest usability gap in the app. See ROADMAP §1.
 
-### 25. High — Saving gives no confirmation
+### ✅ FIXED — 25. High — Saving gives no confirmation
 
-`OasisForm` disables the button while submitting, then re-enables it. On
-[ParentPage](../src/components/pages/ParentPage.tsx#L100-L122) the user stays on the page with
-no toast, no checkmark, nothing — so they press Save again. Add a success Snackbar.
+> **Fixed.** Every save and delete is a `useMutation` whose `onSuccess` fires a toast —
+> "Family saved", "Order created", "Invitation sent" — and whose `onError` fires an error
+> toast naming what failed. Delete buttons are disabled while the mutation is in flight.
 
 ### 26. High — Unsaved changes are lost silently
 
 Navigating away from a dirty `OasisForm` discards edits with no prompt. `react-hook-form`
 already exposes `formState.isDirty`; wire it to a router blocker and a confirmation dialog.
 
-### 27. Medium — Native `alert()` and `confirm()` dialogs
+### ✅ FIXED — 27. Medium — Native `alert()` and `confirm()` dialogs
 
-Used in [supabase.ts:56](../src/supabase.ts#L56), `ParentPage`, `KidPage`, `DelivererPage`,
-`UserPage`, and `FinishedOrderPage`. They're unstyled, unbranded, block the main thread, and
-on mobile look like a browser malfunction. Replace with MUI `Dialog` and `Snackbar`.
+> **Fixed.** Neither `alert()` nor `confirm()` appears anywhere in `src/` any more.
+> `useToast()` ([ToastProvider.tsx](../src/components/ToastProvider.tsx)) covers messages and
+> `useConfirm()` ([ConfirmProvider.tsx](../src/components/ConfirmProvider.tsx)) covers
+> destructive confirmations as a promise-returning MUI `Dialog`.
 
-### 28. Medium — Delete dialogs lie
+### ✅ FIXED — 28. Medium — Delete dialogs lie
 
-Every confirm says "This cannot be undone," but `softDelete` only flips a flag. Either say
-"You can ask an administrator to restore this" or build the restore UI (ROADMAP §5).
+> **Fixed.** The soft-delete confirmations now say the record is removed from the app and
+> that an administrator can restore it, and note that past orders keep their own copy. The
+> one dialog that still says "cannot be undone" is deleting a *user*, where it's true — that
+> deletes the auth account. The restore UI itself is still ROADMAP §5.
 
 ### 29. Medium — Links in tables are unstyled browser defaults
 
@@ -398,6 +415,9 @@ to config or an org-settings row so it survives staff turnover.
 No test runner, no test files. `src/utils/` is pure and trivially testable — `calcDiaperSizes`,
 `consolidateOrderKids`, `getDifference`, `splitEvery`, `groupBy` — and encodes the domain
 rules that matter most. See ROADMAP §6.
+
+This got more urgent on 2026-08-27: the data layer moved to TanStack Query and every page's
+loading, error, and save path was rewritten with no automated coverage behind it.
 
 ### ✅ FIXED — 36. Medium — CI uses `npm install` and outdated actions
 

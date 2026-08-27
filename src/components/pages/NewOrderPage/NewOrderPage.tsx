@@ -15,10 +15,15 @@ import {
 } from '../../../utils/calcDiaperSizes.ts';
 import {getAllRecords, insertRecord} from '../../../supabase.ts';
 import {Database, Deliverer, OrderRecord, Parent} from '../../../types.ts';
-import {Link, NavigateFunction, useNavigate} from 'react-router-dom';
+import {Link, useNavigate} from 'react-router-dom';
 import {OasisForm} from '../../OasisForm.tsx';
 import {orderFields} from './orderFields.ts';
 import {useCanWrite} from '../../../hooks/useAccessLevel.ts';
+import {useMutation, useQueryClient} from '@tanstack/react-query';
+import {queryKeys} from '../../../queryClient.ts';
+import {useToast} from '../../../hooks/useToast.ts';
+import {ErrorState} from '../../PageStates.tsx';
+import {combineQueries} from '../../../hooks/combineQueries.ts';
 
 const getDeliverers = async () =>
   ((await getAllRecords('deliverer')) as Deliverer[]).sort((a, b) =>
@@ -28,20 +33,26 @@ const getDeliverers = async () =>
 const finishOrder = async (
   formData: Partial<OrderRecord>,
   parents: Parent[] | undefined,
-  navigate: NavigateFunction,
 ) => {
-  if (!parents) return;
+  if (!parents) throw new Error('The roster has not finished loading');
+
+  const filteredParents = parents.filter(
+    (p) => p.is_active && p.kid.some((k) => k.is_active),
+  );
+
+  // Checked before the order_record is created: an order with nobody in it is never what
+  // the user meant, and creating it first would leave an empty order behind.
+  if (!filteredParents.length) {
+    throw new Error(
+      'No active families with an active child were found, so there is nothing to order',
+    );
+  }
 
   const orderRecord = await insertRecord(
     'order_record',
     formData as unknown as Database['public']['Tables']['order_record']['Insert'],
   );
-  if (!orderRecord) return;
   const {id: orderId} = orderRecord;
-
-  const filteredParents = parents.filter(
-    (p) => p.is_active && p.kid.some((k) => k.is_active),
-  );
 
   await Promise.all([
     insertRecord(
@@ -54,7 +65,7 @@ const finishOrder = async (
     ),
     insertRecord(
       'order_kid',
-      filteredParents?.flatMap((p) =>
+      filteredParents.flatMap((p) =>
         p.kid
           .filter((k) => k.is_active)
           .map((k) => ({
@@ -67,14 +78,51 @@ const finishOrder = async (
     ),
   ]);
 
-  navigate(`/order/${orderId}`);
+  return orderId;
 };
+
+/** Module-level so react-hook-form's `values` doesn't see a new object every render. */
+const blankOrder = {};
 
 const NewOrderPage = () => {
   const navigate = useNavigate();
-  const parents = useParentsWithAtLeastOneKid();
-  const deliverers = useData(getDeliverers);
+  const parentsResult = useParentsWithAtLeastOneKid();
+  const deliverersQuery = useData(queryKeys.table('deliverer'), getDeliverers);
+  const {parents} = parentsResult;
+  const {data: deliverers} = deliverersQuery;
+  const {error, refetch} = combineQueries(parentsResult, deliverersQuery);
   const canWrite = useCanWrite();
+  const showToast = useToast();
+  const queryClient = useQueryClient();
+
+  const createOrder = useMutation({
+    mutationFn: (formData: Partial<OrderRecord>) =>
+      finishOrder(formData, parents),
+    onSuccess: (orderId) => {
+      queryClient.invalidateQueries({
+        queryKey: queryKeys.table('order_record'),
+      });
+      showToast('Order created');
+      navigate(`/order/${orderId}`);
+    },
+    onError: (e: Error) =>
+      // The snapshot is three inserts and is not transactional (ISSUES #13), so a partial
+      // failure can leave a half-built order — say so rather than failing silently.
+      showToast(
+        `Could not finish this order: ${e.message}. Check the Orders list before trying again.`,
+        {severity: 'error'},
+      ),
+  });
+
+  if (error) {
+    return (
+      <ErrorState
+        error={error}
+        onRetry={refetch}
+        title="Could not load the roster"
+      />
+    );
+  }
 
   return (
     <>
@@ -146,10 +194,11 @@ const NewOrderPage = () => {
         </Typography>
 
         <OasisForm
-          origData={{}}
-          onSubmit={(formData) => finishOrder(formData, parents, navigate)}
+          origData={blankOrder}
+          onSubmit={(formData) => createOrder.mutate(formData)}
           fields={orderFields}
-          disabled={!canWrite}
+          disabled={!canWrite || !parents}
+          submitting={createOrder.isPending}
         />
       </Paper>
     </>

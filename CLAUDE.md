@@ -34,6 +34,7 @@ design decisions.
 | UI | React 19, MUI 7 (`@mui/material`, `@mui/x-data-grid` v8), Emotion |
 | Routing | `react-router-dom` 7, **hash router** (`createHashRouter`) |
 | Forms | `react-hook-form` 7 |
+| Server state | TanStack Query 5 (`@tanstack/react-query`) |
 | Backend | Supabase (Postgres + Auth + Realtime + Edge Functions/Deno) |
 | Hosting | GitHub Pages via GitHub Actions, served under `/oasis/` |
 | Lint | ESLint 9 flat config + Prettier (`singleQuote`, `bracketSpacing: false`) |
@@ -50,6 +51,7 @@ src/
   App.tsx                  Route table (lazy-loaded), session gate
   supabase.ts              THE ONLY module that talks to Supabase. All queries live here.
   types.ts                 Hand-written DB row/insert/update types + form field types
+  queryClient.ts           The QueryClient and the `queryKeys` map — the only place keys live
   hooks/                   One hook per data-loading concern (useParent, useKid, useTable…)
   components/
     Oasis*.tsx             The shared design-system layer (Form, Table, TextField, Select, Switch)
@@ -66,8 +68,14 @@ scripts/                   One-off Node scripts: fake data, prod import, policy 
 
 ### Data access
 Every Supabase call goes through [src/supabase.ts](src/supabase.ts). Pages and hooks never
-import `createClient`. Keep it that way — it's the single seam for adding retries, error
-handling, or typed clients later.
+import `createClient`. Keep it that way — it's the single seam for adding typed clients later.
+
+Above that seam sits **TanStack Query**. Reads are `useQuery` (wrapped in a hook under
+`src/hooks/`), writes are `useMutation` in the page. The rule that makes this work: a
+mutation invalidates the keys it affected, and **every key comes from `queryKeys` in
+[src/queryClient.ts](src/queryClient.ts)** — never an inline array, or the invalidation
+silently misses. Defaults are 30 s `staleTime`, two retries with backoff, and
+refetch-on-focus.
 
 Two families of read helpers:
 - `getAllRecords` / `getRecord` / `getTableCount` — raw tables, always filtered by
@@ -99,16 +107,41 @@ Snapshot creation lives in `finishOrder` in
 [NewOrderPage.tsx](src/components/pages/NewOrderPage/NewOrderPage.tsx#L28-L71). It only
 includes active parents who have at least one active kid.
 
+### Errors, loading, and feedback
+There is no `alert()` and no `confirm()` in `src/`, and adding one back is a regression.
+
+- **Failures.** `fail()` in `supabase.ts` logs and throws. react-query catches the rejection,
+  retries, and the page renders `<ErrorState>` from
+  [PageStates.tsx](src/components/PageStates.tsx) — message plus Retry. Mutations report
+  through `onError` → error toast.
+- **Messages.** `useToast()` ([hooks/useToast.ts](src/hooks/useToast.ts)). Successes
+  auto-hide; errors stay until dismissed. One optional inline action per toast.
+- **Confirmations.** `useConfirm()` ([hooks/useConfirm.ts](src/hooks/useConfirm.ts)) returns
+  a promise. Soft-delete copy must not claim the action is permanent — it isn't.
+- **Loading.** `FormSkeleton` / `BlockSkeleton`, not `<CircularProgress />`. `OasisTable`
+  takes `emptyMessage`, `error`, and `onRetry`.
+- **Render throws** hit `<ErrorBoundary>` in [main.tsx](src/main.tsx).
+
 ### Forms
 `OasisForm` is a declarative renderer. A page defines a module-level
 `FormField<T>[]` array (`id`, `label`, `type`, `width` in a 12-col grid, `options`,
 `required`, `multiline`) and `OasisForm` maps each to `OasisTextField` / `OasisSelect` /
 `OasisSwitch`. Adding a field to a form = adding one object to that array.
 
-Field arrays must stay **module-level constants**. `useOptions` keys its effect on the
-options function's identity; an inline arrow created during render would refetch forever.
+Field arrays must stay **module-level constants**, and so must the `origData` object for a
+*new* record — `OasisForm` passes it to react-hook-form's `values`, which resets the form
+whenever that reference changes. The blank records in `useParent` / `useKid` etc. are
+`useMemo`'d for exactly this reason.
+
+Async select options are an `OptionSource` — `{key, load}` — not a bare function. The `key`
+is the query-cache key, so two fields sharing a source share one fetch and a mutation can
+invalidate it by name.
 
 Updates send only changed keys via `getDifference(formData, original)`.
+
+Submitting goes through a mutation, which returns immediately, so react-hook-form's own
+`isSubmitting` is useless for keeping Save disabled — pass `submitting={mutation.isPending}`
+instead.
 
 ### Tables
 `OasisTable` wraps MUI `DataGrid` with a custom toolbar (title, count subtitle, quick
@@ -137,8 +170,9 @@ Enforcement happens in three places, and the client hooks are the *least* import
 Treat #3 as cosmetic. If you add a write path, the policy in #1 is what actually protects it.
 
 ### Realtime
-`useTable` subscribes to Postgres changes and patches local state. It's used only by the new-order
-flow. Note it does **not** understand soft deletes (ISSUES.md #7).
+`useTable` subscribes to Postgres changes and patches the **query cache** (`setQueryData`),
+not component state. It's used only by the new-order flow. It handles soft deletes: an
+`UPDATE` setting `is_deleted` drops the row.
 
 ### Database schema
 [dataModel.sql](dataModel.sql) is the source of truth, applied by hand in the Supabase SQL
@@ -207,11 +241,12 @@ editing — see [.vscode/extensions.json](.vscode/extensions.json)).
    `dataModel.sql` is NOT a migration and still contains `DROP TABLE … CASCADE`; never run it
    against production. Status of the security work is in
    [docs/SECURITY-FIX-DEPLOY.md](docs/SECURITY-FIX-DEPLOY.md).
-2. **Errors are `alert()` + `throw`.** [`log()` in src/supabase.ts:54](src/supabase.ts#L54-L58)
-   pops a native alert and rethrows. No caller has a `.catch`, so a failed query becomes an
-   unhandled rejection and the page spins forever. If a page hangs on `<CircularProgress />`,
-   check the console for a rejected promise. (`userManagement` is the exception — it returns
-   `{error}` instead.)
+2. **Errors throw; react-query catches them.** `fail()` in `src/supabase.ts` logs and throws.
+   That's deliberate — a rejected promise is how `useQuery` knows to retry and how
+   `useMutation` reaches its `onError`. Don't "fix" it by returning an error object.
+   `userManagement` is the exception: the edge function returns `{error}` rather than
+   rejecting, so the hooks that call it re-throw (`if (fnError) throw new Error(fnError)`).
+   Anything new calling it must do the same or the failure disappears.
 3. **Session state is one shared store, not per-component.** `useSession` /
    `useSessionState` in [src/hooks/useSession.ts](src/hooks/useSession.ts) read a
    module-level store via `useSyncExternalStore`, populated once at import. Use the `loaded`
@@ -223,15 +258,20 @@ editing — see [.vscode/extensions.json](.vscode/extensions.json)).
    `createClient`, because supabase-js clears it as soon as the client initializes — and
    because this app uses a *hash* router, so Supabase's `#access_token=...` also collides
    with the route.
-5. **Still no error boundary.** A render-time throw yields a blank page. There *is* now a
-   `path: '*'` route for unmatched URLs.
+5. **There is an error boundary now**, wrapping the router in
+   [main.tsx](src/main.tsx) — a render-time throw shows "Something went wrong / Reload"
+   rather than a blank page. There's also a `path: '*'` route for unmatched URLs. Note the
+   toast and confirm providers sit *outside* the boundary, so a message survives the failure
+   that produced it.
 6. **Typing is largely fictional past the client boundary.** `from()` in
    [supabase.ts:52](src/supabase.ts#L52) casts to `any`; call sites use `as unknown as X`.
    TypeScript will not catch a schema mismatch.
 7. **`parent.kid` is not a column.** It's attached client-side in `useParent`. Strip it before
    any update — `ParentPage` does this with `kid: undefined`.
-8. **`getDelivererOptions` is memoized for 30 s.** A newly added deliverer may not appear in
-   the parent form's dropdown right away.
+8. **Deliverer options are a cache entry, not a memoized call.** `delivererOptions` in
+   `src/utils/delivererOptions.ts` is an `OptionSource`; `DelivererPage` invalidates
+   `queryKeys.options('deliverer_options')` after a save, so a new deliverer shows up in the
+   parent form immediately. If you add another way to create a deliverer, invalidate it too.
 9. **Print output** relies on the `@media print` block in `index.html` plus the `<style>` tag
    `LabelPage` injects into `<head>` on mount. The label sheet is hard-coded to US Letter
    with 4"×2" labels, 10 per page.
@@ -241,8 +281,10 @@ editing — see [.vscode/extensions.json](.vscode/extensions.json)).
 ## 8. Working agreements for AI assistants
 
 - Prefer extending `OasisForm` / `OasisTable` / `cellRenderers` over writing bespoke MUI.
-- Any new Supabase query goes in `src/supabase.ts`, wrapped in a hook under `src/hooks/` if
-  it has loading state.
+- Any new Supabase query goes in `src/supabase.ts`, wrapped in a `useQuery` hook under
+  `src/hooks/`. Writes are a `useMutation` in the page, with a success toast and an
+  `invalidateQueries` for every key the write affects.
+- Never reintroduce `alert()` or `confirm()`; use `useToast()` / `useConfirm()`.
 - If you change the schema, update **all four**: `dataModel.sql`, `src/types.ts`, the view
   definitions that touch the column, and `scripts/generateTriggersAndPolicies.js`.
 - Don't add a dependency without saying why in the PR — the tree is deliberately small.

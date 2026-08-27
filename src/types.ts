@@ -70,13 +70,22 @@ export type Option = {
   label: string;
   value: string;
 };
+
+/**
+ * An async source of select options. `key` names it for the query cache — two fields
+ * pointing at the same source share one fetch, and a mutation can invalidate it by name.
+ */
+export type OptionSource = {
+  key: string;
+  load: () => Promise<Option[]>;
+};
 export type FormField<T> = {
   id: Path<Partial<T>>;
   label: string;
   required?: boolean;
   width?: number;
   type?: 'text' | 'number' | 'switch' | 'select' | 'date';
-  options?: Option[] | (() => Promise<Option[]>);
+  options?: Option[] | OptionSource;
   multiline?: boolean;
 };
 

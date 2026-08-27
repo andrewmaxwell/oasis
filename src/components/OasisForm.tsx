@@ -13,12 +13,19 @@ type OasisFormProps<T> = {
   ) => Promise<void> | void;
   fields: FormField<T>[];
   disabled?: boolean;
+  /**
+   * True while a save is in flight. Pages submit through a react-query mutation, which
+   * returns immediately and reports its outcome via a toast, so react-hook-form's own
+   * `isSubmitting` goes false straight away — this is what actually keeps Save disabled.
+   */
+  submitting?: boolean;
 };
 export const OasisForm = <T extends FieldValues>({
   origData,
   onSubmit,
   fields,
   disabled,
+  submitting,
 }: OasisFormProps<T>) => {
   const {
     register,
@@ -70,9 +77,13 @@ export const OasisForm = <T extends FieldValues>({
             <Button
               type="submit"
               variant="contained"
-              disabled={!isDirty || isSubmitting}
+              disabled={!isDirty || isSubmitting || submitting}
             >
-              {isSubmitting ? <CircularProgress /> : 'Save'}
+              {isSubmitting || submitting ? (
+                <CircularProgress size={24} color="inherit" />
+              ) : (
+                'Save'
+              )}
             </Button>
           </Grid>
         )}

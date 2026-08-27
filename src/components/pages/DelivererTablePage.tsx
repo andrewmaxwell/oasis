@@ -4,6 +4,7 @@ import {OasisTable} from '../OasisTable.tsx';
 import {useData} from '../../hooks/useData.ts';
 import {GridColDef} from '@mui/x-data-grid';
 import {anchor, bool, linkButton} from '../cellRenderers.tsx';
+import {queryKeys} from '../../queryClient.ts';
 
 const getDeliverers = async () =>
   ((await getAllRecords('deliverer')) as Deliverer[]).sort(
@@ -33,13 +34,24 @@ const columns: GridColDef<Deliverer>[] = [
   },
 ];
 
-const DelivererTablePage = () => (
-  <OasisTable
-    data={useData(getDeliverers)}
-    label="Deliverer"
-    columns={columns}
-    newItemUrl="/deliverer/new"
-  />
-);
+const DelivererTablePage = () => {
+  const {
+    data: deliverers,
+    error,
+    refetch,
+  } = useData(queryKeys.table('deliverer'), getDeliverers);
+
+  return (
+    <OasisTable
+      data={deliverers}
+      label="Deliverer"
+      columns={columns}
+      newItemUrl="/deliverer/new"
+      emptyMessage="No deliverers yet — add your first one."
+      error={error}
+      onRetry={refetch}
+    />
+  );
+};
 
 export default DelivererTablePage;

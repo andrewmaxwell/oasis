@@ -4,6 +4,7 @@ import {OasisTable} from '../OasisTable.tsx';
 import {useData} from '../../hooks/useData.ts';
 import {GridColDef} from '@mui/x-data-grid';
 import {linkButton} from '../cellRenderers.tsx';
+import {queryKeys} from '../../queryClient.ts';
 
 const columns: GridColDef<OrderRecord>[] = [
   {
@@ -29,13 +30,24 @@ const getOrders = async () =>
     b.date_of_order.localeCompare(a.date_of_order),
   );
 
-const OrderTablePage = () => (
-  <OasisTable
-    data={useData(getOrders)}
-    label="Order"
-    columns={columns}
-    newItemUrl="/order/new"
-  />
-);
+const OrderTablePage = () => {
+  const {
+    data: orders,
+    error,
+    refetch,
+  } = useData(queryKeys.table('order_record'), getOrders);
+
+  return (
+    <OasisTable
+      data={orders}
+      label="Order"
+      columns={columns}
+      newItemUrl="/order/new"
+      emptyMessage="No orders yet — create this month's order to get started."
+      error={error}
+      onRetry={refetch}
+    />
+  );
+};
 
 export default OrderTablePage;

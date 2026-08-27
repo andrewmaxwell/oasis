@@ -1,6 +1,9 @@
-import {useEffect, useState} from 'react';
+import {useMemo} from 'react';
+import {useQuery} from '@tanstack/react-query';
+import {combineQueries} from './combineQueries.ts';
 import {getKidsForParent, getParentOrders, getRecord} from '../supabase';
-import {Parent, ParentOrderRow} from '../types';
+import {Parent} from '../types';
+import {queryKeys} from '../queryClient';
 
 const getParent = async (parentId: string) => {
   const [parent, kids] = await Promise.all([
@@ -16,19 +19,30 @@ const getParent = async (parentId: string) => {
 };
 
 export const useParent = (id?: string) => {
-  const [parent, setParent] = useState<Partial<Parent> | undefined>();
-  const [parentOrders, setParentOrders] = useState<ParentOrderRow[]>();
+  const isNew = !id || id === 'new';
 
-  useEffect(() => {
-    if (id && id !== 'new') {
-      getParent(id).then(setParent);
-      getParentOrders(id).then(setParentOrders);
-    } else {
-      Promise.resolve().then(() =>
-        setParent({is_active: true, deliverer_id: ''}),
-      );
-    }
-  }, [id]);
+  const parentQuery = useQuery({
+    queryKey: queryKeys.record('parent', id ?? ''),
+    queryFn: () => getParent(id as string),
+    enabled: !isNew,
+  });
 
-  return {parent, parentOrders};
+  const ordersQuery = useQuery({
+    queryKey: queryKeys.parentOrders(id ?? ''),
+    queryFn: () => getParentOrders(id as string),
+    enabled: !isNew,
+  });
+
+  // Stable identity: OasisForm feeds this to react-hook-form's `values`, which resets the
+  // form every time the reference changes.
+  const blankParent = useMemo(
+    () => ({is_active: true, deliverer_id: ''}) as Partial<Parent>,
+    [],
+  );
+
+  return {
+    parent: isNew ? blankParent : parentQuery.data,
+    parentOrders: ordersQuery.data,
+    ...combineQueries(parentQuery, ordersQuery),
+  };
 };

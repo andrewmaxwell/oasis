@@ -4,6 +4,7 @@ import {useData} from '../../hooks/useData.ts';
 import {GridColDef} from '@mui/x-data-grid';
 import {birthDate, bool, linkButton} from '../cellRenderers.tsx';
 import {DiaperSize} from '../../types.ts';
+import {queryKeys} from '../../queryClient.ts';
 
 type KidViewRow = {
   id: string;
@@ -44,13 +45,24 @@ const columns: GridColDef<KidViewRow>[] = [
   {field: 'notes', headerName: 'Notes', width: 400},
 ];
 
-const KidTablePage = () => (
-  <OasisTable
-    data={useData(getKids)}
-    label="Kid"
-    columns={columns}
-    newItemUrl="/kid/new"
-  />
-);
+const KidTablePage = () => {
+  const {
+    data: kids,
+    error,
+    refetch,
+  } = useData(queryKeys.view('kid_view'), getKids);
+
+  return (
+    <OasisTable
+      data={kids}
+      label="Kid"
+      columns={columns}
+      newItemUrl="/kid/new"
+      emptyMessage="No kids yet — add one from a family's page."
+      error={error}
+      onRetry={refetch}
+    />
+  );
+};
 
 export default KidTablePage;

@@ -17,11 +17,15 @@ import {
 } from '@mui/material';
 import {Link} from 'react-router-dom';
 import {useIsAdmin} from '../../hooks/useAccessLevel';
-import {useEffect, useState} from 'react';
-import {getTableCount} from '../../supabase';
+import {useQueries} from '@tanstack/react-query';
+import {getTableCount, TableWithActiveFlag} from '../../supabase';
+import {queryKeys} from '../../queryClient';
+import {combineQueries} from '../../hooks/combineQueries';
+import {ErrorState} from '../PageStates';
 
 type Stat = {
   label: string;
+  /** Null while loading — the card shows a Skeleton in its place. */
   value: number | null;
   icon: React.ElementType;
   url: string;
@@ -141,49 +145,57 @@ const ActionCard = ({
   </Card>
 );
 
+const COUNTED_TABLES: {
+  table: TableWithActiveFlag;
+  label: string;
+  icon: React.ElementType;
+  url: string;
+  color: Stat['color'];
+}[] = [
+  {
+    table: 'parent',
+    label: 'Active Families',
+    icon: FamilyRestroom,
+    url: '/parents',
+    color: 'info',
+  },
+  {
+    table: 'kid',
+    label: 'Active Kids',
+    icon: ChildCare,
+    url: '/kids',
+    color: 'success',
+  },
+  {
+    table: 'deliverer',
+    label: 'Active Deliverers',
+    icon: LocalShipping,
+    url: '/deliverers',
+    color: 'warning',
+  },
+];
+
 const LandingPage = () => {
   const isAdmin = useIsAdmin();
-  const [counts, setCounts] = useState<{
-    parents: number | null;
-    kids: number | null;
-    deliverers: number | null;
-  }>({parents: null, kids: null, deliverers: null});
 
-  useEffect(() => {
-    const fetchCounts = async () => {
-      const [p, k, d] = await Promise.all([
-        getTableCount('parent'),
-        getTableCount('kid'),
-        getTableCount('deliverer'),
-      ]);
-      setCounts({parents: p, kids: k, deliverers: d});
-    };
-    fetchCounts();
-  }, []);
+  const countQueries = useQueries({
+    queries: COUNTED_TABLES.map(({table}) => ({
+      queryKey: queryKeys.count(table),
+      queryFn: () => getTableCount(table),
+    })),
+  });
 
-  const stats: Stat[] = [
-    {
-      label: 'Active Families',
-      value: counts.parents,
-      icon: FamilyRestroom,
-      url: '/parents',
-      color: 'info',
-    },
-    {
-      label: 'Active Kids',
-      value: counts.kids,
-      icon: ChildCare,
-      url: '/kids',
-      color: 'success',
-    },
-    {
-      label: 'Active Deliverers',
-      value: counts.deliverers,
-      icon: LocalShipping,
-      url: '/deliverers',
-      color: 'warning',
-    },
-  ];
+  const {error: countsError, refetch: refetchCounts} = combineQueries(
+    ...countQueries,
+  );
+
+  const stats: Stat[] = COUNTED_TABLES.map(({label, icon, url, color}, i) => ({
+    label,
+    value: countQueries[i].data ?? null,
+    icon,
+    url,
+    color,
+  }));
 
   const actions = [
     {
@@ -210,6 +222,13 @@ const LandingPage = () => {
       </Typography>
 
       {/* Stats Section */}
+      {countsError && (
+        <ErrorState
+          error={countsError}
+          onRetry={refetchCounts}
+          title="Could not load the roster counts"
+        />
+      )}
       <Grid container spacing={2.5} sx={{mb: 6}}>
         {stats.map((stat) => (
           <Grid key={stat.label} size={{xs: 12, sm: 6, md: 4}}>

@@ -11,6 +11,7 @@ import {
   Toolbar,
 } from '@mui/x-data-grid';
 import {useCanWrite} from '../hooks/useAccessLevel';
+import {EmptyState, ErrorState} from './PageStates.tsx';
 
 declare module '@mui/x-data-grid' {
   interface ToolbarPropsOverrides {
@@ -95,6 +96,11 @@ type OasisTableProps<T extends GridValidRowModel> = {
   columns: readonly GridColDef<T>[];
   newItemUrl?: string;
   secondaryLabel?: string;
+  /** Shown in place of a blank grid once the data has loaded and there is none. */
+  emptyMessage?: string;
+  /** A failed load renders an error with a retry instead of an endless loading bar. */
+  error?: unknown;
+  onRetry?: () => void;
 };
 
 export const OasisTable = <T extends {id: string}>({
@@ -103,16 +109,34 @@ export const OasisTable = <T extends {id: string}>({
   columns,
   newItemUrl,
   secondaryLabel,
+  emptyMessage,
+  error,
+  onRetry,
 }: OasisTableProps<T>) => (
   <Paper sx={{mt: 2, p: 2}}>
-    <DataGrid
-      sx={{border: 0}}
-      loading={!data}
-      rows={data || []}
-      columns={columns}
-      showToolbar
-      slots={{toolbar: CustomToolbar}}
-      slotProps={{toolbar: {label, newItemUrl, secondaryLabel}}}
-    />
+    {error ? (
+      <ErrorState
+        error={error}
+        onRetry={onRetry}
+        title={`Could not load ${label.toLowerCase()}s`}
+      />
+    ) : (
+      <DataGrid
+        sx={{border: 0}}
+        loading={!data}
+        rows={data || []}
+        columns={columns}
+        showToolbar
+        slots={{
+          toolbar: CustomToolbar,
+          noRowsOverlay: () => (
+            <EmptyState
+              message={emptyMessage ?? `No ${label.toLowerCase()}s yet.`}
+            />
+          ),
+        }}
+        slotProps={{toolbar: {label, newItemUrl, secondaryLabel}}}
+      />
+    )}
   </Paper>
 );

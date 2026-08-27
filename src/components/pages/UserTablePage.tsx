@@ -39,7 +39,9 @@ const UserTablePage = () => {
   const isAdmin = useIsAdmin();
   // Only send the token once we believe the caller is an admin; the edge function
   // rejects everyone else with a 403 anyway.
-  const userList = useUserList(isAdmin ? session?.access_token : undefined);
+  const {userList, error, refetch} = useUserList(
+    isAdmin ? session?.access_token : undefined,
+  );
 
   if (!loaded) return <CircularProgress />;
 
@@ -51,6 +53,9 @@ const UserTablePage = () => {
       label="User"
       columns={columns}
       newItemUrl="/user/new"
+      emptyMessage="No users yet."
+      error={error}
+      onRetry={refetch}
     />
   );
 };

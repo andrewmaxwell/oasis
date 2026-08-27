@@ -1,4 +1,4 @@
-import {Button, CircularProgress, Paper, Typography} from '@mui/material';
+import {Button, Paper, Typography} from '@mui/material';
 import {Link, useNavigate, useParams} from 'react-router-dom';
 import {
   softDelete,
@@ -6,6 +6,11 @@ import {
   insertRecord,
   updateRecord,
 } from '../../supabase.ts';
+import {useMutation, useQueryClient} from '@tanstack/react-query';
+import {queryKeys} from '../../queryClient.ts';
+import {useToast} from '../../hooks/useToast.ts';
+import {useConfirm} from '../../hooks/useConfirm.ts';
+import {ErrorState, FormSkeleton} from '../PageStates.tsx';
 import {
   Database,
   DIAPER_SIZES,
@@ -13,6 +18,7 @@ import {
   Kid,
   KidOrderRow,
   Option,
+  OptionSource,
 } from '../../types.ts';
 import {getDifference} from '../../utils/getDifference.ts';
 import {OasisForm} from '../OasisForm.tsx';
@@ -21,6 +27,11 @@ import {useKid} from '../../hooks/useKid.ts';
 import {OasisTable} from '../OasisTable.tsx';
 import {GridColDef} from '@mui/x-data-grid';
 import {linkButton} from '../cellRenderers.tsx';
+
+const parentOptions: OptionSource = {
+  key: 'parent_options',
+  load: async () => (await getView('parent_options')) as Option[],
+};
 
 const kidFields: FormField<Kid>[] = [
   {id: 'first_name', label: 'First Name', required: true, width: 4},
@@ -31,7 +42,7 @@ const kidFields: FormField<Kid>[] = [
     required: true,
     width: 4,
     type: 'select',
-    options: async () => (await getView('parent_options')) as Option[],
+    options: parentOptions,
   },
   {
     id: 'gender',
@@ -70,35 +81,90 @@ const kidOrderColumns: GridColDef<KidOrderRow>[] = [
 
 const KidPage = () => {
   const {id} = useParams();
-  const {kid, kidOrders} = useKid(id);
+  const {kid, kidOrders, error, refetch} = useKid(id);
   const canWrite = useCanWrite();
+  const showToast = useToast();
+  const confirm = useConfirm();
+  const queryClient = useQueryClient();
 
   const navigate = useNavigate();
 
-  if (!kid) return <CircularProgress />;
-
-  const onSubmit = async (formData: Partial<Kid>) => {
-    if (!formData.birth_date) {
-      formData.birth_date = null; // birth date can't be ''
+  const invalidateKid = (parentId?: string) => {
+    queryClient.invalidateQueries({queryKey: queryKeys.view('kid_view')});
+    queryClient.invalidateQueries({queryKey: queryKeys.count('kid')});
+    if (parentId) {
+      queryClient.invalidateQueries({
+        queryKey: queryKeys.record('parent', parentId),
+      });
     }
-    const success = formData.id
-      ? await updateRecord('kid', formData.id, getDifference(formData, kid))
-      : await insertRecord(
+    if (id && id !== 'new') {
+      queryClient.invalidateQueries({queryKey: queryKeys.record('kid', id)});
+    }
+  };
+
+  const saveKid = useMutation({
+    mutationFn: async (formData: Partial<Kid>) => {
+      if (!formData.birth_date) {
+        formData.birth_date = null; // birth date can't be ''
+      }
+      if (formData.id) {
+        await updateRecord(
+          'kid',
+          formData.id,
+          getDifference(formData, kid ?? {}),
+        );
+      } else {
+        await insertRecord(
           'kid',
           formData as unknown as Database['public']['Tables']['kid']['Insert'],
         );
+      }
+      return formData.parent_id;
+    },
+    onSuccess: (parentId) => {
+      invalidateKid(parentId);
+      showToast('Child saved');
+      navigate(`/parent/${parentId}`, {replace: true});
+    },
+    onError: (e: Error) =>
+      showToast(`Could not save this child: ${e.message}`, {severity: 'error'}),
+  });
 
-    if (success) {
-      navigate(`/parent/${formData.parent_id}`, {replace: true});
-    }
+  const deleteKid = useMutation({
+    mutationFn: (kidId: string) => softDelete('kid', kidId),
+    onSuccess: () => {
+      invalidateKid(kid?.parent_id);
+      showToast('Child deleted');
+      navigate(`/parent/${kid?.parent_id}`);
+    },
+    onError: (e: Error) =>
+      showToast(`Could not delete this child: ${e.message}`, {
+        severity: 'error',
+      }),
+  });
+
+  const onDeleteClick = async () => {
+    if (!id || id === 'new') return;
+    const ok = await confirm({
+      title: 'Delete this child?',
+      message: `${kid?.first_name} ${kid?.last_name} will be removed from the app and from future orders. Past orders keep their own copy, and an administrator can restore the record.`,
+      confirmLabel: 'Delete',
+      destructive: true,
+    });
+    if (ok) deleteKid.mutate(id);
   };
 
-  const deleteKid = async () => {
-    const msg = `Are you sure you want to delete ${kid.first_name} ${kid.last_name}? This cannot be undone.`;
-    if (!id || !confirm(msg)) return;
-    await softDelete('kid', id);
-    navigate(`/parent/${kid.parent_id}`);
-  };
+  if (error) {
+    return (
+      <ErrorState
+        error={error}
+        onRetry={refetch}
+        title="Could not load this child"
+      />
+    );
+  }
+
+  if (!kid) return <FormSkeleton rows={3} />;
 
   return (
     <>
@@ -114,9 +180,10 @@ const KidPage = () => {
         </Typography>
         <OasisForm
           origData={kid}
-          onSubmit={onSubmit}
+          onSubmit={(formData) => saveKid.mutate(formData)}
           fields={kidFields}
           disabled={!canWrite}
+          submitting={saveKid.isPending}
         />
       </Paper>
 
@@ -125,11 +192,17 @@ const KidPage = () => {
           data={kidOrders}
           label="Past Order"
           columns={kidOrderColumns}
+          emptyMessage="This child hasn't been in an order yet."
         />
       )}
 
-      {canWrite && id && (
-        <Button color="error" sx={{mt: 4}} onClick={deleteKid}>
+      {canWrite && id && id !== 'new' && (
+        <Button
+          color="error"
+          sx={{mt: 4}}
+          onClick={onDeleteClick}
+          disabled={deleteKid.isPending}
+        >
           Delete {kid.first_name} {kid.last_name}
         </Button>
       )}

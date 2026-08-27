@@ -3,21 +3,31 @@ import {updatePassword} from '../../supabase.ts';
 import {FieldError, useForm} from 'react-hook-form';
 import {OasisTextField} from '../OasisTextField.tsx';
 import {useNavigate} from 'react-router-dom';
+import {useToast} from '../../hooks/useToast.ts';
 
 const ChangePasswordPage = () => {
   const navigate = useNavigate();
+  const showToast = useToast();
   const {
     handleSubmit,
     register,
     getValues,
-    formState: {errors},
+    formState: {errors, isSubmitting},
   } = useForm();
 
   return (
     <Box
       component="form"
       onSubmit={handleSubmit(async ({password}) => {
-        if (await updatePassword(password)) navigate('/');
+        try {
+          await updatePassword(password);
+          showToast('Password updated');
+          navigate('/');
+        } catch (e) {
+          showToast(`Could not update your password: ${(e as Error).message}`, {
+            severity: 'error',
+          });
+        }
       })}
       sx={{
         '& .MuiTextField-root': {m: 1, width: '25ch'},
@@ -33,12 +43,14 @@ const ChangePasswordPage = () => {
       <OasisTextField
         label="New Password"
         type="password"
+        autoComplete="new-password"
         {...register('password', {required: true})}
         error={errors.password as FieldError}
       />
       <OasisTextField
         label="Confirm New Password"
         type="password"
+        autoComplete="new-password"
         {...register('confirmPassword', {
           required: true,
           validate: (val: string) => {
@@ -49,7 +61,12 @@ const ChangePasswordPage = () => {
         })}
         error={errors.confirmPassword as FieldError}
       />
-      <Button type="submit" variant="contained" sx={{mt: 3, mb: 2}}>
+      <Button
+        type="submit"
+        variant="contained"
+        sx={{mt: 3, mb: 2}}
+        disabled={isSubmitting}
+      >
         Submit
       </Button>
     </Box>

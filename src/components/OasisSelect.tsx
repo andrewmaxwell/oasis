@@ -1,9 +1,9 @@
 import {
-  CircularProgress,
   FormControl,
   InputLabel,
   MenuItem,
   Select,
+  Skeleton,
 } from '@mui/material';
 import {
   Control,
@@ -12,14 +12,14 @@ import {
   FieldValues,
   Path,
 } from 'react-hook-form';
-import {Option} from '../types.ts';
+import {Option, OptionSource} from '../types.ts';
 import {useOptions} from '../hooks/useOptions.ts';
 
 type OasisSelectProps<T extends FieldValues> = {
   name: Path<T>;
   label: string;
   control: Control<T>;
-  options: Option[] | (() => Promise<Option[]>);
+  options: Option[] | OptionSource;
   required?: boolean;
   error?: FieldError;
   disabled?: boolean;
@@ -28,14 +28,16 @@ export const OasisSelect = <T extends FieldValues>({
   name,
   label,
   control,
-  options: optsOrGetOpts,
+  options: optionsOrSource,
   required = false,
   error,
   disabled,
 }: OasisSelectProps<T>) => {
-  const options = useOptions(optsOrGetOpts);
+  const options = useOptions(optionsOrSource);
 
-  if (!options) return <CircularProgress />;
+  // A field-shaped placeholder, not a spinner: the select sits in a grid with text fields
+  // and a smaller element here shifts everything below it when the options land.
+  if (!options) return <Skeleton variant="rounded" height={56} />;
   const labelId = `${name}-label`;
   return (
     <FormControl fullWidth>

@@ -1,13 +1,13 @@
-import {useEffect, useState} from 'react';
-import {OrderParentViewRow} from '../types';
+import {useQuery} from '@tanstack/react-query';
 import {getOrderParents} from '../supabase';
+import {queryKeys} from '../queryClient';
 
 export const useOrderParents = (orderId?: string) => {
-  const [orderParents, setOrderParents] = useState<OrderParentViewRow[]>();
+  const {data, error, refetch} = useQuery({
+    queryKey: queryKeys.orderParents(orderId ?? ''),
+    queryFn: () => getOrderParents(orderId as string),
+    enabled: !!orderId,
+  });
 
-  useEffect(() => {
-    if (orderId) getOrderParents(orderId).then(setOrderParents);
-  }, [orderId]);
-
-  return orderParents;
+  return {orderParents: data, error, refetch};
 };

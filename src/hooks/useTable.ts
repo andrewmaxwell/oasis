@@ -1,32 +1,45 @@
-import {useEffect, useState} from 'react';
-import {TableWithSoftDelete} from '../supabase.ts'; // Need to export this
-import {getAllRecords, subscribe} from '../supabase.ts';
+import {useEffect} from 'react';
+import {useQuery, useQueryClient} from '@tanstack/react-query';
+import {getAllRecords, subscribe, TableWithSoftDelete} from '../supabase.ts';
+import {queryKeys} from '../queryClient.ts';
 
+/**
+ * A table plus a live Postgres subscription that patches the cached rows in place. Used by
+ * the new-order flow, where a stale roster would be snapshotted into a real order.
+ */
 export const useTable = <T extends {id: string}>(
   tableName: TableWithSoftDelete,
 ) => {
-  const [data, setData] = useState<T[]>();
+  const queryClient = useQueryClient();
 
-  useEffect(() => {
-    (async () => setData((await getAllRecords(tableName)) as unknown as T[]))();
+  const {data, error, refetch} = useQuery({
+    queryKey: queryKeys.table(tableName),
+    queryFn: async () => (await getAllRecords(tableName)) as unknown as T[],
+  });
 
-    return subscribe(tableName, ({eventType, old, new: newRecord}) => {
-      if (eventType === 'DELETE') {
-        setData((data) => data?.filter((row) => row.id !== old.id));
-      } else if (eventType === 'INSERT') {
-        setData((data) => data && [...data, newRecord as T]);
-      } else if (eventType === 'UPDATE') {
-        // A soft delete reaches us as an UPDATE setting is_deleted, not as a DELETE, so
-        // the row has to be dropped here or it stays in the list (and stays eligible to be
-        // snapshotted into a new order).
-        setData((data) =>
-          (newRecord as {is_deleted?: boolean}).is_deleted
-            ? data?.filter((row) => row.id !== old.id)
-            : data?.map((row) => (row.id === old.id ? (newRecord as T) : row)),
-        );
-      }
-    });
-  }, [tableName]);
+  useEffect(
+    () =>
+      subscribe(tableName, ({eventType, old, new: newRecord}) => {
+        const queryKey = queryKeys.table(tableName);
+        queryClient.setQueryData<T[]>(queryKey, (rows) => {
+          if (!rows) return rows;
+          if (eventType === 'DELETE') {
+            return rows.filter((row) => row.id !== old.id);
+          }
+          if (eventType === 'INSERT') return [...rows, newRecord as T];
+          if (eventType === 'UPDATE') {
+            // A soft delete arrives as an UPDATE setting is_deleted, not as a DELETE, so
+            // the row has to be dropped here or it stays in the list (and stays eligible
+            // to be snapshotted into a new order).
+            return (newRecord as {is_deleted?: boolean}).is_deleted
+              ? rows.filter((row) => row.id !== old.id)
+              : rows.map((row) => (row.id === old.id ? (newRecord as T) : row));
+          }
+          return rows;
+        });
+      }),
+    [tableName, queryClient],
+  );
 
-  return data;
+  return {data, error, refetch};
 };
