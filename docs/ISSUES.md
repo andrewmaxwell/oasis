@@ -7,8 +7,9 @@ names the file and line so it can be picked up directly.
 > below and kept for the record. The database migrations and the edge function are **deployed
 > and verified in production**; see [SECURITY-FIX-DEPLOY.md](SECURITY-FIX-DEPLOY.md).
 >
-> ⚠️ **One Critical item is still open: public signup is enabled on the hosted project** and
-> can only be turned off in the Supabase dashboard. See step 4 of the deploy doc.
+> **All Critical and High security issues are now closed and verified in production.** The
+> only recommended follow-up is rotating the anon key (#6). See
+> [SECURITY-FIX-DEPLOY.md](SECURITY-FIX-DEPLOY.md).
 
 Legend: **Critical** = exploitable or data-corrupting · **High** = wrong behavior users will
 hit · **Medium** = correctness/robustness · **Low** = polish and hygiene.
@@ -69,11 +70,10 @@ This is full application takeover. The `useIsAdmin()` guards in
 > assigned level — i.e. anyone who self-registers — resolves to NULL and can neither read nor
 > write.** Verified in production against live data.
 >
-> ⚠️ **Still open:** public signup is enabled on the hosted project (confirmed by test on
-> 2026-08-27 — a signup with the public anon key succeeded). RLS now makes such an account
-> useless, but the endpoint should still be closed in the dashboard; `config.toml` governs
-> local dev only, and `supabase config push` is unsafe here (it would repoint `site_url` at
-> localhost).
+> Public signup was found to be **enabled** on 2026-08-27 (a signup with the public anon key
+> succeeded) and has since been turned off and re-verified (`signup_disabled`, HTTP 422).
+> Note `config.toml` governs local dev only, and `supabase config push` is unsafe here — it
+> would repoint `site_url` at localhost.
 
 `scripts/generateTriggersAndPolicies.js:25-37` emits, for every table:
 

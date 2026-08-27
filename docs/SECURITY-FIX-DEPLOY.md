@@ -7,34 +7,35 @@ Applied to the hosted project (`lsagjnicdssonuenzunb`) on **2026-08-27**.
 | 1 | Move `access_level` to `app_metadata` | ✅ applied |
 | 2 | Deploy the authorizing edge function | ✅ deployed & verified |
 | 3 | Apply RLS policies | ✅ applied & verified |
-| 4 | **Turn off public signup in the dashboard** | ❌ **OUTSTANDING — signup is open** |
-| 5 | Deploy the client | ⬜ on next push to `main` |
-| 6 | Rotate the anon key | ⬜ recommended |
+| 4 | Turn off public signup in the dashboard | ✅ done & verified |
+| 5 | Deploy the client | ✅ deployed & verified |
+| 6 | Rotate the anon key | ⬜ recommended, see below |
 
 ---
 
-## 4. Turn off public signup — the one thing still open
+## 4. Public signup — closed
 
-**Verified open on 2026-08-27:** a `POST /auth/v1/signup` with the public anon key
-successfully created an account. Anyone who reads the deployed JavaScript can register.
+Turned off on 2026-08-27 and verified: `POST /auth/v1/signup` with the public anon key now
+returns `HTTP 422 {"error_code":"signup_disabled"}`. Before the change the same request
+successfully created an account.
 
-Fix it here: **Authentication → Sign In / Providers → Email → "Allow new users to sign up" →
-off.**
+`supabase/config.toml` also sets `enable_signup = false`, but that file governs local
+development only. **Do not run `npx supabase config push` to sync it** — it pushes the whole
+local config, including `site_url = "http://127.0.0.1:3000"`, which would point every invite
+and password-reset link at localhost, and may clobber remote SMTP and provider settings that
+aren't represented locally.
 
-`supabase/config.toml` sets `enable_signup = false`, but that file only governs local
-development. `npx supabase config push` would apply it — **do not run it**: it pushes the
-whole local config, including `site_url = "http://127.0.0.1:3000"`, which would point every
-invite and password-reset link at localhost, and may clobber remote SMTP and provider
-settings that aren't represented locally.
+## 5. Client — deployed
 
-RLS now limits the damage — an account with no assigned access level can neither read nor
-write (verified below) — but an open registration endpoint on an app holding refugee family
-PII should still be closed.
+Deployed via GitHub Actions on 2026-08-27. Verified live at
+https://andrewmaxwell.github.io/oasis/ — the `useAccessLevel` and `toAppUser` chunks are
+byte-identical to a local build of the same commit and read `app_metadata.access_level`.
 
-## 5. Deploy the client
-
-Push to `main`; GitHub Actions builds and publishes. The client now reads `access_level`
-from `app_metadata` and routes invite/recovery arrivals to the password form.
+One snag worth recording: the first run failed at `Setup Pages`. The repo had been switched
+to private earlier that day, which disables GitHub Pages (Pages on a private repo requires a
+paid plan). Making it public again restored Pages with `build_type: workflow`, and a re-run
+succeeded. If the deploy ever fails there again, check `gh api repos/<owner>/<repo>/pages`
+before suspecting the workflow.
 
 ## 6. Rotate the anon key (recommended)
 

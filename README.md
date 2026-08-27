@@ -66,8 +66,7 @@ Every push to the `main` branch will trigger a deployment.
 -   [docs/SECURITY-FIX-DEPLOY.md](docs/SECURITY-FIX-DEPLOY.md): Status of the auth fixes and what remains.
 
 > **Security notice:** the critical auth fixes are deployed and verified in production as of
-> 2026-08-27, with **one item outstanding — public signup is still enabled** on the hosted
-> project and must be turned off in the Supabase dashboard. See
+> 2026-08-27. The one recommended follow-up is rotating the Supabase anon key. See
 > [docs/SECURITY-FIX-DEPLOY.md](docs/SECURITY-FIX-DEPLOY.md).
 
 ## Project Structure
