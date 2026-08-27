@@ -7,7 +7,8 @@ names the file and line so it can be picked up directly.
 > below and kept for the record. The database migrations and the edge function are **deployed
 > and verified in production**; see [SECURITY-FIX-DEPLOY.md](SECURITY-FIX-DEPLOY.md).
 >
-> **#24 and #32 (navigation) were also fixed on 2026-08-27** — see ROADMAP §1.
+> **#24 and #32 (navigation) were also fixed on 2026-08-27** — see ROADMAP §1. **#7, #8,
+> #16, #18, #21 and #22 were fixed on 2026-08-27** in a batch of small correctness fixes.
 >
 > **All Critical and High security issues are now closed and verified in production.** The
 > only recommended follow-up is rotating the anon key (#6). See
@@ -136,7 +137,11 @@ because of issue #1, where the anon key is effectively an admin credential.
 
 ## Correctness
 
-### 7. High — Realtime updates don't handle soft deletes
+### ✅ FIXED — 7. High — Realtime updates don't handle soft deletes
+
+> **Fixed.** The `UPDATE` branch in [useTable.ts](../src/hooks/useTable.ts) now drops the
+> row when `newRecord.is_deleted` is true instead of patching it in place, so a family
+> soft-deleted in another tab leaves the new-order list immediately.
 
 [src/hooks/useTable.ts:18-22](../src/hooks/useTable.ts#L18-L22)
 
@@ -147,7 +152,13 @@ snapshotted into a new order.
 
 **Fix:** in the `UPDATE` branch, drop the row when `newRecord.is_deleted` is true.
 
-### 8. High — Dashboard counts say "Active" but count inactive records too
+### ✅ FIXED — 8. High — Dashboard counts say "Active" but count inactive records too
+
+> **Fixed.** `getTableCount` now filters `is_active = true` as well as `is_deleted = false`.
+> Its parameter was narrowed from `TableWithSoftDelete` to the new `TableWithActiveFlag`
+> (`parent` | `kid` | `deliverer`), so it can't be called against the order tables, which
+> have no `is_active` column. **The dashboard numbers will drop** — they were previously
+> inflated by inactive records.
 
 [src/supabase.ts:76-82](../src/supabase.ts#L76-L82) filters only on `is_deleted`, but
 [LandingPage.tsx:144,152,160](../src/components/pages/LandingPage.tsx#L142-L164) labels the
@@ -224,7 +235,10 @@ Swap the two checks. Same ordering concern in
 [UserTablePage.tsx](../src/components/pages/UserTablePage.tsx#L42-L46), where the user list is
 fetched before the admin check runs.
 
-### 16. Medium — `LabelPage` mutates React state in place
+### ✅ FIXED — 16. Medium — `LabelPage` mutates React state in place
+
+> **Fixed.** [LabelPage.tsx](../src/components/pages/LabelPage.tsx) sorts a copy —
+> `[...orderParents].sort(…)`.
 
 [LabelPage.tsx:62](../src/components/pages/LabelPage.tsx#L62) calls `.sort()` directly on the
 `orderParents` array from state. Copy first: `[...orderParents].sort(…)`, as
@@ -240,7 +254,10 @@ many clients, truncating long delivery lists without warning.
 **Fix:** render the list as a dialog with a per-deliverer "Open email" button and a
 "Copy to clipboard" fallback — or send server-side (ROADMAP §4).
 
-### 18. Medium — Missing birth dates render as an empty red cell
+### ✅ FIXED — 18. Medium — Missing birth dates render as an empty red cell
+
+> **Fixed.** `birthDate` in [cellRenderers.tsx](../src/components/cellRenderers.tsx) tests
+> the value for truthiness before the date comparison.
 
 [cellRenderers.tsx:47-60](../src/components/cellRenderers.tsx#L47-L60) —
 `new Date(null)` is the 1970 epoch, so a null birth date always tests as "more than three
@@ -264,13 +281,20 @@ blank page. Add a 404 route with a link home.
 
 `useSession` initialized to `null`, which `App` read as "logged out".
 
-### 21. Low — `undefined` shown in the parents table subtitle
+### ✅ FIXED — 21. Low — `undefined` shown in the parents table subtitle
+
+> **Fixed.** [ParentTablePage.tsx](../src/components/pages/ParentTablePage.tsx) renders an
+> empty subtitle until `parents` has loaded.
 
 [ParentTablePage.tsx:77](../src/components/pages/ParentTablePage.tsx#L77) renders
 `(undefined active parents, undefined kids)` during load. Render the subtitle only once
 `parents` is defined.
 
-### 22. Low — Empty `MenuItem` in every select
+### ✅ FIXED — 22. Low — Empty `MenuItem` in every select
+
+> **Fixed.** [OasisSelect.tsx](../src/components/OasisSelect.tsx) renders
+> `<MenuItem value=""><em>None</em></MenuItem>`, and omits it entirely when the field is
+> `required`.
 
 [OasisSelect.tsx:56](../src/components/OasisSelect.tsx#L56) renders `<MenuItem></MenuItem>`
 with no `value`, producing a zero-height blank row and an out-of-range value warning from

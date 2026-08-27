@@ -74,7 +74,11 @@ const ParentTablePage = () => {
     <OasisTable
       data={parents}
       label="Parent"
-      secondaryLabel={` (${activeParents?.length} active parents, ${numKids} kids)`}
+      secondaryLabel={
+        activeParents
+          ? ` (${activeParents.length} active parents, ${numKids} kids)`
+          : ''
+      }
       columns={columns}
       newItemUrl="/parent/new"
     />

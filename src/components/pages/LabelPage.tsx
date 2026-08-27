@@ -59,7 +59,7 @@ const LabelPage = () => {
 
   return splitEvery(
     10,
-    orderParents.sort((a, b) =>
+    [...orderParents].sort((a, b) =>
       String(a.deliverer_name).localeCompare(String(b.deliverer_name)),
     ),
   ).map((arr: OrderParentViewRow[]) => (

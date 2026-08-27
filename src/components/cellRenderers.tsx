@@ -51,7 +51,9 @@ const isMoreThanThreeYearsAgo = (dateString: string) => {
 };
 
 export const birthDate = ({value}: GridRenderCellParams) =>
-  isMoreThanThreeYearsAgo(value) ? (
+  // Guard first: new Date(null) is the 1970 epoch, so a missing birth date would always
+  // test as "more than three years ago" and render as an empty cell in error red.
+  value && isMoreThanThreeYearsAgo(value) ? (
     <Typography color="error" component="span">
       {value}
     </Typography>

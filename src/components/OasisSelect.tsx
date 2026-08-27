@@ -53,7 +53,13 @@ export const OasisSelect = <T extends FieldValues>({
             disabled={disabled}
             {...field}
           >
-            <MenuItem></MenuItem>
+            {/* A valueless MenuItem renders a zero-height blank row and makes MUI warn
+                about an out-of-range value. A required field needs no empty choice. */}
+            {!required && (
+              <MenuItem value="">
+                <em>None</em>
+              </MenuItem>
+            )}
             {options.map((o) => (
               <MenuItem key={o.value} value={o.value}>
                 {o.label}

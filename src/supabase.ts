@@ -47,6 +47,9 @@ export type TableWithSoftDelete =
   | 'order_record'
   | 'order_kid';
 
+/** The subset of the above that carries an `is_active` flag. */
+export type TableWithActiveFlag = 'parent' | 'kid' | 'deliverer';
+
 // Helper to bypass strict union checks in generic functions
 
 const from = (table: string) => supabase.from(table) as any;
@@ -94,10 +97,16 @@ export const getAllRecords = async <T extends TableWithSoftDelete>(
   return data as Database['public']['Tables'][T]['Row'][];
 };
 
-export const getTableCount = async (tableName: TableWithSoftDelete) => {
+/**
+ * Counts live, active rows. Narrowed to the tables that actually have `is_active` — the
+ * order tables don't, and this used to be labelled "Active" in the UI while counting
+ * inactive records too.
+ */
+export const getTableCount = async (tableName: TableWithActiveFlag) => {
   const {count, error} = await from(tableName)
     .select('*', {count: 'exact', head: true})
-    .eq('is_deleted', false);
+    .eq('is_deleted', false)
+    .eq('is_active', true);
   if (error) log(error);
   return count || 0;
 };

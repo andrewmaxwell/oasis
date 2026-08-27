@@ -16,8 +16,13 @@ export const useTable = <T extends {id: string}>(
       } else if (eventType === 'INSERT') {
         setData((data) => data && [...data, newRecord as T]);
       } else if (eventType === 'UPDATE') {
+        // A soft delete reaches us as an UPDATE setting is_deleted, not as a DELETE, so
+        // the row has to be dropped here or it stays in the list (and stays eligible to be
+        // snapshotted into a new order).
         setData((data) =>
-          data?.map((row) => (row.id === old.id ? (newRecord as T) : row)),
+          (newRecord as {is_deleted?: boolean}).is_deleted
+            ? data?.filter((row) => row.id !== old.id)
+            : data?.map((row) => (row.id === old.id ? (newRecord as T) : row)),
         );
       }
     });
