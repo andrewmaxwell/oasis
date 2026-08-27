@@ -1,16 +1,11 @@
-import {AppUser} from '../../types.ts';
+import {AppUser, ACCESS_LEVEL_LABELS} from '../../types.ts';
+import {CircularProgress} from '@mui/material';
 import {OasisTable} from '../OasisTable.tsx';
 import {GridColDef} from '@mui/x-data-grid';
 import {anchor, linkButton} from '../cellRenderers.tsx';
-import {useSession} from '../../hooks/useSession.ts';
+import {useSessionState} from '../../hooks/useSession.ts';
 import {useIsAdmin} from '../../hooks/useAccessLevel.ts';
 import {useUserList} from '../../hooks/useUserList.ts';
-
-const accessLevels = {
-  admin: 'Admin',
-  readWrite: 'Read+Write',
-  readOnly: 'Read Only',
-};
 
 const columns: GridColDef<AppUser>[] = [
   {
@@ -29,7 +24,8 @@ const columns: GridColDef<AppUser>[] = [
     field: 'access_level',
     headerName: 'Access Level',
     width: 150,
-    valueGetter: (value) => accessLevels[value] || value,
+    valueGetter: (value: AppUser['access_level']) =>
+      value ? ACCESS_LEVEL_LABELS[value] : '',
   },
   {
     field: 'notes',
@@ -39,9 +35,13 @@ const columns: GridColDef<AppUser>[] = [
 ];
 
 const UserTablePage = () => {
-  const session = useSession();
-  const userList = useUserList(session?.access_token);
+  const {session, loaded} = useSessionState();
   const isAdmin = useIsAdmin();
+  // Only send the token once we believe the caller is an admin; the edge function
+  // rejects everyone else with a 403 anyway.
+  const userList = useUserList(isAdmin ? session?.access_token : undefined);
+
+  if (!loaded) return <CircularProgress />;
 
   if (!isAdmin) return <p>Access Denied</p>;
 

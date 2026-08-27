@@ -1,6 +1,7 @@
 import {useEffect, useState} from 'react';
-import {AppUser} from '../types';
-import {userManagement} from '../supabase';
+import {AppUser} from '../types.ts';
+import {userManagement} from '../supabase.ts';
+import {toAppUser} from '../utils/toAppUser.ts';
 
 export const useUser = (id?: string, accessToken?: string) => {
   const [user, setUser] = useState<Partial<AppUser>>();
@@ -11,14 +12,7 @@ export const useUser = (id?: string, accessToken?: string) => {
       userManagement(accessToken, {
         action: 'getUserById',
         args: [id],
-      }).then(({user}) =>
-        setUser({
-          id: user.id,
-          email: user.email,
-          access_level: '',
-          ...user.user_metadata,
-        }),
-      );
+      }).then(({user}) => setUser(user ? toAppUser(user) : undefined));
     } else {
       Promise.resolve().then(() => setUser({access_level: ''}));
     }

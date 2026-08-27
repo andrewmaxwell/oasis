@@ -121,11 +121,23 @@ export type OrderParentViewRow = {
   }[];
 };
 
+// Keep in sync with ACCESS_LEVELS in supabase/functions/user-management/index.ts
+export const ACCESS_LEVELS = ['readOnly', 'readWrite', 'admin'] as const;
+
+export type AccessLevel = (typeof ACCESS_LEVELS)[number];
+
+export const ACCESS_LEVEL_LABELS: Record<AccessLevel, string> = {
+  readOnly: 'Read Only',
+  readWrite: 'Read+Write',
+  admin: 'Admin',
+};
+
 export type AppUser = {
   id: string;
   name: string;
   email: string;
-  access_level: string;
+  /** Stored in Supabase `app_metadata`, which only the service role can write. */
+  access_level: AccessLevel | '';
   notes: string;
 };
 

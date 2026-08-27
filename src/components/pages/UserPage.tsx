@@ -1,9 +1,14 @@
 import {Box, Button, CircularProgress, Paper, Typography} from '@mui/material';
 import {Link, useNavigate, useParams} from 'react-router-dom';
 import {userManagement} from '../../supabase.ts';
-import {FormField, AppUser} from '../../types.ts';
+import {
+  FormField,
+  AppUser,
+  ACCESS_LEVELS,
+  ACCESS_LEVEL_LABELS,
+} from '../../types.ts';
 import {OasisForm} from '../OasisForm.tsx';
-import {useSession} from '../../hooks/useSession.ts';
+import {useSessionState} from '../../hooks/useSession.ts';
 import {useIsAdmin} from '../../hooks/useAccessLevel.ts';
 import {useUser} from '../../hooks/useUser.ts';
 
@@ -16,86 +21,69 @@ const userFields: FormField<AppUser>[] = [
     required: true,
     width: 4,
     type: 'select',
-    options: [
-      {label: 'Read Only', value: 'readOnly'},
-      {label: 'Read+Write', value: 'readWrite'},
-      {label: 'Admin', value: 'admin'},
-    ],
+    options: ACCESS_LEVELS.map((value) => ({
+      value,
+      label: ACCESS_LEVEL_LABELS[value],
+    })),
   },
   {id: 'notes', label: 'Notes', width: 12, multiline: true},
 ];
 
 const UserPage = () => {
   const {id} = useParams();
-  const session = useSession();
-  const user = useUser(id, session?.access_token);
+  const {session, loaded} = useSessionState();
   const isAdmin = useIsAdmin();
+  const user = useUser(id, isAdmin ? session?.access_token : undefined);
 
   const navigate = useNavigate();
 
-  if (!user) return <CircularProgress />;
+  if (!loaded) return <CircularProgress />;
 
   if (!isAdmin) return <p>Access Denied</p>;
+
+  if (!user) return <CircularProgress />;
 
   const onSubmit = async (formData: Partial<AppUser>) => {
     if (!session?.access_token) return;
 
-    if (formData.id) {
-      await userManagement(session.access_token, {
-        action: 'updateUserById',
-        args: [
-          formData.id,
-          {
-            email: formData.email,
-            user_metadata: {
-              name: formData.name,
-              access_level: formData.access_level,
-              notes: formData.notes,
-            },
-          },
-        ],
-      });
-      navigate(`/users`);
-    } else if (session?.access_token) {
-      await userManagement(session.access_token, {
-        action: 'createUser',
-        args: [
-          {
-            email: formData.email,
-            password: 'abcdefg',
-            user_metadata: {
-              name: formData.name,
-              access_level: formData.access_level,
-              notes: formData.notes,
-            },
-          },
-        ],
-      });
-      await userManagement(session.access_token, {
-        action: 'inviteUserByEmail',
-        args: [formData.email],
-      });
-      navigate(`/users`);
+    // The edge function decides which bucket each field lands in: `access_level` goes to
+    // app_metadata (service-role only), name/notes to user_metadata.
+    const profile = {
+      email: formData.email,
+      name: formData.name,
+      access_level: formData.access_level,
+      notes: formData.notes,
+    };
+
+    const {error} = await userManagement(
+      session.access_token,
+      formData.id
+        ? {action: 'updateUserById', args: [formData.id, profile]}
+        : // Sends an invite email and creates the account with NO password, so it can
+          // only be signed into once the invitee sets one via the link.
+          {action: 'inviteUser', args: [profile]},
+    );
+
+    if (error) {
+      alert(error);
+      return;
     }
+    navigate(`/users`);
   };
 
   const deleteUser = async () => {
     const msg = `Are you sure you want to delete this user? This cannot be undone.`;
     if (!user.id || !session?.access_token || !confirm(msg)) return;
-    await userManagement(session.access_token, {
+    const {error} = await userManagement(session.access_token, {
       action: 'deleteUser',
       args: [user.id],
     });
+    if (error) {
+      alert(error);
+      return;
+    }
     navigate(`/users`);
   };
-
-  // const sendPasswordReset = async () => {
-  //   if (!session?.access_token) return;
-  //   await userManagement(session.access_token, {
-  //     action: 'generateLink',
-  //     args: [{type: 'recovery', email: origData.email}],
-  //   });
-  // };
 
   return (
     <>
@@ -131,8 +119,6 @@ const UserPage = () => {
           <Button color="error" onClick={deleteUser}>
             Delete {user.name}
           </Button>
-
-          {/* <Button onClick={sendPasswordReset}>Send Password Reset</Button> */}
         </Box>
       )}
     </>

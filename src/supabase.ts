@@ -16,6 +16,27 @@ import {
 const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
 const supabaseKey = import.meta.env.VITE_SUPABASE_KEY;
 
+/**
+ * Supabase returns from an invite or password-reset link with
+ * `#access_token=...&type=invite` in the fragment. Read it BEFORE createClient(), because
+ * supabase-js consumes and clears that fragment as soon as the client initializes.
+ *
+ * This matters because invited accounts are created with no password (see the
+ * user-management edge function): if we drop them on the dashboard instead of the password
+ * form, they are signed in now but permanently locked out the moment they sign out.
+ */
+let pendingAuthRedirect = new URLSearchParams(
+  window.location.hash.replace(/^#\/?/, ''),
+).get('type');
+
+/** True once, if this page load came from an invite or recovery link. */
+export const consumePasswordSetupRedirect = () => {
+  const needsSetup =
+    pendingAuthRedirect === 'invite' || pendingAuthRedirect === 'recovery';
+  pendingAuthRedirect = null;
+  return needsSetup;
+};
+
 const supabase = createClient<Database>(supabaseUrl, supabaseKey);
 
 type TableWithId = 'parent' | 'kid' | 'deliverer' | 'order_record';
@@ -191,11 +212,26 @@ export const getDelivererParents = async (delivererId: string) => {
   return data ?? [];
 };
 
+/**
+ * Calls the admin-only user-management edge function. The bearer token is the caller's
+ * session token; the function verifies it and checks app_metadata.access_level === 'admin'
+ * before doing anything. Returns `{error}` on rejection rather than throwing.
+ */
 export const userManagement = async (token: string, payload: object) => {
-  const response = await fetch(supabaseUrl + '/functions/v1/user-management', {
-    method: 'post',
-    headers: {Authorization: `Bearer ${token}`},
-    body: JSON.stringify(payload),
-  });
-  return await response.json();
+  try {
+    const response = await fetch(
+      supabaseUrl + '/functions/v1/user-management',
+      {
+        method: 'post',
+        headers: {
+          Authorization: `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(payload),
+      },
+    );
+    return await response.json();
+  } catch (e) {
+    return {error: (e as Error).message};
+  }
 };
