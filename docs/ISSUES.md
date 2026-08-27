@@ -7,6 +7,8 @@ names the file and line so it can be picked up directly.
 > below and kept for the record. The database migrations and the edge function are **deployed
 > and verified in production**; see [SECURITY-FIX-DEPLOY.md](SECURITY-FIX-DEPLOY.md).
 >
+> **#24 and #32 (navigation) were also fixed on 2026-08-27** — see ROADMAP §1.
+>
 > **All Critical and High security issues are now closed and verified in production.** The
 > only recommended follow-up is rotating the anon key (#6). See
 > [SECURITY-FIX-DEPLOY.md](SECURITY-FIX-DEPLOY.md).
@@ -286,7 +288,14 @@ deprecated in MUI v7 in favor of `slotProps={{inputLabel: {…}}}`. There's also
 
 ## UX
 
-### 24. High — There is no navigation
+### ✅ FIXED — 24. High — There is no navigation
+
+> **Fixed.** [OasisNav.tsx](../src/components/OasisNav.tsx) adds a persistent nav —
+> Dashboard · Families · Kids · Deliverers · Orders, plus Users for admins — rendered as
+> inline AppBar links at `md` and up and as a hamburger `Drawer` below it. The active
+> section is highlighted and carries `aria-current="page"`; detail routes count as their
+> section (`/parent/:id` highlights Families). Breadcrumbs, the other half of ROADMAP §1,
+> are still outstanding.
 
 [OasisToolbar.tsx](../src/components/OasisToolbar.tsx) contains only a logo, a title, and the
 account menu. Reaching Kids from Deliverers means going home first, every time. This is the
@@ -334,7 +343,11 @@ exactly the mobile case. See ROADMAP §3.
 no respect for `prefers-color-scheme`. Dark-only is a real problem for printing and for
 outdoor phone use.
 
-### 32. Low — Toolbar title is a click target but not a button
+### ✅ FIXED — 32. Low — Toolbar title is a click target but not a button
+
+> **Fixed.** The logo and title now sit inside one `<Link to="/">`, so the whole thing is a
+> single keyboard-focusable, screen-reader-visible link. The `onClick`/`useNavigate` pair is
+> gone, and the logo's `alt` is now "Oasis logo" rather than "logo".
 
 [OasisToolbar.tsx:32](../src/components/OasisToolbar.tsx#L32) puts `onClick` on a
 `Typography` — not keyboard focusable, no role, invisible to screen readers. Wrap in the

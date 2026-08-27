@@ -11,9 +11,8 @@ small-team, mobile-heavy, PII-holding non-profit tool.
 
 ## Priority order, if you only do a few things
 
-1. **Fix ISSUES.md #1–#3** (auth). Nothing else matters until the edge function authorizes
-   its callers.
-2. **§1 Navigation.** The cheapest large UX win available.
+1. ~~**Fix ISSUES.md #1–#3** (auth).~~ Done and verified in production.
+2. ~~**§1 Navigation.**~~ Done, except breadcrumbs.
 3. **§2 Error and feedback layer.** Replaces `alert()`/spinner-forever with something users
    can act on.
 4. **§6 Tests on `src/utils/`.** Locks down the diaper-quantity math before refactoring.
@@ -21,17 +20,14 @@ small-team, mobile-heavy, PII-holding non-profit tool.
 
 ---
 
-## 1. Real navigation — S
+## 1. Real navigation — S — ✅ mostly done
 
-**Problem:** the toolbar has no links (ISSUES #24).
+**Done (2026-08-27):** [`OasisNav.tsx`](../src/components/OasisNav.tsx) renders Dashboard · Families · Kids · Deliverers ·
+Orders, plus Users for admins — AppBar buttons at `md` and up, hamburger `Drawer` below.
+Active section highlighted with `aria-current`. Closes ISSUES #24 and #32.
 
-Add a persistent nav to `OasisToolbar`: Dashboard · Families · Kids · Deliverers · Orders,
-plus Users for admins. On desktop, tabs or buttons in the AppBar with the active route
-highlighted; on mobile, a hamburger opening an MUI `Drawer`, or a bottom `BottomNavigation`
-bar (better for one-handed phone use).
-
-Pair it with breadcrumbs — `Families › Amara Okafor › Chidi` — replacing the ad-hoc "Back to
-Parent" buttons on each page, which currently guess wrong when you arrived from the Kids
+**Still open:** breadcrumbs — `Families › Amara Okafor › Chidi` — replacing the ad-hoc "Back
+to Parent" buttons on each page, which currently guess wrong when you arrived from the Kids
 table rather than from a parent.
 
 ## 2. An error, loading, and feedback layer — M
@@ -141,16 +137,19 @@ have:
 - Families with no deliverer assigned; deliverers with no families.
 - Children aging out of diapers this quarter.
 
-Drop the hardcoded hex colors (`#2196f3`, and the `${stat.color}20` alpha-by-string-concat
-hack) in favor of theme palette tokens and `alpha()` — that's what makes a theme switch
-possible in §10.
+~~Drop the hardcoded hex colors (`#2196f3`, and the `${stat.color}20` alpha-by-string-concat
+hack) in favor of theme palette tokens and `alpha()`.~~ ✅ done (2026-08-27) — the stat cards
+now key off `info` / `success` / `warning` and `alpha()`, which is what makes the theme switch
+above possible. The content items in this section are still open.
 
 ## 10. Design system and theming — S
 
 - **Light/dark/system toggle** (ISSUES #31), persisted to `localStorage`. MUI v7's
   `colorSchemes` API handles this cleanly and fixes the print-in-dark-mode problem.
-- **A real theme file** — `src/theme.ts` with palette, typography, shape, and component
-  defaults — instead of one-line `createTheme` in `main.tsx` and per-component `sx` repetition.
+- ~~**A real theme file**~~ — ✅ done (2026-08-27). [`src/theme.ts`](../src/theme.ts) holds
+  palette, typography, shape, and component defaults. Button labels are no longer uppercased,
+  the AppBar is flat with a hairline border, and `CardActionArea` keeps an explicit
+  focus-visible outline. Per-component `sx` repetition is reduced but not gone.
 - **Brand identity.** The favicon is the only branding. A proper logo, color palette, and
   typographic scale would make it feel like the org's tool rather than a scaffold.
 - **Accessibility pass:** keyboard navigation (ISSUES #32), focus-visible rings, contrast

@@ -7,6 +7,7 @@ import {
   TrendingFlat,
 } from '@mui/icons-material';
 import {
+  alpha,
   Box,
   Card,
   CardActionArea,
@@ -24,15 +25,23 @@ type Stat = {
   value: number | null;
   icon: React.ElementType;
   url: string;
-  color: string;
+  /** A palette key, not a hex string — so a theme change carries through (ROADMAP §9). */
+  color: 'info' | 'success' | 'warning';
 };
 
 const StatCard = ({stat}: {stat: Stat}) => (
-  <Card sx={{height: '100%', display: 'flex', flexDirection: 'column'}}>
+  <Card
+    sx={{
+      height: '100%',
+      display: 'flex',
+      flexDirection: 'column',
+      '&:hover .viewAllArrow': {transform: 'translateX(4px)'},
+    }}
+  >
     <CardActionArea
       component={Link}
       to={stat.url}
-      sx={{flexGrow: 1, display: 'flex', flexDirection: 'column', p: 2}}
+      sx={{flexGrow: 1, display: 'flex', flexDirection: 'column', p: 2.5}}
     >
       <Box
         sx={{
@@ -45,33 +54,46 @@ const StatCard = ({stat}: {stat: Stat}) => (
       >
         <Box
           sx={{
-            bgcolor: `${stat.color}20`,
+            bgcolor: (t) => alpha(t.palette[stat.color].main, 0.15),
             p: 1.5,
             borderRadius: '50%',
-            color: stat.color,
+            color: `${stat.color}.main`,
             display: 'flex',
           }}
         >
-          <stat.icon sx={{fontSize: 32}} />
+          <stat.icon sx={{fontSize: 28}} />
         </Box>
         {stat.value === null ? (
           <Skeleton variant="text" width={40} height={60} />
         ) : (
-          <Typography variant="h3" fontWeight="bold" color="text.primary">
+          <Typography
+            variant="h3"
+            fontWeight={700}
+            color="text.primary"
+            sx={{letterSpacing: '-0.03em', lineHeight: 1}}
+          >
             {stat.value}
           </Typography>
         )}
       </Box>
       <Box sx={{alignSelf: 'flex-start'}}>
-        <Typography variant="h6" color="text.secondary" fontWeight={500}>
+        <Typography variant="h6" color="text.primary" fontWeight={600}>
           {stat.label}
         </Typography>
         <Typography
           variant="body2"
-          color="primary"
+          color="text.secondary"
           sx={{display: 'flex', alignItems: 'center', mt: 0.5}}
         >
-          View All <TrendingFlat sx={{ml: 0.5, fontSize: 16}} />
+          View all
+          <TrendingFlat
+            className="viewAllArrow"
+            sx={{
+              ml: 0.5,
+              fontSize: 16,
+              transition: (t) => t.transitions.create('transform'),
+            }}
+          />
         </Typography>
       </Box>
     </CardActionArea>
@@ -89,7 +111,7 @@ const ActionCard = ({
       to={action.url}
       sx={{
         flexGrow: 1,
-        p: 3,
+        p: 2.5,
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'flex-start',
@@ -97,21 +119,21 @@ const ActionCard = ({
     >
       <Box
         sx={{
-          bgcolor: 'primary.main',
-          p: 2,
+          bgcolor: (t) => alpha(t.palette.primary.main, 0.15),
+          p: 1.5,
           borderRadius: '50%',
-          color: 'white',
-          mr: 3,
+          color: 'primary.light',
+          mr: 2,
           display: 'flex',
         }}
       >
-        <action.Icon sx={{fontSize: 40}} />
+        <action.Icon sx={{fontSize: 28}} />
       </Box>
       <Box>
-        <Typography variant="h5" fontWeight="bold" color="text.primary">
+        <Typography variant="h6" fontWeight={600} color="text.primary">
           {action.label}
         </Typography>
-        <Typography variant="body1" color="text.secondary">
+        <Typography variant="body2" color="text.secondary">
           {action.desc}
         </Typography>
       </Box>
@@ -145,21 +167,21 @@ const LandingPage = () => {
       value: counts.parents,
       icon: FamilyRestroom,
       url: '/parents',
-      color: '#2196f3',
+      color: 'info',
     },
     {
       label: 'Active Kids',
       value: counts.kids,
       icon: ChildCare,
       url: '/kids',
-      color: '#4caf50',
+      color: 'success',
     },
     {
       label: 'Active Deliverers',
       value: counts.deliverers,
       icon: LocalShipping,
       url: '/deliverers',
-      color: '#ff9800',
+      color: 'warning',
     },
   ];
 
@@ -183,12 +205,12 @@ const LandingPage = () => {
 
   return (
     <Box sx={{maxWidth: 1200, mx: 'auto', p: {xs: 2, md: 4}}}>
-      <Typography variant="h4" fontWeight="bold" gutterBottom sx={{mb: 4}}>
+      <Typography variant="h4" gutterBottom sx={{mb: 4}}>
         Dashboard
       </Typography>
 
       {/* Stats Section */}
-      <Grid container spacing={3} sx={{mb: 6}}>
+      <Grid container spacing={2.5} sx={{mb: 6}}>
         {stats.map((stat) => (
           <Grid key={stat.label} size={{xs: 12, sm: 6, md: 4}}>
             <StatCard stat={stat} />
@@ -197,12 +219,12 @@ const LandingPage = () => {
       </Grid>
 
       {/* Quick Actions Section */}
-      <Typography variant="h5" fontWeight="bold" gutterBottom sx={{mb: 2}}>
+      <Typography variant="h5" gutterBottom sx={{mb: 2}}>
         Quick Actions
       </Typography>
       <Grid
         container
-        spacing={3}
+        spacing={2.5}
         justifyContent={visibleActions.length === 1 ? 'center' : 'flex-start'}
       >
         {visibleActions.map((action) => (
