@@ -1,200 +1,19 @@
 # Known Issues
 
-Defects found in a review of the codebase on 2026-08-27. Ordered by severity. Each entry
-names the file and line so it can be picked up directly.
+Defects found in a review of the codebase on 2026-08-27, plus what has been fixed since.
+Numbers are stable — other docs cite them, so a closed issue keeps its number in the
+[ledger](#fixed) at the bottom rather than being renumbered away.
 
-> **Issues #1–#4, #15, #19, #20, #38 and part of #36 were fixed on 2026-08-27**, marked ✅
-> below and kept for the record. The database migrations and the edge function are **deployed
-> and verified in production**; see [SECURITY-FIX-DEPLOY.md](SECURITY-FIX-DEPLOY.md).
->
-> **#24 and #32 (navigation) were also fixed on 2026-08-27** — see ROADMAP §1. **#7, #8,
-> #16, #18, #21 and #22 were fixed on 2026-08-27** in a batch of small correctness fixes.
->
-> **#9, #23, #25, #27, #28 and part of #5 were fixed on 2026-08-27** by the error-and-feedback
-> layer built on TanStack Query — see ROADMAP §2 and §11.
->
-> **All Critical and High security issues are now closed and verified in production.** The
-> only recommended follow-up is rotating the anon key (#6). See
-> [SECURITY-FIX-DEPLOY.md](SECURITY-FIX-DEPLOY.md).
+Severity: **Critical** = exploitable or data-corrupting · **High** = wrong behavior users
+will hit · **Medium** = correctness/robustness · **Low** = polish and hygiene.
 
-Legend: **Critical** = exploitable or data-corrupting · **High** = wrong behavior users will
-hit · **Medium** = correctness/robustness · **Low** = polish and hygiene.
+**All Critical and High security issues are closed and verified in production**
+([SECURITY-FIX-DEPLOY.md](SECURITY-FIX-DEPLOY.md)). The only security follow-up is rotating
+the anon key (#6). Enhancements — as opposed to defects — live in [ROADMAP.md](ROADMAP.md).
 
 ---
 
-## Security
-
-### ✅ FIXED — 1. Critical — The user-management edge function never authorizes its caller
-
-> **Fixed.** [index.ts](../supabase/functions/user-management/index.ts) now verifies the
-> bearer token with `auth.getUser(token)`, requires
-> `app_metadata.access_level === 'admin'`, and dispatches through an explicit handler
-> allow-list instead of `auth.admin[action]`. `access_level` was moved from `user_metadata`
-> to `app_metadata` across the app so it can no longer be self-granted.
-
-[supabase/functions/user-management/index.ts:22-42](../supabase/functions/user-management/index.ts#L22-L42)
-
-The function creates a **service-role** Supabase client and then does:
-
-```js
-const {action, args = []} = await req.json();
-const {data, error} = await supabase.auth.admin[action](...args);
-```
-
-The `Authorization` header is forwarded by the client but is **never read, verified, or
-checked for `access_level === 'admin'`**. Supabase's default `verify_jwt` only proves the
-bearer token was signed by this project — and the anon key, which ships in the public
-JavaScript bundle, satisfies exactly that.
-
-Consequence: anyone who opens DevTools on the deployed site can call any method on
-`auth.admin`, including:
-- `listUsers` — dump every account and its metadata
-- `updateUserById` — set their own `user_metadata.access_level` to `admin`, or change any
-  other user's password or email
-- `createUser` / `deleteUser` — create or destroy accounts
-
-This is full application takeover. The `useIsAdmin()` guards in
-[UserTablePage.tsx:46](../src/components/pages/UserTablePage.tsx#L46) and
-[UserPage.tsx:38](../src/components/pages/UserPage.tsx#L38) are cosmetic.
-
-**Fix:**
-1. Extract the bearer token, call `supabase.auth.getUser(token)`, and reject if it fails.
-2. Reject unless that user's `user_metadata.access_level === 'admin'`.
-3. Replace `auth.admin[action]` with an explicit allow-list —
-   `{listUsers, getUserById, createUser, updateUserById, deleteUser, inviteUserByEmail}` —
-   so an attacker can't reach unintended methods via arbitrary property lookup.
-4. Validate `args` shape per action instead of spreading raw JSON.
-5. Move `access_level` out of `user_metadata` (which users can edit themselves) into
-   `app_metadata` or a dedicated `app_user` table, and have RLS read from there.
-
-### ✅ FIXED — 2. Critical — RLS gives every authenticated user full access to all PII
-
-> **Fixed and deployed**, except the dashboard toggle. `scripts/generateTriggersAndPolicies.js`
-> emits per-operation policies: `SELECT` requires `public.app_can_read()`,
-> `INSERT`/`UPDATE`/`DELETE` require `public.app_can_write()`. `public.app_access_level()`
-> reads the JWT's `app_metadata` claim and falls back to `auth.users`, so an account with **no
-> assigned level — i.e. anyone who self-registers — resolves to NULL and can neither read nor
-> write.** Verified in production against live data.
->
-> Public signup was found to be **enabled** on 2026-08-27 (a signup with the public anon key
-> succeeded) and has since been turned off and re-verified (`signup_disabled`, HTTP 422).
-> Note `config.toml` governs local dev only, and `supabase config push` is unsafe here — it
-> would repoint `site_url` at localhost.
-
-`scripts/generateTriggersAndPolicies.js:25-37` emits, for every table:
-
-```sql
-CREATE POLICY access_for_logged_in_users ON <table>
-FOR ALL TO authenticated USING (true) WITH CHECK (true);
-```
-
-Combined with `enable_signup = true` in [supabase/config.toml:83](../supabase/config.toml#L83),
-if public signup is also enabled on the **hosted** project then anyone who registers an
-account can read and modify every refugee family's name, address, phone number, country of
-origin, and estimated income.
-
-**Fix:** confirm signup is disabled in the hosted Supabase dashboard (config.toml only
-governs local dev). Then replace the blanket policy with per-operation policies keyed on the
-server-side access level — `readOnly` gets `SELECT` only, `readWrite` gets write on the
-domain tables, `admin` on everything.
-
-### ✅ FIXED — 3. High — New users are created with the hardcoded password `abcdefg`
-
-> **Fixed.** The `createUser`-with-password call is gone. The new `inviteUser` action
-> creates the account via `inviteUserByEmail` with **no password at all**, so it cannot be
-> signed into until the invitee sets one through the emailed link.
-
-[src/components/pages/UserPage.tsx:65](../src/components/pages/UserPage.tsx#L65)
-
-`createUser` is called with `password: 'abcdefg'` and an invite email is sent afterward. The
-account exists and is signable-into with that known password from the moment it's created —
-anyone who can guess a colleague's email address can sign in as them.
-
-**Fix:** use `inviteUserByEmail` alone (it creates the user), or generate a
-cryptographically random password server-side and never return it.
-
-### ✅ FIXED — 4. Medium — Edge function allows any origin
-
-> **Fixed.** Origins are checked against an allow-list, configurable via the
-> `ALLOWED_ORIGINS` env var and defaulting to the GitHub Pages origin plus localhost.
-
-[supabase/functions/user-management/index.ts:11](../supabase/functions/user-management/index.ts#L11)
-
-`'Access-Control-Allow-Origin': '*'`. Restrict to the GitHub Pages origin and localhost.
-
-### 5. Medium — No password policy — *partly fixed*
-
-[ChangePasswordPage.tsx](../src/components/pages/ChangePasswordPage.tsx) requires only
-a non-empty value matching the confirmation. **Still open:** enforce a minimum length and set
-Supabase's password requirements in the dashboard.
-
-> **Fixed 2026-08-27:** the `autoComplete` half. `OasisTextField` now forwards
-> `autoComplete`, and the sign-in and change-password forms pass `username` /
-> `current-password` / `new-password`, so password managers behave.
-
-### 6. Low — Anon key is in git history
-
-The Supabase URL and anon key were hardcoded in `src/supabase.ts` until commit `298466a`;
-they remain in the history at `081bcdb`. Anon keys are public by design so this is not
-itself a breach, but rotating the key is cheap hygiene — and it matters more than usual here
-because of issue #1, where the anon key is effectively an admin credential.
-
----
-
-## Correctness
-
-### ✅ FIXED — 7. High — Realtime updates don't handle soft deletes
-
-> **Fixed.** The `UPDATE` branch in [useTable.ts](../src/hooks/useTable.ts) now drops the
-> row when `newRecord.is_deleted` is true instead of patching it in place, so a family
-> soft-deleted in another tab leaves the new-order list immediately.
-
-[src/hooks/useTable.ts:18-22](../src/hooks/useTable.ts#L18-L22)
-
-A soft delete is an `UPDATE` setting `is_deleted = true`. The `UPDATE` branch replaces the
-row in place, so deleted records stay in the in-memory list. Since `useTable` feeds
-`useParentsWithAtLeastOneKid` → `NewOrderPage`, a family deleted in another tab can still be
-snapshotted into a new order.
-
-**Fix:** in the `UPDATE` branch, drop the row when `newRecord.is_deleted` is true.
-
-### ✅ FIXED — 8. High — Dashboard counts say "Active" but count inactive records too
-
-> **Fixed.** `getTableCount` now filters `is_active = true` as well as `is_deleted = false`.
-> Its parameter was narrowed from `TableWithSoftDelete` to the new `TableWithActiveFlag`
-> (`parent` | `kid` | `deliverer`), so it can't be called against the order tables, which
-> have no `is_active` column. **The dashboard numbers will drop** — they were previously
-> inflated by inactive records.
-
-[src/supabase.ts:76-82](../src/supabase.ts#L76-L82) filters only on `is_deleted`, but
-[LandingPage.tsx:144,152,160](../src/components/pages/LandingPage.tsx#L142-L164) labels the
-results "Active Families", "Active Kids", "Active Deliverers". The headline numbers on the
-first screen users see are wrong.
-
-**Fix:** add `.eq('is_active', true)` to `getTableCount`, or relabel to "Families" / "Kids" /
-"Deliverers".
-
-### ✅ FIXED — 9. High — All Supabase errors alert, throw, and hang the page
-
-> **Fixed.** `log()` is now `fail()`: it logs and throws, but no longer calls `alert()`.
-> Every read goes through a react-query `useQuery`, so a rejection is caught by the library,
-> retried twice with backoff, and then rendered as `<ErrorState>` — the message plus a Retry
-> button — instead of leaving the page on a spinner. Writes go through `useMutation` and
-> report failure through the error toast. See ROADMAP §2.
-
-[src/supabase.ts:54-58](../src/supabase.ts#L54-L58)
-
-```js
-const log = (error) => { console.error(error); alert(error.message); throw error; };
-```
-
-Because it throws, the `return data` after each `if (error) log(error)` is unreachable, and
-no caller attaches `.catch`. Every failed query is an unhandled promise rejection that
-leaves the page stuck on a spinner behind a native alert box. A dropped connection is
-indistinguishable from a permanent hang.
-
-**Fix:** return a result rather than throwing; surface failures through an MUI Snackbar and
-render an inline error state with a retry action. See ROADMAP §2.
+## Open
 
 ### 10. High — `dataModel.sql` has a syntax error and won't run
 
@@ -210,6 +29,33 @@ render an inline error state with a retry action. See ROADMAP §2.
 
 **Fix:** create `deliverer` first, and group all `DROP` statements at the top in reverse
 dependency order.
+
+### 26. High — Unsaved changes are lost silently
+
+Navigating away from a dirty `OasisForm` discards edits with no prompt. `react-hook-form`
+already exposes `formState.isDirty`; wire it to a router blocker and the existing
+`useConfirm()` dialog.
+
+### 35. High — Thin test coverage — *partly fixed*
+
+> **Fixed 2026-08-27:** Vitest is configured, `npm test` runs in CI, and all of `src/utils/`
+> is covered — 46 tests across the diaper-quantity rules, the order-snapshot consolidation,
+> `getDifference`, `splitEvery`, `groupBy`, `indexBy`, and `toAppUser`.
+
+**Still open:** nothing above `src/utils/` is tested. The TanStack Query data layer, every
+page's loading/error/save path, and `OasisForm`'s validation and dirty-state handling have no
+coverage. See ROADMAP §6.2–§6.4 for the order to add it in — component tests, then a
+Playwright smoke test of the core flow, then view-level SQL assertions.
+
+### 5. Medium — No password policy — *partly fixed*
+
+> **Fixed 2026-08-27:** the `autoComplete` half. `OasisTextField` forwards `autoComplete`,
+> and the sign-in and change-password forms pass `username` / `current-password` /
+> `new-password`, so password managers behave.
+
+**Still open:** [ChangePasswordPage.tsx](../src/components/pages/ChangePasswordPage.tsx)
+requires only a non-empty value matching the confirmation. Enforce a minimum length and set
+Supabase's password requirements in the dashboard.
 
 ### 12. Medium — `parent_order_view` silently hides orders with no kid rows
 
@@ -236,133 +82,15 @@ navigated to it anyway.
 double-counts diapers. Add composite primary keys `(order_id, parent_id)` and
 `(order_id, kid_id)`.
 
-### ✅ FIXED — 15. Medium — Non-admins see an infinite spinner instead of "Access Denied"
-
-> **Fixed.** The `isAdmin` guard now runs before the loading spinner in both `UserPage`
-> and `UserTablePage`, and `UserTablePage` no longer requests the user list at all unless
-> the caller is an admin.
-
-The `!user` spinner returned before the `!isAdmin` check, and `useUser` never resolves for a non-admin.
-Swap the two checks. Same ordering concern in
-[UserTablePage.tsx](../src/components/pages/UserTablePage.tsx#L42-L46), where the user list is
-fetched before the admin check runs.
-
-### ✅ FIXED — 16. Medium — `LabelPage` mutates React state in place
-
-> **Fixed.** [LabelPage.tsx](../src/components/pages/LabelPage.tsx) sorts a copy —
-> `[...orderParents].sort(…)`.
-
-[LabelPage.tsx:62](../src/components/pages/LabelPage.tsx#L62) calls `.sort()` directly on the
-`orderParents` array from state. Copy first: `[...orderParents].sort(…)`, as
-[useOrderRecordWithParents.ts:20](../src/hooks/useOrderRecordWithParents.ts#L20) correctly does.
-
 ### 17. Medium — Deliverer emails are blocked after the first one
 
 [generateEmails.ts:30](../src/components/pages/FinishedOrderPage/generateEmails.ts#L30) opens
-one `mailto:` per deliverer inside a loop. Browsers allow one popup per user gesture, so
-most emails are silently dropped. `mailto:` bodies are also capped around 2000 characters by
-many clients, truncating long delivery lists without warning.
+one `mailto:` per deliverer inside a loop. Browsers allow one popup per user gesture, so most
+emails are silently dropped. `mailto:` bodies are also capped around 2000 characters by many
+clients, truncating long delivery lists without warning.
 
 **Fix:** render the list as a dialog with a per-deliverer "Open email" button and a
 "Copy to clipboard" fallback — or send server-side (ROADMAP §4).
-
-### ✅ FIXED — 18. Medium — Missing birth dates render as an empty red cell
-
-> **Fixed.** `birthDate` in [cellRenderers.tsx](../src/components/cellRenderers.tsx) tests
-> the value for truthiness before the date comparison.
-
-[cellRenderers.tsx:47-60](../src/components/cellRenderers.tsx#L47-L60) —
-`new Date(null)` is the 1970 epoch, so a null birth date always tests as "more than three
-years ago" and renders empty text in error red. Guard for a falsy value first.
-
-### ✅ FIXED — 19. Low — No catch-all route
-
-> **Fixed.** [App.tsx](../src/App.tsx) has a `path: '*'` route rendering a "Page not found"
-> screen with a link home. It also absorbs the moment after an invite redirect when the
-> fragment still holds Supabase's auth params and matches no route.
-
-[App.tsx:28-53](../src/App.tsx#L28-L53) defines no `path: '*'`. A mistyped hash renders a
-blank page. Add a 404 route with a link home.
-
-### ✅ FIXED — 20. Low — Sign-in form flashes on every load
-
-> **Fixed.** `useSession` is now a single shared store (`useSyncExternalStore`) exposing an
-> explicit `loaded` flag, so "logged out" and "not yet known" are distinguishable. This also
-> removed four redundant `getSession()` round-trips and the matching flash in `useCanWrite()`,
-> which previously reported `false` on every mount.
-
-`useSession` initialized to `null`, which `App` read as "logged out".
-
-### ✅ FIXED — 21. Low — `undefined` shown in the parents table subtitle
-
-> **Fixed.** [ParentTablePage.tsx](../src/components/pages/ParentTablePage.tsx) renders an
-> empty subtitle until `parents` has loaded.
-
-[ParentTablePage.tsx:77](../src/components/pages/ParentTablePage.tsx#L77) renders
-`(undefined active parents, undefined kids)` during load. Render the subtitle only once
-`parents` is defined.
-
-### ✅ FIXED — 22. Low — Empty `MenuItem` in every select
-
-> **Fixed.** [OasisSelect.tsx](../src/components/OasisSelect.tsx) renders
-> `<MenuItem value=""><em>None</em></MenuItem>`, and omits it entirely when the field is
-> `required`.
-
-[OasisSelect.tsx:56](../src/components/OasisSelect.tsx#L56) renders `<MenuItem></MenuItem>`
-with no `value`, producing a zero-height blank row and an out-of-range value warning from
-MUI. Use `<MenuItem value=""><em>None</em></MenuItem>`, and omit it entirely when the field
-is `required`.
-
-### 23. Low — Deprecated MUI API — *partly fixed*
-
-> **Fixed 2026-08-27:** `OasisTextField` uses `slotProps={{inputLabel: {shrink: true}}}`
-> instead of the deprecated `InputLabelProps`.
-
-**Still open:** the `@ts-expect-error` in
-[OasisTable.tsx](../src/components/OasisTable.tsx) papering over `QuickFilterControl` prop
-typing.
-
----
-
-## UX
-
-### ✅ FIXED — 24. High — There is no navigation
-
-> **Fixed.** [OasisNav.tsx](../src/components/OasisNav.tsx) adds a persistent nav —
-> Dashboard · Families · Kids · Deliverers · Orders, plus Users for admins — rendered as
-> inline AppBar links at `md` and up and as a hamburger `Drawer` below it. The active
-> section is highlighted and carries `aria-current="page"`; detail routes count as their
-> section (`/parent/:id` highlights Families). Breadcrumbs, the other half of ROADMAP §1,
-> are still outstanding.
-
-[OasisToolbar.tsx](../src/components/OasisToolbar.tsx) contains only a logo, a title, and the
-account menu. Reaching Kids from Deliverers means going home first, every time. This is the
-single biggest usability gap in the app. See ROADMAP §1.
-
-### ✅ FIXED — 25. High — Saving gives no confirmation
-
-> **Fixed.** Every save and delete is a `useMutation` whose `onSuccess` fires a toast —
-> "Family saved", "Order created", "Invitation sent" — and whose `onError` fires an error
-> toast naming what failed. Delete buttons are disabled while the mutation is in flight.
-
-### 26. High — Unsaved changes are lost silently
-
-Navigating away from a dirty `OasisForm` discards edits with no prompt. `react-hook-form`
-already exposes `formState.isDirty`; wire it to a router blocker and a confirmation dialog.
-
-### ✅ FIXED — 27. Medium — Native `alert()` and `confirm()` dialogs
-
-> **Fixed.** Neither `alert()` nor `confirm()` appears anywhere in `src/` any more.
-> `useToast()` ([ToastProvider.tsx](../src/components/ToastProvider.tsx)) covers messages and
-> `useConfirm()` ([ConfirmProvider.tsx](../src/components/ConfirmProvider.tsx)) covers
-> destructive confirmations as a promise-returning MUI `Dialog`.
-
-### ✅ FIXED — 28. Medium — Delete dialogs lie
-
-> **Fixed.** The soft-delete confirmations now say the record is removed from the app and
-> that an administrator can restore it, and note that past orders keep their own copy. The
-> one dialog that still says "cannot be undone" is deleting a *user*, where it's true — that
-> deletes the auth account. The restore UI itself is still ROADMAP §5.
 
 ### 29. Medium — Links in tables are unstyled browser defaults
 
@@ -379,20 +107,50 @@ exactly the mobile case. See ROADMAP §3.
 
 ### 31. Medium — Dark mode is forced
 
-`* {color-scheme: dark}` in [index.html](../index.html) and a hardcoded
-`createTheme({palette: {mode: 'dark'}})` in [main.tsx:6](../src/main.tsx#L6). No light mode,
-no respect for `prefers-color-scheme`. Dark-only is a real problem for printing and for
-outdoor phone use.
+`* {color-scheme: dark}` in [index.html](../index.html) and a hardcoded dark palette in
+[src/theme.ts](../src/theme.ts). No light mode, no respect for `prefers-color-scheme`.
+Dark-only is a real problem for printing and for outdoor phone use. See ROADMAP §10.
 
-### ✅ FIXED — 32. Low — Toolbar title is a click target but not a button
+### 37. Medium — Database types are hand-written and will drift
 
-> **Fixed.** The logo and title now sit inside one `<Link to="/">`, so the whole thing is a
-> single keyboard-focusable, screen-reader-visible link. The `onClick`/`useNavigate` pair is
-> gone, and the logo's `alt` is now "Oasis logo" rather than "logo".
+[types.ts](../src/types.ts) is maintained by hand, `from()` in
+[supabase.ts:52](../src/supabase.ts#L52) casts to `any`, and call sites use `as unknown as X`.
+TypeScript cannot catch a schema mismatch anywhere in the app. Generate types with
+`supabase gen types typescript` and drop the casts.
 
-[OasisToolbar.tsx:32](../src/components/OasisToolbar.tsx#L32) puts `onClick` on a
-`Typography` — not keyboard focusable, no role, invisible to screen readers. Wrap in the
-same `<Link>` the logo uses.
+### 44. Medium — `react-router` has open high-severity advisories
+
+Pinned at 7.13.0; the advisories cover `6.0.0 – 7.18.1` and are fixed in **7.18.2**.
+
+Practical exposure here is essentially nil — every advisory targets a server-side vector
+(turbo-stream deserialization, prerendered redirect HTML, the `__manifest` endpoint,
+single-fetch reflected input), and this app is a client-only SPA on GitHub Pages using
+`createHashRouter` with no loaders, actions, SSR, or RSC. `npm audit` will keep flagging it
+regardless. Everything else `npm audit` reports (babel, eslint, vite, rollup, esbuild,
+postcss, ws) is build-chain only and not shipped to users.
+
+Do it as its own change, and click through the app before merging — sign in, each table page,
+a detail page, label printing, the invite redirect — because there is still no browser test
+to catch a routing regression (#35).
+
+```bash
+npm i react-router-dom@^7.18.2 && npm run lint && npm run typecheck && npm test && npm run build
+```
+
+### 23. Low — Deprecated MUI API — *partly fixed*
+
+> **Fixed 2026-08-27:** `OasisTextField` uses `slotProps={{inputLabel: {shrink: true}}}`
+> instead of the deprecated `InputLabelProps`.
+
+**Still open:** the `@ts-expect-error` in
+[OasisTable.tsx](../src/components/OasisTable.tsx) papering over `QuickFilterControl` prop
+typing.
+
+### 6. Low — Anon key is in git history
+
+The Supabase URL and anon key were hardcoded in `src/supabase.ts` until commit `298466a`;
+they remain in the history at `081bcdb`. Anon keys are public by design so this is not itself
+a breach, but rotating the key is cheap hygiene.
 
 ### 33. Low — Table toolbar lost its standard controls
 
@@ -406,72 +164,17 @@ CSV export in particular is something this kind of org asks for constantly.
 [generateEmails.ts:24](../src/components/pages/FinishedOrderPage/generateEmails.ts#L24). Move
 to config or an org-settings row so it survives staff turnover.
 
----
-
-## Infrastructure & maintainability
-
-### 35. High — No tests at all
-
-No test runner, no test files. `src/utils/` is pure and trivially testable — `calcDiaperSizes`,
-`consolidateOrderKids`, `getDifference`, `splitEvery`, `groupBy` — and encodes the domain
-rules that matter most. See ROADMAP §6.
-
-This got more urgent on 2026-08-27: the data layer moved to TanStack Query and every page's
-loading, error, and save path was rewritten with no automated coverage behind it.
-
-### ✅ FIXED — 36. Medium — CI uses `npm install` and outdated actions
-
-> **Mostly fixed.** CI now runs `npm ci`, lint, `typecheck`, and `check:functions`, and the
-> actions are current. Still outstanding: no test step, because there are no tests (#35).
-
-[.github/workflows/main.yml](../.github/workflows/main.yml): `npm install` ignores the
-lockfile — use `npm ci`. `actions/setup-node@v3` and `actions/configure-pages@v3` are behind.
-There is no lint step; `npm run build` does run `tsc`, but ESLint never runs in CI.
-
-### 37. Medium — Database types are hand-written and will drift
-
-[types.ts](../src/types.ts) is maintained by hand, `from()` in
-[supabase.ts:52](../src/supabase.ts#L52) casts to `any`, and call sites use `as unknown as X`.
-TypeScript cannot catch a schema mismatch anywhere in the app. Generate types with
-`supabase gen types typescript` and drop the casts.
-
-### 38. Medium — No migration system
-
-`dataModel.sql` is applied by hand and contains `DROP TABLE … CASCADE`, so running it against
-production destroys data. Triggers, policies, and grants live separately in a script whose
-output must be pasted in. Adopt `supabase/migrations/`.
-
-### 44. Medium — `react-router` has open high-severity advisories
-
-`react-router` / `react-router-dom` are pinned at 7.13.0; the advisories cover `6.0.0 –
-7.18.1` and are fixed in **7.18.2**.
-
-Practical exposure here is essentially nil — every advisory targets a server-side vector
-(turbo-stream deserialization, prerendered redirect HTML, the `__manifest` endpoint,
-single-fetch reflected input), and this app is a client-only SPA on GitHub Pages using
-`createHashRouter` with no loaders, actions, SSR, or RSC. `npm audit` will keep flagging it
-regardless.
-
-Deliberately **not** bundled with the 2026-08-27 security work: it is a five-minor-version
-bump to the routing layer, and there is no browser test in this repo to verify routing still
-works afterwards (#35). Do it as its own change, and click through the app before merging:
-sign in, each table page, a detail page, label printing, and the invite redirect.
-
-```bash
-npm i react-router-dom@^7.18.2 && npm run lint && npm run typecheck && npm run build
-```
-
-Everything else `npm audit` reports (babel, eslint, vite, rollup, esbuild, postcss, ws) is
-build-chain only and not shipped to users.
-
 ### 39. Low — No `.env.example`
 
 The template exists only in the README. Commit `.env.example` so `cp .env.example .env` works.
 
-### 40. Low — Missing developer scripts and version pinning
+### 40. Low — Missing developer scripts and version pinning — *partly fixed*
 
-No `typecheck`, `format`, or `test` script. No `engines` field or `.nvmrc`; the README says
-Node 20+ while CI uses 22. `package.json` version is still `0.0.0`.
+> **Fixed 2026-08-27:** `typecheck`, `check:functions`, `test`, and `test:watch` scripts now
+> exist and all but `test:watch` run in CI.
+
+**Still open:** no `format` script, no `engines` field or `.nvmrc` (the README says Node 20+
+while CI uses 22), and `package.json` version is still `0.0.0`.
 
 ### 41. Low — `supabase/seed.sql` is empty
 
@@ -488,4 +191,55 @@ but the views join across all of them.
 
 `created_at` / `modified_at` exist but not `created_by` / `modified_by`. For an application
 holding refugee family PII with several shared-access users, knowing who changed what has
-real operational and compliance value.
+real operational and compliance value. See ROADMAP §5.
+
+---
+
+## Fixed
+
+All fixed 2026-08-27. The security work is deployed and verified in production —
+see [SECURITY-FIX-DEPLOY.md](SECURITY-FIX-DEPLOY.md).
+
+### Security
+
+| # | Sev | Issue | Fix |
+| --- | --- | --- | --- |
+| 1 | Critical | The user-management edge function never authorized its caller, so anyone with the public anon key could call any `auth.admin` method — full application takeover | Verifies the bearer token with `auth.getUser(token)`, requires `app_metadata.access_level === 'admin'`, and dispatches through an explicit handler allow-list instead of `auth.admin[action]` |
+| 2 | Critical | One blanket `FOR ALL … USING (true)` RLS policy per table gave every authenticated account full read/write on all PII, and public signup turned out to be enabled | Per-operation policies from `scripts/generateTriggersAndPolicies.js`: `SELECT` needs `app_can_read()`, writes need `app_can_write()`. `app_access_level()` reads the JWT claim and falls back to `auth.users`, so an account with no assigned level gets nothing. Signup disabled and re-verified (HTTP 422) |
+| 3 | High | New users were created with the hardcoded password `abcdefg` and were signable-into immediately | `inviteUserByEmail` creates the account with no password at all |
+| 4 | Medium | Edge function sent `Access-Control-Allow-Origin: *` | Origin allow-list via the `ALLOWED_ORIGINS` env var |
+
+`access_level` moved from `user_metadata` (self-writable) to `app_metadata` across the whole
+app as part of #1 — see the warning in [CLAUDE.md](../CLAUDE.md) §4.
+
+### Correctness
+
+| # | Sev | Issue | Fix |
+| --- | --- | --- | --- |
+| 7 | High | Realtime `UPDATE` patched soft-deleted rows in place, so a deleted family could still be snapshotted into a new order | `useTable` drops the row when `newRecord.is_deleted` is true |
+| 8 | High | Dashboard counted inactive records under "Active" labels | `getTableCount` filters `is_active`, and its parameter narrowed to `TableWithActiveFlag` so it can't be called on the order tables |
+| 9 | High | Every Supabase error called `alert()`, threw, and left the page on a spinner | `fail()` logs and throws; react-query retries twice then renders `<ErrorState>` with Retry. See ROADMAP §2 |
+| 15 | Medium | Non-admins got an infinite spinner instead of "Access Denied" | Admin guard runs before the loading check, and the user list isn't requested at all for non-admins |
+| 16 | Medium | `LabelPage` called `.sort()` on state in place | Sorts a copy |
+| 18 | Medium | Null birth dates rendered as an empty cell in error red (`new Date(null)` is 1970) | Truthiness check before the date comparison |
+| 19 | Low | No catch-all route — a mistyped hash rendered blank | `path: '*'` renders "Page not found"; also absorbs the post-invite fragment |
+| 20 | Low | Sign-in form flashed on every load | `useSession` is one shared store with an explicit `loaded` flag; also removed four redundant `getSession()` round-trips |
+| 21 | Low | `(undefined active parents, undefined kids)` during load | Subtitle renders only once `parents` is defined |
+| 22 | Low | Empty `MenuItem` in every select | `<MenuItem value=""><em>None</em></MenuItem>`, omitted when the field is `required` |
+
+### UX
+
+| # | Sev | Issue | Fix |
+| --- | --- | --- | --- |
+| 24 | High | No navigation — reaching Kids from Deliverers meant going home first | [OasisNav.tsx](../src/components/OasisNav.tsx): AppBar links at `md`+, hamburger `Drawer` below, active section carries `aria-current`. Breadcrumbs still open — ROADMAP §1 |
+| 25 | High | Saving gave no confirmation | Every mutation toasts on success and on failure; delete buttons disable while in flight |
+| 27 | Medium | Native `alert()` and `confirm()` | `useToast()` and promise-based `useConfirm()`; neither native call appears in `src/` any more |
+| 28 | Medium | Delete dialogs claimed a soft delete "cannot be undone" | Copy says an administrator can restore it. The user-delete dialog still says it, where it's true. Restore UI is ROADMAP §5 |
+| 32 | Low | Toolbar title was an `onClick` on a `Typography` — not focusable, invisible to screen readers | Logo and title sit inside one `<Link to="/">` |
+
+### Infrastructure
+
+| # | Sev | Issue | Fix |
+| --- | --- | --- | --- |
+| 36 | Medium | CI used `npm install` and outdated actions, and never ran ESLint | `npm ci` plus lint, typecheck, test, and `check:functions` steps on current actions |
+| 38 | Medium | No migration system; `dataModel.sql` was applied by hand and contains `DROP TABLE … CASCADE` | Schema changes go through `supabase/migrations/` and `npx supabase db push` |

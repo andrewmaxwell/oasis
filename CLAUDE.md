@@ -57,7 +57,7 @@ src/
     Oasis*.tsx             The shared design-system layer (Form, Table, TextField, Select, Switch)
     cellRenderers.tsx      DataGrid cell renderers (links, chips, map/tel/mailto anchors)
     pages/                 One file per route; each default-exports its page component
-  utils/                   Pure functions only, individually testable
+  utils/                   Pure functions only; each has a colocated *.test.ts
 supabase/
   functions/user-management/index.ts   Deno edge fn wrapping supabase.auth.admin.*
 dataModel.sql              Schema + views (hand-applied; NOT a migration system)
@@ -212,15 +212,23 @@ npm run lint       # eslint .
 ```bash
 npm run typecheck        # tsc --noEmit
 npm run check:functions  # deno check on supabase/functions — see below
+npm test                 # vitest run
+npm run test:watch       # vitest, watching
 ```
 
 **`npm run check:functions` is not optional.** `tsconfig.json` scopes to `["src"]`, so the
 Deno edge function is invisible to `tsc`, and ESLint's `no-undef` is off for TypeScript. An
 undefined identifier in that file will otherwise build, lint, and deploy cleanly and only
-fail at runtime. CI runs all four checks.
+fail at runtime.
 
-No test runner is configured. Lint, typecheck, functions check, and build all pass clean —
-keep them that way.
+CI runs lint, typecheck, test, `check:functions`, and build. All five pass clean — keep them
+that way.
+
+**Tests.** Vitest, no jsdom, no setup file. Tests are `*.test.ts` next to the module they
+cover, and today they cover `src/utils/` only — the pure functions, where the diaper-quantity
+rules live. `tsconfig.json` includes them, so `npm run typecheck` type-checks the tests too.
+Anything above `src/utils/` (hooks, pages, `OasisForm`) is untested; adding component tests
+means adding `jsdom` and RTL first — see ROADMAP §6.
 
 Environment: copy the template in the README into `.env`:
 ```
@@ -285,6 +293,8 @@ editing — see [.vscode/extensions.json](.vscode/extensions.json)).
   `src/hooks/`. Writes are a `useMutation` in the page, with a success toast and an
   `invalidateQueries` for every key the write affects.
 - Never reintroduce `alert()` or `confirm()`; use `useToast()` / `useConfirm()`.
+- A new file in `src/utils/` gets a colocated `*.test.ts`. They are pure functions with no
+  setup cost, and they encode the rules that cost the org money when wrong.
 - If you change the schema, update **all four**: `dataModel.sql`, `src/types.ts`, the view
   definitions that touch the column, and `scripts/generateTriggersAndPolicies.js`.
 - Don't add a dependency without saying why in the PR — the tree is deliberately small.

@@ -35,6 +35,8 @@ jobs:
         run: npm run lint
       - name: Typecheck
         run: npm run typecheck
+      - name: Test
+        run: npm test
       - name: Set up Deno
         uses: denoland/setup-deno@v2
         with:
