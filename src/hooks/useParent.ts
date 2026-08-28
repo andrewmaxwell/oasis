@@ -14,7 +14,6 @@ const getParent = async (parentId: string) => {
   parent.kid = kids.sort((a, b) =>
     (b.birth_date ?? '').localeCompare(a.birth_date ?? ''),
   );
-  parent.deliverer_id = parent.deliverer_id || '';
   return parent;
 };
 

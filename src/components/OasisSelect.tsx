@@ -54,6 +54,13 @@ export const OasisSelect = <T extends FieldValues>({
             error={!!error}
             disabled={disabled}
             {...field}
+            // A record loaded from Postgres has `null` for an unset column, and a blank
+            // record omits the key entirely; either one makes MUI warn about an
+            // out-of-range value and log on every render. '' is the one value MUI treats
+            // as "nothing selected" rather than as a missing option. Coerced here at
+            // render only, so react-hook-form's own value — and therefore the dirty check
+            // and `getDifference` — is untouched.
+            value={field.value ?? ''}
           >
             {/* A valueless MenuItem renders a zero-height blank row and makes MUI warn
                 about an out-of-range value. A required field needs no empty choice. */}

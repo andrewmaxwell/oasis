@@ -208,6 +208,48 @@ describe('OasisForm', () => {
         expect(screen.getAllByRole('option')).toHaveLength(1),
       );
     });
+
+    /**
+     * MUI logs "You have provided an out-of-range value" on every render when a Select's
+     * value matches no option. A record loaded from Postgres has `null` for an unset
+     * column and a blank record omits the key, so both hit it — that used to be papered
+     * over per-field (`deliverer_id || ''` in useParent) rather than fixed in OasisSelect.
+     */
+    it.each([
+      ['undefined', undefined],
+      ['null', null],
+    ])(
+      'renders an unset value (%s) without MUI warning',
+      async (_label, value) => {
+        const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
+        const error = vi.spyOn(console, 'error').mockImplementation(() => {});
+
+        renderForm<TestRecord>({
+          fields: [
+            {
+              id: 'deliverer_id',
+              label: 'Deliverer',
+              type: 'select',
+              options: [{value: 'a', label: 'Ana'}],
+            },
+          ],
+          origData: {deliverer_id: value} as Partial<TestRecord>,
+        });
+
+        const select = await screen.findByRole('combobox', {name: 'Deliverer'});
+        // MUI renders a zero-width-space placeholder, so "empty" means no option label.
+        expect(select).not.toHaveTextContent('Ana');
+        for (const spy of [warn, error]) {
+          expect(
+            spy.mock.calls
+              .map(String)
+              .filter((c) => c.includes('out-of-range')),
+          ).toEqual([]);
+        }
+        warn.mockRestore();
+        error.mockRestore();
+      },
+    );
   });
 
   describe('the unsaved-changes prompt (ISSUES #26)', () => {
