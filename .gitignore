@@ -26,3 +26,9 @@ scripts/prodData.txt
 scripts/temp.sql
 scripts/prodDeliverers.txt
 .env
+
+# Playwright
+/test-results/
+/playwright-report/
+/blob-report/
+/playwright/.cache/

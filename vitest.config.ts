@@ -18,6 +18,9 @@ export default mergeConfig(
       // its `afterEach(cleanup)` only when the globals are present. Tests still import
       // `describe`/`it`/`expect` explicitly, so no ambient types are needed.
       globals: true,
+      // The Playwright suite lives in e2e/ and matches Vitest's default spec glob. It
+      // needs a browser and a dev server, so it must not be swept into `npm test`.
+      exclude: ['e2e/**', 'node_modules/**', 'dist/**'],
     },
   }),
 );

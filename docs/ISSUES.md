@@ -25,8 +25,15 @@ the anon key (#6). Enhancements — as opposed to defects — live in [ROADMAP.m
 > rendering, required-field validation, the dirty/submitting Save button, `OptionSource`
 > cache sharing, and every branch of the unsaved-changes blocker (#26). 64 tests total.
 
-**Still open:** the TanStack Query data layer and every page's loading/error/save path. See
-ROADMAP §6.3–§6.4 — a Playwright smoke test of the core flow, then view-level SQL assertions.
+> **Fixed 2026-08-28:** a Playwright smoke test ([e2e/smoke.spec.ts](../e2e/smoke.spec.ts))
+> walks sign-in → add a family → add a child → create the order → verify the frozen totals,
+> against a Supabase mock at the network boundary. It runs in CI with no Docker and no
+> credentials. Verified by mutation: changing a diaper quantity and breaking a route each
+> fail it.
+
+**Still open:** the TanStack Query data layer and each page's loading/error branches have no
+unit tests, and the E2E mock reimplements the SQL views in TypeScript, so nothing yet guards
+the real view semantics — ROADMAP §6.4.
 
 ### 5. Medium — No password policy — *partly fixed*
 
@@ -93,9 +100,10 @@ single-fetch reflected input), and this app is a client-only SPA on GitHub Pages
 regardless. Everything else `npm audit` reports (babel, eslint, vite, rollup, esbuild,
 postcss, ws) is build-chain only and not shipped to users.
 
-Do it as its own change, and click through the app before merging — sign in, each table page,
-a detail page, label printing, the invite redirect — because there is still no browser test
-to catch a routing regression (#35).
+**Now unblocked:** the smoke test added under #35 covers sign-in, three table pages, two
+detail pages, and the order flow, and it fails on a broken route (verified by mutation). Do
+the bump as its own change and run `npm run test:e2e`; still click through label printing and
+the invite redirect by hand, which the suite does not reach.
 
 ```bash
 npm i react-router-dom@^7.18.2 && npm run lint && npm run typecheck && npm test && npm run build

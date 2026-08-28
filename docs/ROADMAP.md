@@ -9,11 +9,9 @@ small-team, mobile-heavy, PII-holding non-profit tool.
 
 1. **§3 Mobile**, starting with the deliverer view. The delivery-day use case — the one a
    volunteer has in a car, mid-route — is the only major workflow the app doesn't support.
-2. **§6.3 Playwright smoke test.** `OasisForm` is covered now; the core flow end-to-end is
-   not, and ISSUES #44 (the `react-router` advisories) is waiting on exactly this before the
-   bump can be made safely.
-3. **§5 Restore and undo.** Soft-deleted records are invisible in the app today, so a
+2. **§5 Restore and undo.** Soft-deleted records are invisible in the app today, so a
    misclick needs a developer with SQL access.
+3. **ISSUES #44**, the `react-router` bump — unblocked now that §6.3 has landed.
 
 ## Done
 
@@ -36,6 +34,12 @@ small-team, mobile-heavy, PII-holding non-profit tool.
   router / confirm / query providers the form needs, and 18 tests over validation, the Save
   button's dirty and submitting states, `OptionSource` cache sharing, and the
   unsaved-changes blocker. Filed ISSUES #45 along the way. *§6.3 and §6.4 still open.*
+- **§6.3 Playwright smoke test** (2026-08-28) — [`e2e/`](../e2e/smoke.spec.ts): sign in →
+  add a family → add a child → create the order → verify the frozen totals, across five
+  routes. Supabase is mocked at the network boundary
+  ([`supabaseMock.ts`](../e2e/fixtures/supabaseMock.ts)), so it needs no Docker, no test
+  project, and no secrets, and runs the same locally and in CI. Unblocks ISSUES #44.
+  *§6.4 still open — and more valuable now, since the mock does not run the real views.*
 - **§10 A real theme file** (2026-08-27) — [`src/theme.ts`](../src/theme.ts) holds palette,
   typography, shape, and component defaults; `LandingPage`'s stat cards key off palette
   tokens and `alpha()` rather than hardcoded hex. *Light mode is still open — see §10.*
@@ -90,11 +94,10 @@ preview-before-send dialog. Optionally attach the label PDF (§7).
 `src/utils/` (46 tests) and `OasisForm` (18 tests) are covered — 64 in all. The RTL harness
 is in place now, so a new component test is a file, not a project. Remaining, in value order:
 
-3. **Playwright smoke test.** Sign in → create a family → add a kid → create an order →
-   verify the totals. This one test would catch most regressions in the core flow, and would
-   unblock the `react-router` bump (ISSUES #44).
 4. **`pgTAP` or plain SQL assertions** on the views. The `LEFT JOIN` semantics that caused
-   ISSUES #12 are fixed but unguarded — nothing would catch the same mistake in the next view.
+   ISSUES #12 are fixed but unguarded — nothing would catch the same mistake in the next
+   view, and the E2E suite reimplements the views in TypeScript rather than running them.
+   This is the gap that mock leaves open, and it is now the most valuable test work left.
 
 ## 7. Better operational output — M
 

@@ -224,6 +224,7 @@ npm run check:functions  # deno check on supabase/functions — see below
 npm test                 # vitest run
 npm run test:watch       # vitest, watching
 npm run format           # prettier --write over **/*.{ts,tsx,js}
+npm run test:e2e         # playwright, the browser smoke test
 ```
 
 **`npm run check:functions` is not optional.** `tsconfig.json` scopes to `["src"]`, so the
@@ -231,8 +232,8 @@ Deno edge function is invisible to `tsc`, and ESLint's `no-undef` is off for Typ
 undefined identifier in that file will otherwise build, lint, and deploy cleanly and only
 fail at runtime.
 
-CI runs lint, typecheck, test, `check:functions`, and build. All five pass clean — keep them
-that way.
+CI runs lint, typecheck, test, `test:e2e`, `check:functions`, and build. All six pass clean
+— keep them that way.
 
 **Tests.** Vitest. [vitest.config.ts](vitest.config.ts) merges the Vite config and adds
 `jsdom`, `globals: true` (React Testing Library registers its auto-cleanup only when the
@@ -243,8 +244,31 @@ components — and `tsconfig.json` includes them, so `npm run typecheck` covers 
 Covered today: all of `src/utils/`, plus `OasisForm`. Component tests mount via `renderForm`
 in [src/test/renderForm.tsx](src/test/renderForm.tsx), which supplies the providers the form
 reaches for. Note it must be a **data** router (`createMemoryRouter`) — plain `MemoryRouter`
-has no `useBlocker` and `useUnsavedChangesPrompt` will throw. Pages and hooks are still
-untested — see ROADMAP §6.3.
+has no `useBlocker` and `useUnsavedChangesPrompt` will throw.
+
+**E2E.** Playwright, in [e2e/](e2e/), run separately with `npm run test:e2e` — Vitest
+excludes `e2e/**` so `npm test` stays fast and browserless.
+[smoke.spec.ts](e2e/smoke.spec.ts) walks the core flow: sign in → add a family → add a
+child → create the order → check the frozen totals.
+
+Supabase is **mocked at the network boundary**, not run locally: no Docker, no test
+project, no credentials, identical on a laptop and in CI.
+[e2e/fixtures/database.ts](e2e/fixtures/database.ts) holds the rows and reimplements the SQL
+views in TypeScript; [supabaseMock.ts](e2e/fixtures/supabaseMock.ts) answers the PostgREST
+subset the app uses (`select=*`, `col=eq.value`, `count=exact` HEAD, `return=representation`
+inserts) and throws on anything outside it, because a mock that silently answers a query it
+does not understand is worse than none. Two consequences worth knowing:
+
+- **It tests the app, not the SQL.** If a view definition in `dataModel.sql` changes, update
+  `views` in `database.ts` to match or the suite stays green while production breaks. Real
+  view and RLS coverage is still ROADMAP §6.4.
+- **It must never reach a real database.** The dev server runs on port 5174 in `e2e` mode so
+  it loads `.env.e2e`'s placeholders instead of your `.env`, `reuseExistingServer` is off so
+  it cannot latch onto a hand-started `npm run dev`, and a lowest-priority catch-all route
+  fails the test on any unmocked external request. That guard caught a live request to the
+  production project the first time the suite ran; don't remove it.
+
+Pages and hooks still have no unit tests — see ROADMAP §6.
 
 Environment: `cp .env.example .env` and fill in `VITE_SUPABASE_URL` and
 `VITE_SUPABASE_KEY` (anon/public key ONLY, never the service role key).
