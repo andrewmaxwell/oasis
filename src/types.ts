@@ -25,6 +25,7 @@ export type Kid = {
   is_active: boolean;
   created_at: string;
   modified_at: string;
+  is_deleted: boolean;
   notes?: string;
 };
 
@@ -36,6 +37,7 @@ export type Deliverer = {
   is_active: boolean;
   created_at: string;
   modified_at: string;
+  is_deleted: boolean;
   notes?: string;
 };
 
@@ -52,6 +54,7 @@ export type Parent = {
   is_active: boolean;
   created_at: string;
   modified_at: string;
+  is_deleted: boolean;
   kid: Kid[];
   deliverer_id: string;
   notes?: string;
@@ -63,6 +66,7 @@ export type OrderRecord = {
   date_of_pickup: string;
   created_at: string;
   modified_at: string;
+  is_deleted: boolean;
   notes?: string;
 };
 
@@ -114,6 +118,7 @@ export type OrderKidViewRow = {
 };
 
 export type OrderParentViewRow = {
+  order_id: string;
   parent_id: string;
   parent_name: string;
   address: string;
@@ -152,6 +157,7 @@ export type AppUser = {
 
 export type KidOrderRow = {
   id: string;
+  kid_id: string;
   date_of_order: string;
   diaper_size: DiaperSize;
   diaper_quantity: string;
@@ -160,6 +166,7 @@ export type KidOrderRow = {
 
 export type ParentOrderRow = {
   id: string;
+  parent_id: string;
   date_of_order: string;
   order_notes: string | null;
   deliverer_id: string;
@@ -176,54 +183,84 @@ export type Database = {
     Tables: {
       parent: {
         Row: Parent;
-        Insert: Omit<Parent, 'id' | 'created_at' | 'modified_at'>;
-        Update: Partial<Omit<Parent, 'id' | 'created_at' | 'modified_at'>>;
+        Insert: Omit<
+          Parent,
+          'id' | 'created_at' | 'modified_at' | 'is_deleted'
+        >;
+        Update: Partial<
+          Omit<Parent, 'id' | 'created_at' | 'modified_at' | 'is_deleted'>
+        >;
+        Relationships: [];
       };
       kid: {
         Row: Kid;
-        Insert: Omit<Kid, 'id' | 'created_at' | 'modified_at'>;
-        Update: Partial<Omit<Kid, 'id' | 'created_at' | 'modified_at'>>;
+        Insert: Omit<Kid, 'id' | 'created_at' | 'modified_at' | 'is_deleted'>;
+        Update: Partial<
+          Omit<Kid, 'id' | 'created_at' | 'modified_at' | 'is_deleted'>
+        >;
+        Relationships: [];
       };
       deliverer: {
         Row: Deliverer;
-        Insert: Omit<Deliverer, 'id' | 'created_at' | 'modified_at'>;
-        Update: Partial<Omit<Deliverer, 'id' | 'created_at' | 'modified_at'>>;
+        Insert: Omit<
+          Deliverer,
+          'id' | 'created_at' | 'modified_at' | 'is_deleted'
+        >;
+        Update: Partial<
+          Omit<Deliverer, 'id' | 'created_at' | 'modified_at' | 'is_deleted'>
+        >;
+        Relationships: [];
       };
       order_record: {
         Row: OrderRecord;
-        Insert: Omit<OrderRecord, 'id' | 'created_at' | 'modified_at'>;
-        Update: Partial<Omit<OrderRecord, 'id' | 'created_at' | 'modified_at'>>;
+        Insert: Omit<
+          OrderRecord,
+          'id' | 'created_at' | 'modified_at' | 'is_deleted'
+        >;
+        Update: Partial<
+          Omit<OrderRecord, 'id' | 'created_at' | 'modified_at' | 'is_deleted'>
+        >;
+        Relationships: [];
       };
       order_parent: {
         Row: OrderParent;
         Insert: OrderParent;
         Update: Partial<OrderParent>;
+        Relationships: [];
       };
       order_kid: {
         Row: OrderKid;
         Insert: Omit<OrderKid, 'is_deleted'>;
         Update: Partial<OrderKid>;
+        Relationships: [];
       };
     };
     Views: {
       finished_order_view: {
         Row: OrderParentViewRow;
+        Relationships: [];
       };
       kid_order_view: {
         Row: KidOrderRow;
+        Relationships: [];
       };
       parent_order_view: {
         Row: ParentOrderRow;
+        Relationships: [];
       };
       parent_view: {
         Row: Parent & {deliverer_name: string; diaper_sizes: string[]}; // Approximate
+        Relationships: [];
       };
     };
     Functions: {
       /** The transactional order snapshot — see `createOrder` in supabase.ts. */
       create_order: {
         Args: {
-          order_data: Omit<OrderRecord, 'id' | 'created_at' | 'modified_at'>;
+          order_data: Omit<
+            OrderRecord,
+            'id' | 'created_at' | 'modified_at' | 'is_deleted'
+          >;
           parents: Omit<OrderParent, 'order_id'>[];
           kids: Omit<OrderKid, 'order_id' | 'is_deleted'>[];
         };

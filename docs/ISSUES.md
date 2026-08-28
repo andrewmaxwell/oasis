@@ -61,12 +61,22 @@ clients, truncating long delivery lists without warning.
 [src/theme.ts](../src/theme.ts). No light mode, no respect for `prefers-color-scheme`.
 Dark-only is a real problem for printing and for outdoor phone use. See ROADMAP §10.
 
-### 37. Medium — Database types are hand-written and will drift
+### 37. Medium — Database types are hand-written and will drift — *partly fixed*
 
-[types.ts](../src/types.ts) is maintained by hand, `from()` in
-[supabase.ts:52](../src/supabase.ts#L52) casts to `any`, and call sites use `as unknown as X`.
-TypeScript cannot catch a schema mismatch anywhere in the app. Generate types with
-`supabase gen types typescript` and drop the casts.
+> **Fixed 2026-08-28:** the types were not merely unchecked, they were switched off.
+> supabase-js's `GenericTable`/`GenericView` require a `Relationships` field; `types.ts` had
+> none, so `Database` failed to satisfy `GenericSchema`, the client's `Schema` resolved to
+> `never`, and every typed call degraded to accepting any argument. Adding `Relationships: []`
+> restored checking and immediately caught five drifted columns: `is_deleted` missing from
+> `parent`, `kid`, `deliverer`, and `order_record`, and `order_id` / `kid_id` / `parent_id`
+> missing from the three order view row types — each one a column its own query filters on.
+> `createOrder` is genuinely typechecked as a result.
+
+**Still open:** [types.ts](../src/types.ts) is still maintained by hand and will drift again;
+`from()` in [supabase.ts](../src/supabase.ts) still casts to `any` and its call sites still
+use `as unknown as X`. Generate types with `supabase gen types typescript` and drop the
+casts. Until then, a new table or view in `types.ts` **must** carry `Relationships: []` — omit
+it and all type checking silently switches off again.
 
 ### 46. Low — TypeScript 7 is not adoptable yet
 

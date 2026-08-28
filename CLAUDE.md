@@ -114,8 +114,11 @@ sizes P/N/1 → 75 diapers, sizes 2–7 → 50. Changing a kid's size later must
 order. That's why the values are denormalized into `order_kid` rather than joined.
 
 `order_parent` and `order_kid` are keyed by `(order_id, parent_id)` and `(order_id, kid_id)`.
-That is not decoration: without it a retried write appends a second copy of every row and the
-order double-counts its diapers (ISSUES #14).
+That is not decoration: without it a write that lands twice appends a second copy of every
+row and the order silently double-counts its diapers (ISSUES #14). A retry of the whole
+snapshot mints a fresh `order_id`, so the worst it can do now is create a second order —
+wrong, but visible in the Orders list rather than hidden inside the totals of an existing
+one.
 
 Snapshot creation lives in `finishOrder` in
 [NewOrderPage.tsx](src/components/pages/NewOrderPage/NewOrderPage.tsx#L34-L70), which picks
@@ -357,8 +360,15 @@ editing — see [.vscode/extensions.json](.vscode/extensions.json)).
    toast and confirm providers sit *outside* the boundary, so a message survives the failure
    that produced it.
 6. **Typing is largely fictional past the client boundary.** `from()` in
-   [supabase.ts:52](src/supabase.ts#L52) casts to `any`; call sites use `as unknown as X`.
-   TypeScript will not catch a schema mismatch.
+   [supabase.ts](src/supabase.ts) casts to `any`; call sites use `as unknown as X`.
+   TypeScript will not catch a schema mismatch on those paths. `createOrder` is the
+   exception and shows what the rest could look like: `supabase.rpc` is genuinely checked
+   against the `Functions` entry in `types.ts`, so a wrong argument name or payload shape is
+   a compile error. That only works because every `Tables` and `Views` entry carries a
+   `Relationships` field — supabase-js's `GenericTable`/`GenericView` require it, and without
+   it `Database` fails to satisfy `GenericSchema`, the client's `Schema` resolves to `never`,
+   and *every* typed call silently degrades to accepting anything. **Give a new table or view
+   `Relationships: []`** or you will switch that checking back off without a single error.
 7. **`parent.kid` is not a column.** It's attached client-side in `useParent`. Strip it before
    any update — `ParentPage` does this with `kid: undefined`.
 8. **Deliverer options are a cache entry, not a memoized call.** `delivererOptions` in

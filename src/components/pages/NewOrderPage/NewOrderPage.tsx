@@ -53,10 +53,13 @@ const finishOrder = async (
   }
 
   // One transactional call (ISSUES #13): order_record, order_parent, and order_kid commit
-  // together or not at all. The composite primary keys added alongside it (ISSUES #14) also
-  // make a retry safe — a second attempt conflicts instead of double-counting the diapers.
+  // together or not at all, so a failure here leaves nothing behind to clean up.
+  //
+  // `formData` is a Partial because that is what a form hands back; the two date fields are
+  // `required` in orderFields, and the columns are NOT NULL besides, so the DB rejects an
+  // order that somehow got here without them.
   return await createOrderSnapshot(
-    formData as unknown as Database['public']['Tables']['order_record']['Insert'],
+    formData as Database['public']['Tables']['order_record']['Insert'],
     filteredParents.map((p) => ({
       parent_id: p.id,
       deliverer_id: p.deliverer_id,

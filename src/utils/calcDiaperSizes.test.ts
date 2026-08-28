@@ -16,6 +16,7 @@ const kid = (diaper_size: DiaperSize, is_active = true): Kid => ({
   is_active,
   created_at: '2026-01-01',
   modified_at: '2026-01-01',
+  is_deleted: false,
 });
 
 const parent = (kids: Kid[], is_active = true): Parent => ({
@@ -29,6 +30,7 @@ const parent = (kids: Kid[], is_active = true): Parent => ({
   is_active,
   created_at: '2026-01-01',
   modified_at: '2026-01-01',
+  is_deleted: false,
   kid: kids,
   deliverer_id: 'd1',
 });

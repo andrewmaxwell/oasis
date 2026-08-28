@@ -126,8 +126,10 @@ const HAS_ID = new Set(['parent', 'kid', 'deliverer', 'order_record']);
  * here too. Two behaviors are load-bearing and mirror the real thing deliberately —
  *
  *   - it is all-or-nothing, so a rejected call leaves no order_record behind (ISSUES #13);
- *   - the composite primary keys reject a duplicate (order_id, parent_id) /
- *     (order_id, kid_id) rather than appending a second copy (ISSUES #14).
+ *   - it rejects a payload naming the same family or child twice, the way the composite
+ *     primary keys do (ISSUES #14). Note that is the only duplicate this can produce: each
+ *     call mints a fresh order_id, so a retry makes a second *order*, visible in the Orders
+ *     list, rather than silently inflating the totals of an existing one.
  */
 const createOrder = (db: Database, args: Row) => {
   const orderData = (args.order_data ?? {}) as Row;

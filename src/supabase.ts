@@ -48,9 +48,12 @@ export type TableWithSoftDelete =
 /** The subset of the above that carries an `is_active` flag. */
 export type TableWithActiveFlag = 'parent' | 'kid' | 'deliverer';
 
-// Helper to bypass strict union checks in generic functions
-
-const from = (table: string) => supabase.from(table) as any;
+/**
+ * Escape hatch for the generic helpers below: they are parameterised over `TableName`, and
+ * supabase-js resolves a row type per literal table, which those generics cannot express.
+ * The call sites re-assert the row type — see CLAUDE.md gotcha 6.
+ */
+const from = (table: TableName) => supabase.from(table) as any;
 
 /**
  * Every query funnels its failure through here. It throws rather than returning, which is
@@ -127,8 +130,10 @@ export const getTableCount = async (tableName: TableWithActiveFlag) => {
   return count || 0;
 };
 
+// Not `keyof Database['public']['Views']`: the `*_options` views back the async select
+// options and are deliberately not modelled as row types, so the name stays a plain string.
 export const getView = async (viewName: string) => {
-  const {data, error} = await supabase.from(viewName).select();
+  const {data, error} = await supabase.from(viewName as TableName).select();
   if (error) fail(error);
   return data ?? [];
 };
@@ -175,17 +180,15 @@ export const createOrder = async (
   parents: Omit<OrderParent, 'order_id'>[],
   kids: Omit<OrderKid, 'order_id' | 'is_deleted'>[],
 ) => {
-  // Cast at the call, typed at the signature — the same trade as `from()` above. rpc()
-  // infers its argument type by exact-matching the Functions entry, which a hand-written
-  // Database (CLAUDE.md gotcha 6) does not satisfy. The parameters of this function are
-  // where callers actually get checked.
+  // Genuinely typed, unlike the rest of this file: `rpc` checks the arguments against the
+  // Functions entry in types.ts, so a renamed column here is a compile error.
   const {data, error} = await supabase.rpc('create_order', {
     order_data: orderData,
     parents,
     kids,
-  } as never);
+  });
   if (error) fail(error);
-  return data as unknown as string;
+  return data;
 };
 
 export const updateRecord = async <T extends TableWithId>(

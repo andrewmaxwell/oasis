@@ -18,7 +18,10 @@ primary keys — `(order_id, parent_id)` and `(order_id, kid_id)` — after the
 migration de-duplicates anything already written that way, and the whole snapshot
 moves into one `create_order` Postgres function called through `supabase.rpc()`.
 It commits or it does not, so the error toast can now say "Nothing was saved"
-instead of telling the user to go check the Orders list by hand.
+instead of telling the user to go check the Orders list by hand. A retry mints a
+fresh `order_id`, so the worst a repeated submit can do is create a second order
+— wrong, but visible in the Orders list rather than hidden inside the totals of
+an existing one.
 
 The function is `SECURITY INVOKER`, so the existing RLS policies on all three
 tables still gate what it writes — it grants no ability a `readOnly` account did
@@ -31,6 +34,20 @@ by. Atomicity is what it adds, not a second opinion.
 The E2E mock reimplements `create_order` alongside the views, including the
 primary-key conflict, since the app now depends on a function that Postgres would
 otherwise be the only thing to provide.
+
+**`supabase.rpc` was accepting anything, and so was every other typed call.**
+Wiring up the new call surfaced why: supabase-js's `GenericTable` and
+`GenericView` both require a `Relationships` field, and `types.ts` declared none
+— so `Database` failed to satisfy `GenericSchema`, the client's `Schema` resolved
+to `never`, and every typed call silently degraded to accepting any argument.
+Adding `Relationships: []` to each entry turned real checking back on, which
+promptly found five things `types.ts` had wrong: `is_deleted` was missing from
+`parent`, `kid`, `deliverer`, and `order_record`, and the `order_id`, `kid_id`,
+and `parent_id` that `finished_order_view`, `kid_order_view`, and
+`parent_order_view` are each *filtered by* were absent from their row types. Every
+one of those queries had been running against a type that did not admit the column
+it filters on. `create_order`'s arguments are now genuinely typechecked — verified
+by mutation — while `from()` stays `any` (ISSUES #37).
 
 ## 2026-08-28 — Mobile layout and list ordering
 
