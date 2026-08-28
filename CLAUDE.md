@@ -83,15 +83,22 @@ Two families of read helpers:
 - `getView('some_view')` and the specific `get*Orders` helpers — read from SQL **views**
   that pre-join and pre-aggregate. Views end in `_view` or `_options`.
 
-**Sorting is the database's job.** Every view carries its own `ORDER BY` and reads of raw
-tables pass a `SortSpec[]` to `getAllRecords`; pages render rows in the order they arrive
-and don't re-sort the array. The house rule for anything with an `is_active` flag is active
-first, then alphabetically — `parent_view`, `kid_view`, `deliverer_options`, and the
-deliverer table all follow it, and a new list should too. (`ORDER BY` inside a view isn't
-contractual in SQL, but Postgres preserves it for the plain `SELECT *` PostgREST issues at
-this data size; a table that outgrows that should move to an explicit `.order()`.) Note
-`e2e/fixtures/database.ts` mirrors these orderings — keep it in step or the suite and
-production disagree about what's at the top of a list.
+**A count must agree with the list it summarizes and with the order.** A row's own flags are
+not the whole rule: a kid can be active while the family holding them is deactivated or
+deleted, and the Kids list and the order roster both drop that child. Counting the raw table
+put them back on the dashboard (ISSUES #8, then #48). `COUNT_SOURCE` in `supabase.ts` routes
+each dashboard count to its source, and the kid count reads `rostered_kid_view` — kid columns
+filtered to live, active parents — so the same `is_active` / `is_deleted` filters still mean
+what they meant. A new count belongs behind a view that encodes the same rule, not behind a
+second copy of it in TypeScript.
+
+**Sorting is the database's job.** Views carry their own `ORDER BY`; reads of raw tables
+pass a `SortSpec[]` to `getAllRecords`. Pages render rows in the order they arrive and don't
+re-sort. The house rule for anything with an `is_active` flag is active first, then
+alphabetically, and a new list should follow it. (`ORDER BY` inside a view isn't contractual
+in SQL, but Postgres preserves it at this size — ISSUES #47.) `e2e/fixtures/database.ts`
+mirrors these orderings; keep it in step or the suite and production disagree about what's
+at the top of a list.
 
 ### Soft deletes
 Nothing is ever hard-deleted from the UI. `softDelete()` sets `is_deleted = true`. Every
@@ -114,24 +121,23 @@ sizes P/N/1 → 75 diapers, sizes 2–7 → 50. Changing a kid's size later must
 order. That's why the values are denormalized into `order_kid` rather than joined.
 
 `order_parent` and `order_kid` are keyed by `(order_id, parent_id)` and `(order_id, kid_id)`.
-That is not decoration: without it a write that lands twice appends a second copy of every
-row and the order silently double-counts its diapers (ISSUES #14). A retry of the whole
-snapshot mints a fresh `order_id`, so the worst it can do now is create a second order —
-wrong, but visible in the Orders list rather than hidden inside the totals of an existing
-one.
+Not decoration: without it a write that lands twice appends a second copy of every row and the
+order silently double-counts its diapers (ISSUES #14).
 
 Snapshot creation lives in `finishOrder` in
 [NewOrderPage.tsx](src/components/pages/NewOrderPage/NewOrderPage.tsx#L34-L70), which picks
 the roster — active parents with at least one active kid — and hands it to `createOrder` in
 [supabase.ts](src/supabase.ts), a single `supabase.rpc('create_order', …)`. **All three
-tables are written by that one Postgres function, in one transaction** (`dataModel.sql`); do
-not split it back into separate inserts, or a partial failure leaves a half-built order the
-user gets navigated into (ISSUES #13).
+tables are written by that one Postgres function, in one transaction**; do not split it back
+into separate inserts, or a partial failure leaves a half-built order the user gets navigated
+into (ISSUES #13). It takes the rows the client computed rather than rebuilding the roster in
+SQL, so `calcDiaperSizes.ts` stays the only place the diaper-quantity rule lives, and it is
+`SECURITY INVOKER`, so RLS still applies to the caller — keep both that way.
 
-The function takes the rows the client computed rather than rebuilding the roster in SQL, so
-`calcDiaperSizes.ts` stays the only place the diaper-quantity rule lives. It is
-`SECURITY INVOKER`, so the RLS policies still apply to the caller — keep it that way. Its
-`GRANT EXECUTE` comes from `scripts/generateTriggersAndPolicies.js` like every other grant.
+There is no write path to `order_parent` or `order_kid` outside that function, so an order is
+immutable once created. Adding one (ROADMAP §14) means another transactional function beside
+`create_order`, and it must never write back to `parent`, `kid`, or `deliverer` — that would
+undo the point of the snapshot.
 
 The E2E mock implements `create_order` too ([supabaseMock.ts](e2e/fixtures/supabaseMock.ts)),
 primary-key conflict included — same standing rule as the views: change the SQL, change the
@@ -186,17 +192,14 @@ and a write-gated "Add" button). Columns are `GridColDef` arrays, also module-le
 rendering is shared through `cellRenderers.tsx`.
 
 That header sits *above* the grid rather than in its `toolbar` slot: the slot has a fixed
-height and clips whatever spills past it, so on a phone — where the row wraps onto two
-lines — the search box and Add button were sliced off by the column headers. The cost is
-that the quick filter is ours to drive, through the grid's `filterModel`; don't move it
-back into the slot.
+height and clipped the search box and Add button on a phone. The cost is that the quick
+filter is ours to drive, through the grid's `filterModel`; don't move it back into the slot.
 
-Below the `sm` breakpoint a table shows only the fields in its `mobileColumns` prop
-(defaulting to the first two columns), flexed to fill the width with wrapping cells, so no
-table needs a sideways scroll to be read. Adding a column to a table means deciding whether
-it earns a place on a phone. Two things follow from hiding columns, and both are
-load-bearing: the filter model sets `quickFilterExcludeHiddenColumns: false`, so search
-still reaches a zip or a phone number a phone isn't showing, and inactive rows get the
+Below `sm` a table shows only the fields in its `mobileColumns` prop (defaulting to the first
+two), flexed to fill the width with wrapping cells, so no table needs a sideways scroll.
+Adding a column means deciding whether it earns a place on a phone. Two things follow from
+hiding columns, both load-bearing: `quickFilterExcludeHiddenColumns: false`, so search still
+reaches a zip or phone number a phone isn't showing, and inactive rows get the
 `oasis-row--inactive` class and are dimmed, because the "Active" chip is one of the columns
 that goes.
 
@@ -301,6 +304,8 @@ broke there before (ISSUES #30): the header controls being clipped by the column
 and the table overflowing the viewport.
 [ordering.spec.ts](e2e/ordering.spec.ts) pins active-before-inactive on the kids list, the
 deliverers list, and the deliverer dropdown.
+[dashboard.spec.ts](e2e/dashboard.spec.ts) pins the counts against the lists they summarize
+(ISSUES #48).
 
 Supabase is **mocked at the network boundary**, not run locally: no Docker, no test
 project, no credentials, identical on a laptop and in CI.
@@ -398,8 +403,11 @@ editing — see [.vscode/extensions.json](.vscode/extensions.json)).
 - Never reintroduce `alert()` or `confirm()`; use `useToast()` / `useConfirm()`.
 - A new file in `src/utils/` gets a colocated `*.test.ts`. They are pure functions with no
   setup cost, and they encode the rules that cost the org money when wrong.
-- If you change the schema, update **all four**: `dataModel.sql`, `src/types.ts`, the view
-  definitions that touch the column, and `scripts/generateTriggersAndPolicies.js`.
+- A schema change is **five files**, not one: a migration in `supabase/migrations/`,
+  `dataModel.sql`, `src/types.ts` (with `Relationships: []`), the view list in
+  `scripts/generateTriggersAndPolicies.js`, and the reimplemented views in
+  `e2e/fixtures/database.ts`. Miss the last and the suite stays green while production
+  breaks; miss the fourth and the view is unreachable through PostgREST.
 - Don't add a dependency without saying why in the PR — the tree is deliberately small.
 - Never weaken the `is_deleted` filters, and never surface `hardDelete` in the UI.
 - Treat anything in `docs/ISSUES.md` marked **Critical** as blocking for any release that

@@ -264,14 +264,7 @@ export const mockSupabase = async (page: Page): Promise<MockHandle> => {
       }
     }
 
-    if (name in views) {
-      return json(
-        route,
-        applyOrder(applyFilters(views[name](db), params), params),
-      );
-    }
-
-    const table = db[name as keyof Database];
+    const table = name in views ? views[name](db) : db[name as keyof Database];
     if (!table) {
       throw new Error(`supabaseMock: unknown table or view "${name}"`);
     }
@@ -279,12 +272,19 @@ export const mockSupabase = async (page: Page): Promise<MockHandle> => {
     if (method === 'GET' || method === 'HEAD') {
       const rows = applyOrder(applyFilters(table, params), params);
       // count=exact + head:true is how getTableCount asks for a number without the rows.
+      // Views answer it too: the kid count reads rostered_kid_view.
       const headers: Record<string, string> = request
         .headers()
         .prefer?.includes('count=exact')
         ? {'content-range': `0-${Math.max(rows.length - 1, 0)}/${rows.length}`}
         : {};
       return json(route, method === 'HEAD' ? [] : rows, headers);
+    }
+
+    if (name in views) {
+      throw new Error(
+        `supabaseMock: unsupported method ${method} on view "${name}"`,
+      );
     }
 
     if (method === 'POST') {

@@ -11,6 +11,7 @@ const views = [
   'parent_view',
   'finished_order_view',
   'kid_view',
+  'rostered_kid_view',
   'parent_options',
   'deliverer_options',
   'kid_order_view',

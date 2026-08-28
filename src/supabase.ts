@@ -13,6 +13,7 @@ import {
   OrderParentViewRow,
   ParentOrderRow,
   TableName,
+  ViewName,
 } from './types.ts';
 
 const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
@@ -53,7 +54,8 @@ export type TableWithActiveFlag = 'parent' | 'kid' | 'deliverer';
  * supabase-js resolves a row type per literal table, which those generics cannot express.
  * The call sites re-assert the row type — see CLAUDE.md gotcha 6.
  */
-const from = (table: TableName) => supabase.from(table) as any;
+const from = (table: TableName | ViewName) =>
+  supabase.from(table as TableName) as any;
 
 /**
  * Every query funnels its failure through here. It throws rather than returning, which is
@@ -121,8 +123,22 @@ export const getAllRecords = async <T extends TableWithSoftDelete>(
  * order tables don't, and this used to be labelled "Active" in the UI while counting
  * inactive records too.
  */
+/**
+ * Where each dashboard count comes from. Kids are counted through `rostered_kid_view`
+ * rather than the `kid` table: a kid row's own flags say nothing about whether the family
+ * is still there, so counting the table left the children of a deleted or deactivated
+ * family on the front page as "active" while nobody was ordering diapers for them. The
+ * view is kid's own columns filtered to live, active parents, so the two filters below
+ * still mean exactly what they meant against the table.
+ */
+const COUNT_SOURCE: Record<TableWithActiveFlag, TableName | ViewName> = {
+  parent: 'parent',
+  kid: 'rostered_kid_view',
+  deliverer: 'deliverer',
+};
+
 export const getTableCount = async (tableName: TableWithActiveFlag) => {
-  const {count, error} = await from(tableName)
+  const {count, error} = await from(COUNT_SOURCE[tableName])
     .select('*', {count: 'exact', head: true})
     .eq('is_deleted', false)
     .eq('is_active', true);

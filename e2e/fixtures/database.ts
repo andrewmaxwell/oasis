@@ -154,6 +154,15 @@ export const views: Record<string, (db: Database) => Row[]> = {
       ];
     }),
 
+  // The dashboard's kid count. Kid's own columns, filtered to families that are still
+  // live AND active — note that is more than kid_view drops, which only excludes deleted
+  // parents. The caller adds the kid's own is_active / is_deleted filters.
+  rostered_kid_view: (db) =>
+    db.kid.filter((k) => {
+      const parent = byId(live(db.parent), k.parent_id);
+      return Boolean(parent?.is_active);
+    }),
+
   parent_options: (db) =>
     byName(live(db.parent), fullName).map((p) => ({
       value: p.id,

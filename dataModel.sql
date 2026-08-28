@@ -163,6 +163,20 @@ WHERE
   AND NOT p.is_deleted
 ORDER BY k.is_active DESC, k.first_name, k.last_name;
 
+-- The countable roster: kid rows whose family is still live and active. The dashboard's
+-- "Active Kids" count reads from here rather than from `kid`, because a kid row's own flags
+-- say nothing about whether the family is still there — counting the table disagreed with
+-- the Kids list and with the order roster, which both require a live parent. Kid's own
+-- columns, so a caller's is_active / is_deleted filters still apply.
+DROP VIEW IF EXISTS rostered_kid_view;
+CREATE VIEW rostered_kid_view WITH (security_invoker = ON) AS
+SELECT k.*
+FROM kid k
+JOIN parent p
+  ON p.id = k.parent_id
+WHERE NOT p.is_deleted
+  AND p.is_active;
+
 DROP VIEW IF EXISTS parent_options;
 CREATE VIEW parent_options WITH (security_invoker = ON) AS
 SELECT 

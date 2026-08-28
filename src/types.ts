@@ -94,6 +94,7 @@ export type FormField<T> = {
 };
 
 export type TableName = keyof Database['public']['Tables'];
+export type ViewName = keyof Database['public']['Views'];
 
 // Table definitions (Strictly matches DB)
 export type OrderKid = {
@@ -250,6 +251,11 @@ export type Database = {
       };
       parent_view: {
         Row: Parent & {deliverer_name: string; diaper_sizes: string[]}; // Approximate
+        Relationships: [];
+      };
+      /** `kid` rows whose family is still live and active — the dashboard's kid count. */
+      rostered_kid_view: {
+        Row: Kid;
         Relationships: [];
       };
     };

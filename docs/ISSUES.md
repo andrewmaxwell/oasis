@@ -2,138 +2,128 @@
 
 Defects found in a review of the codebase on 2026-08-27, plus what has been fixed since.
 Numbers are stable — other docs cite them, so a closed issue keeps its number in the
-[ledger](#fixed) at the bottom rather than being renumbered away.
+[ledger](#fixed) rather than being renumbered away.
 
 Severity: **Critical** = exploitable or data-corrupting · **High** = wrong behavior users
 will hit · **Medium** = correctness/robustness · **Low** = polish and hygiene.
 
-**All Critical and High security issues are closed and verified in production**
-([SECURITY-FIX-DEPLOY.md](SECURITY-FIX-DEPLOY.md)). The only security follow-up is rotating
-the anon key (#6). Enhancements — as opposed to defects — live in [ROADMAP.md](ROADMAP.md).
+All Critical and High *security* issues are closed and verified in production
+([SECURITY-FIX-DEPLOY.md](SECURITY-FIX-DEPLOY.md)); the only follow-up there is rotating the
+anon key (#6). Enhancements — as opposed to defects — live in [ROADMAP.md](ROADMAP.md).
 
 ---
 
 ## Open
 
+### 49. High — No idle timeout on a session
+
+Nothing in `src/` signs a user out after inactivity, and the Supabase session refreshes
+itself indefinitely. This app holds names, addresses, phone numbers, country of origin, and
+estimated income for refugee families, and it is used on phones and shared tablets, sometimes
+in a car. An unattended unlocked device is a full disclosure of the roster.
+
+**Fix:** an inactivity timer that calls `logOut()` — 15–30 minutes, reset on interaction,
+with a warning before it fires so nobody loses a half-typed form. Cheap, and the kind of
+control a partner agency or funder will eventually ask about.
+
 ### 35. High — Thin test coverage — *partly fixed*
 
-> **Fixed 2026-08-27:** Vitest in CI, and all of `src/utils/` covered — 46 tests over the
-> diaper-quantity rules, order-snapshot consolidation, and the small helpers.
->
-> **Fixed 2026-08-28:** `jsdom` + React Testing Library wired up, and
-> [OasisForm.test.tsx](../src/components/OasisForm.test.tsx) adds 18 tests over field
-> rendering, required-field validation, the dirty/submitting Save button, `OptionSource`
-> cache sharing, and every branch of the unsaved-changes blocker (#26). 64 tests total.
-
-> **Fixed 2026-08-28:** a Playwright smoke test ([e2e/smoke.spec.ts](../e2e/smoke.spec.ts))
-> walks sign-in → add a family → add a child → create the order → verify the frozen totals,
-> against a Supabase mock at the network boundary. It runs in CI with no Docker and no
-> credentials. Verified by mutation: changing a diaper quantity and breaking a route each
-> fail it.
+> Fixed 2026-08-27/28: Vitest in CI over all of `src/utils/`; `jsdom` + RTL and 18 tests on
+> `OasisForm`; a Playwright smoke test over sign-in → family → child → order → totals against
+> a network-level Supabase mock. 66 unit tests plus 4 E2E specs.
 
 **Still open:** the TanStack Query data layer and each page's loading/error branches have no
-unit tests, and the E2E mock reimplements the SQL views in TypeScript, so nothing yet guards
-the real view semantics — ROADMAP §6.4.
+unit tests, and the E2E mock reimplements the SQL views in TypeScript, so nothing guards the
+real view semantics — ROADMAP §6.4.
 
 ### 5. Medium — No password policy — *partly fixed*
 
-> **Fixed 2026-08-27:** the `autoComplete` half. `OasisTextField` forwards `autoComplete`,
-> and the sign-in and change-password forms pass `username` / `current-password` /
-> `new-password`, so password managers behave.
+> Fixed 2026-08-27: `OasisTextField` forwards `autoComplete`, and the sign-in and
+> change-password forms pass `username` / `current-password` / `new-password`.
 
 **Still open:** [ChangePasswordPage.tsx](../src/components/pages/ChangePasswordPage.tsx)
-requires only a non-empty value matching the confirmation. Enforce a minimum length and set
+requires only a non-empty value matching the confirmation. Enforce a minimum length, and set
 Supabase's password requirements in the dashboard.
 
 ### 17. Medium — Deliverer emails are blocked after the first one
 
 [generateEmails.ts:30](../src/components/pages/FinishedOrderPage/generateEmails.ts#L30) opens
-one `mailto:` per deliverer inside a loop. Browsers allow one popup per user gesture, so most
-emails are silently dropped. `mailto:` bodies are also capped around 2000 characters by many
-clients, truncating long delivery lists without warning.
+one `mailto:` per deliverer in a loop. Browsers allow one popup per user gesture, so most are
+silently dropped — a monthly workflow that quietly loses most of its output. `mailto:` bodies
+are also capped around 2000 characters by many clients, truncating long delivery lists.
 
-**Fix:** render the list as a dialog with a per-deliverer "Open email" button and a
-"Copy to clipboard" fallback — or send server-side (ROADMAP §4).
+**Fix:** a dialog with a per-deliverer "Open email" button and a copy-to-clipboard fallback.
+Server-side sending is the real answer — ROADMAP §4.
 
 ### 31. Medium — Dark mode is forced
 
-`* {color-scheme: dark}` in [index.html](../index.html) and a hardcoded dark palette in
-[src/theme.ts](../src/theme.ts). No light mode, no respect for `prefers-color-scheme`.
-Dark-only is a real problem for printing and for outdoor phone use. See ROADMAP §10.
+`* {color-scheme: dark}` in [index.html](../index.html) plus a hardcoded dark palette in
+[theme.ts](../src/theme.ts). No light mode, no `prefers-color-scheme`. Bad for printing and
+for outdoor phone use. See ROADMAP §10.
 
 ### 37. Medium — Database types are hand-written and will drift — *partly fixed*
 
-> **Fixed 2026-08-28:** the types were not merely unchecked, they were switched off.
-> supabase-js's `GenericTable`/`GenericView` require a `Relationships` field; `types.ts` had
-> none, so `Database` failed to satisfy `GenericSchema`, the client's `Schema` resolved to
-> `never`, and every typed call degraded to accepting any argument. Adding `Relationships: []`
-> restored checking and immediately caught five drifted columns: `is_deleted` missing from
-> `parent`, `kid`, `deliverer`, and `order_record`, and `order_id` / `kid_id` / `parent_id`
-> missing from the three order view row types — each one a column its own query filters on.
-> `createOrder` is genuinely typechecked as a result.
+> Fixed 2026-08-28: the types were not merely unchecked, they were switched off. supabase-js
+> requires a `Relationships` field on each table and view; without it `Database` failed to
+> satisfy `GenericSchema`, `Schema` resolved to `never`, and every typed call silently
+> accepted anything. Adding `Relationships: []` restored checking and immediately caught five
+> drifted columns. `createOrder` is genuinely typechecked as a result.
 
-**Still open:** [types.ts](../src/types.ts) is still maintained by hand and will drift again;
-`from()` in [supabase.ts](../src/supabase.ts) still casts to `any` and its call sites still
-use `as unknown as X`. Generate types with `supabase gen types typescript` and drop the
-casts. Until then, a new table or view in `types.ts` **must** carry `Relationships: []` — omit
-it and all type checking silently switches off again.
+**Still open:** [types.ts](../src/types.ts) is still hand-maintained; `from()` in
+[supabase.ts](../src/supabase.ts) still casts to `any` and its call sites still use
+`as unknown as X`. Generate with `supabase gen types typescript` and drop the casts. Until
+then a new table or view **must** carry `Relationships: []`, or all checking switches back
+off without a single error.
+
+### 51. Low — Nothing prevents two orders for the same month
+
+`finishOrder` always mints a new `order_record`. The Save button is disabled while the
+mutation is in flight, so a double-click is covered, but two staff working at once — or a
+retry after a timeout that actually succeeded — produces a duplicate order, and the
+warehouse totals get placed twice. Cheap guard: check for an existing order in the same month
+before creating, and confirm.
 
 ### 46. Low — TypeScript 7 is not adoptable yet
 
-> **Fixed 2026-08-28 (the ESLint half):** ESLint 10 was blocked only by
-> `eslint-plugin-react`, whose latest release still caps at `eslint@^9.7`. Replaced with
-> [`@eslint-react/eslint-plugin`](https://eslint-react.xyz) v5, which declares `eslint: '*'`;
-> every other plugin already supported 10.
+> Fixed 2026-08-28 (the ESLint half): ESLint 10 was blocked only by `eslint-plugin-react`,
+> which caps at `eslint@^9.7`. Replaced with `@eslint-react/eslint-plugin` v5.
 
-**Still open:** TypeScript 7 is blocked twice over, and neither is a peer-range technicality.
-
-1. `typescript-eslint` caps at `typescript@<6.1.0` and has published no v9, no `next` tag,
-   and no canary above 8.68. TS 7 is the native compiler port, so this is a real piece of
-   work for them, not a version-range bump. There is no alternative to swap in: it is the
-   only serious TypeScript integration for ESLint. The nuclear option is dropping it for
-   `oxlint` or `biome`, which is a much bigger change than this project needs.
-2. **The codebase is not ready either.** Forcing TS 7 in with `--legacy-peer-deps`
-   typechecks with errors: `@types/node` is no longer picked up implicitly (it wants an
-   explicit `types` field), and `@testing-library/react` resolves with no exported `screen`
-   or `waitFor`. So even with the linter solved there is a migration to do.
-
-Recheck when `typescript-eslint` ships TS 7 support.
+**Still open, twice over.** `typescript-eslint` caps at `typescript@<6.1.0` with no v9, no
+`next`, and no canary above 8.68 — TS 7 is the native compiler port, so this is real work for
+them, and there is no serious alternative to swap in short of `oxlint` or `biome`. And the
+codebase is not ready either: forced in with `--legacy-peer-deps` it typechecks with errors
+(`@types/node` no longer picked up implicitly, `@testing-library/react` resolving with no
+`screen` or `waitFor`). Recheck when `typescript-eslint` ships TS 7 support.
 
 ### 23. Low — Deprecated MUI API — *partly fixed*
 
-> **Fixed 2026-08-27:** `OasisTextField` uses `slotProps={{inputLabel: {shrink: true}}}`
-> instead of the deprecated `InputLabelProps`.
+> Fixed 2026-08-27: `OasisTextField` uses `slotProps={{inputLabel: {shrink: true}}}`.
 
-**Still open:** the `@ts-expect-error` in
-[OasisTable.tsx](../src/components/OasisTable.tsx) papering over `QuickFilterControl` prop
-typing. Still required as of `@mui/x-data-grid` 9.12.0.
+**Still open:** the `@ts-expect-error` in [OasisTable.tsx](../src/components/OasisTable.tsx)
+over `QuickFilterControl` prop typing. Still required as of `@mui/x-data-grid` 9.12.0.
 
 ### 6. Low — Anon key is in git history
 
-The Supabase URL and anon key were hardcoded in `src/supabase.ts` until commit `298466a`;
-they remain in the history at `081bcdb`. Anon keys are public by design so this is not itself
-a breach, but rotating the key is cheap hygiene.
+Hardcoded in `src/supabase.ts` until commit `298466a`; still present at `081bcdb`. Anon keys
+are public by design, so not a breach — rotating is cheap hygiene.
 
 ### 33. Low — Table toolbar lost its standard controls
 
 The custom header in [OasisTable.tsx](../src/components/OasisTable.tsx) replaced the MUI
-default toolbar, dropping the columns, filter, density, and CSV-export buttons. A
-CSV export in particular is something this kind of org asks for constantly.
+default toolbar, dropping columns, filter, density, and CSV export. CSV in particular is
+something this kind of org asks for constantly.
 
 ### 47. Low — A view's `ORDER BY` is convention, not contract — *partly fixed*
 
-> **Fixed 2026-08-28:** ordering now lives in the database for every list: `ORDER BY` in the views, a `SortSpec[]`
-> on `getAllRecords` for raw tables. `kid_view` sorted by birth date, which scattered kids
-> who had aged out through the working roster, and `deliverer_options` sorted `is_active`
-> ASC — false before true — so retired volunteers were listed above active ones in the
-> family form's dropdown. Both fixed in
-> [20260828000002](../supabase/migrations/20260828000002_sort_kid_view_and_deliverer_options.sql).
+> Fixed 2026-08-28: ordering lives in the database for every list — `ORDER BY` in the views,
+> a `SortSpec[]` on `getAllRecords` for raw tables. Fixed `kid_view` sorting by birth date
+> (scattering aged-out kids through the roster) and `deliverer_options` sorting `is_active`
+> ASC (retired volunteers above active ones in the family form's dropdown).
 
-**Still open:** SQL does not guarantee that a view's `ORDER BY` survives a `SELECT` from
-that view — Postgres preserves it for the simple plans these queries produce, but a
-parallel or re-ordered plan would be within its rights. At this size it is fine. If a table
-grows to where the planner gets creative, or if paging is ever added, move the ordering to
-an explicit `.order()` on the query.
+**Still open:** SQL does not guarantee a view's `ORDER BY` survives a `SELECT` from it.
+Postgres preserves it for the simple plans these queries produce, and at this size that is
+fine. If a table grows to where the planner gets creative, or paging is added, move the
+ordering to an explicit `.order()`.
 
 ### 34. Low — Hardcoded contact address in generated emails
 
@@ -143,23 +133,23 @@ to config or an org-settings row so it survives staff turnover.
 
 ### 41. Low — `supabase/seed.sql` is empty
 
-Zero bytes. Either populate it from `scripts/generateFake.js` or delete it. The `scripts/`
-directory generally has no README explaining when to run what.
+Zero bytes. Populate it from `scripts/generateFake.js` or delete it. `scripts/` also has no
+README explaining when to run what.
 
 ### 42. Low — Missing indexes on foreign keys — *partly fixed*
 
-> **Fixed 2026-08-28, as a side effect of #14:** the composite primary keys on
-> `order_parent` and `order_kid` lead with `order_id`, so the joins the order views make on
-> it are indexed now.
+> Fixed 2026-08-28 as a side effect of #14: the composite primary keys on `order_parent` and
+> `order_kid` lead with `order_id`, so the order views' joins are indexed.
 
-**Still open:** `kid.parent_id`, `parent.deliverer_id`, and `order_kid.kid_id` still have no
-index. Fine at current scale, but the views join across all of them.
+**Still open:** `kid.parent_id`, `parent.deliverer_id`, and `order_kid.kid_id` have no index.
+Fine at current scale, but the views join across all of them — and `rostered_kid_view` (#48)
+adds another join on `kid.parent_id`.
 
 ### 43. Low — No audit trail
 
-`created_at` / `modified_at` exist but not `created_by` / `modified_by`. For an application
-holding refugee family PII with several shared-access users, knowing who changed what has
-real operational and compliance value. See ROADMAP §5.
+`created_at` / `modified_at` exist; `created_by` / `modified_by` do not. For an app holding
+refugee family PII with several shared-access users, knowing who changed what has real
+operational and compliance value. See ROADMAP §5.
 
 ---
 
@@ -173,12 +163,12 @@ see [SECURITY-FIX-DEPLOY.md](SECURITY-FIX-DEPLOY.md).
 | # | Sev | Issue | Fix |
 | --- | --- | --- | --- |
 | 1 | Critical | The user-management edge function never authorized its caller, so anyone with the public anon key could call any `auth.admin` method — full application takeover | Verifies the bearer token with `auth.getUser(token)`, requires `app_metadata.access_level === 'admin'`, and dispatches through an explicit handler allow-list instead of `auth.admin[action]` |
-| 2 | Critical | One blanket `FOR ALL … USING (true)` RLS policy per table gave every authenticated account full read/write on all PII, and public signup turned out to be enabled | Per-operation policies from `scripts/generateTriggersAndPolicies.js`: `SELECT` needs `app_can_read()`, writes need `app_can_write()`. `app_access_level()` reads the JWT claim and falls back to `auth.users`, so an account with no assigned level gets nothing. Signup disabled and re-verified (HTTP 422) |
+| 2 | Critical | One blanket `FOR ALL … USING (true)` RLS policy per table gave every authenticated account full read/write on all PII, and public signup was enabled | Per-operation policies from `scripts/generateTriggersAndPolicies.js`: `SELECT` needs `app_can_read()`, writes need `app_can_write()`. `app_access_level()` reads the JWT claim and falls back to `auth.users`, so an account with no level gets nothing. Signup disabled and re-verified (HTTP 422) |
 | 3 | High | New users were created with the hardcoded password `abcdefg` and were signable-into immediately | `inviteUserByEmail` creates the account with no password at all |
 | 4 | Medium | Edge function sent `Access-Control-Allow-Origin: *` | Origin allow-list via the `ALLOWED_ORIGINS` env var |
 
-`access_level` moved from `user_metadata` (self-writable) to `app_metadata` across the whole
-app as part of #1 — see the warning in [CLAUDE.md](../CLAUDE.md) §4.
+`access_level` moved from `user_metadata` (self-writable) to `app_metadata` as part of #1 —
+see the warning in [CLAUDE.md](../CLAUDE.md) §4.
 
 ### Correctness
 
@@ -186,12 +176,13 @@ app as part of #1 — see the warning in [CLAUDE.md](../CLAUDE.md) §4.
 | --- | --- | --- | --- |
 | 7 | High | Realtime `UPDATE` patched soft-deleted rows in place, so a deleted family could still be snapshotted into a new order | `useTable` drops the row when `newRecord.is_deleted` is true |
 | 8 | High | Dashboard counted inactive records under "Active" labels | `getTableCount` filters `is_active`, and its parameter narrowed to `TableWithActiveFlag` so it can't be called on the order tables |
-| 9 | High | Every Supabase error called `alert()`, threw, and left the page on a spinner | `fail()` logs and throws; react-query retries twice then renders `<ErrorState>` with Retry. See ROADMAP §2 |
+| 9 | High | Every Supabase error called `alert()`, threw, and left the page on a spinner | `fail()` logs and throws; react-query retries twice then renders `<ErrorState>` with Retry |
+| 48 | Medium | The dashboard's "Active Kids" count read the `kid` table on the kid's own flags alone, so children of a deactivated or deleted family stayed on the front page as active — while `kid_view` hid them from the Kids list and `finishOrder` skipped them in the order. #8, one join short *(2026-08-28)* | New `rostered_kid_view` (kid rows whose parent is live and active); `COUNT_SOURCE` in [supabase.ts](../src/supabase.ts) routes the kid count through it. Migration `20260828000004`; pinned by [e2e/dashboard.spec.ts](../e2e/dashboard.spec.ts) |
 | 10 | High | `dataModel.sql` had a trailing comma before the closing `)` of `order_kid`, so the file wouldn't run *(2026-08-28)* | Comma removed |
-| 11 | High | `dataModel.sql` created `parent` before the `deliverer` it references, and dropped `deliverer` after creating `parent`, cascading away the constraint on a re-run *(2026-08-28)* | All `DROP TABLE` statements grouped at the top in reverse dependency order; tables created in dependency order, `deliverer` first |
-| 12 | Medium | `parent_order_view` evaluated `NOT ok.is_deleted` in `WHERE` on a `LEFT JOIN`ed table, collapsing it to an inner join — a family in an order with no surviving `order_kid` rows vanished from the historical record entirely *(2026-08-28)* | Predicate moved into the `LEFT JOIN … ON` clause as `ok.is_deleted IS NOT TRUE`, so the outer join survives and `json_agg`'s `'[]'` fallback renders as intended. Migration `20260828000001_fix_parent_order_view_outer_join.sql`; `dataModel.sql` synced |
-| 13 | Medium | Order creation was three separate inserts, so a failure in the second or third left a committed, half-populated `order_record` behind — and navigated the user into it as if it were complete *(2026-08-28)* | The whole snapshot moved into the `create_order` Postgres function, called via `supabase.rpc()`, so it commits or it does not. `SECURITY INVOKER`, so the RLS policies still gate what it writes. Migration `20260828000003`; the E2E mock implements it too |
-| 14 | Medium | `order_parent` and `order_kid` had no primary key, so a retried insert appended a second copy of every row and double-counted the diapers the org orders against *(2026-08-28)* | Composite primary keys `(order_id, parent_id)` and `(order_id, kid_id)`, added in `20260828000003` after de-duplicating anything already written that way. The key columns are `NOT NULL` now too |
+| 11 | High | `dataModel.sql` created `parent` before the `deliverer` it references, and dropped `deliverer` after creating `parent`, cascading away the constraint on a re-run *(2026-08-28)* | `DROP TABLE`s grouped at the top in reverse dependency order; tables created in dependency order, `deliverer` first |
+| 12 | Medium | `parent_order_view` evaluated `NOT ok.is_deleted` in `WHERE` on a `LEFT JOIN`ed table, collapsing it to an inner join — a family in an order with no surviving `order_kid` rows vanished from the historical record *(2026-08-28)* | Predicate moved into the `LEFT JOIN … ON` clause; migration `20260828000001` |
+| 13 | Medium | Order creation was three separate inserts, so a failure in the second or third left a committed, half-populated order behind — and navigated the user into it as if complete *(2026-08-28)* | The whole snapshot moved into the `create_order` Postgres function, called via `supabase.rpc()`. `SECURITY INVOKER`, so RLS still gates it. Migration `20260828000003`; the E2E mock implements it too |
+| 14 | Medium | `order_parent` and `order_kid` had no primary key, so a retried insert appended a second copy of every row and double-counted the diapers the org orders against *(2026-08-28)* | Composite primary keys `(order_id, parent_id)` and `(order_id, kid_id)`, after de-duplicating existing rows. Key columns are `NOT NULL` now too |
 | 15 | Medium | Non-admins got an infinite spinner instead of "Access Denied" | Admin guard runs before the loading check, and the user list isn't requested at all for non-admins |
 | 16 | Medium | `LabelPage` called `.sort()` on state in place | Sorts a copy |
 | 18 | Medium | Null birth dates rendered as an empty cell in error red (`new Date(null)` is 1970) | Truthiness check before the date comparison |
@@ -204,22 +195,22 @@ app as part of #1 — see the warning in [CLAUDE.md](../CLAUDE.md) §4.
 
 | # | Sev | Issue | Fix |
 | --- | --- | --- | --- |
-| 24 | High | No navigation — reaching Kids from Deliverers meant going home first | [OasisNav.tsx](../src/components/OasisNav.tsx): AppBar links at `md`+, hamburger `Drawer` below, active section carries `aria-current`. Breadcrumbs still open — ROADMAP §1 |
-| 25 | High | Saving gave no confirmation | Every mutation toasts on success and on failure; delete buttons disable while in flight |
-| 26 | High | Navigating away from a dirty form discarded the edits silently *(2026-08-28)* | `useUnsavedChangesPrompt` in [OasisForm](../src/components/OasisForm.tsx) blocks in-app navigation via react-router's `useBlocker` and shows the `useConfirm()` dialog, plus a `beforeunload` handler for tab close and reload. Mutations that navigate on success call `allowNextNavigation()` first, so a save or delete doesn't also ask |
+| 24 | High | No navigation — reaching Kids from Deliverers meant going home first | [OasisNav.tsx](../src/components/OasisNav.tsx): AppBar links at `md`+, hamburger `Drawer` below, active section carries `aria-current` |
+| 25 | High | Saving gave no confirmation | Every mutation toasts on success and failure; delete buttons disable while in flight |
+| 26 | High | Navigating away from a dirty form discarded the edits silently *(2026-08-28)* | `useUnsavedChangesPrompt` blocks in-app navigation via `useBlocker` plus a `beforeunload` handler. Mutations that navigate on success call `allowNextNavigation()` first |
 | 27 | Medium | Native `alert()` and `confirm()` | `useToast()` and promise-based `useConfirm()`; neither native call appears in `src/` any more |
 | 28 | Medium | Delete dialogs claimed a soft delete "cannot be undone" | Copy says an administrator can restore it. The user-delete dialog still says it, where it's true. Restore UI is ROADMAP §5 |
+| 29 | Medium | `linkButton`, `anchor`, and `mapAnchor` rendered bare `<Link>` / `<a>`, so every table link came out browser-default blue turning visited-purple *(2026-08-28)* | All three use MUI `<Link>`, plus a `MuiLink` theme default: `underline: 'hover'` and a `focus-visible` ring |
+| 30 | Medium | Not usable on a phone: the table header was clipped by the column headers, and fixed pixel widths made every table a sideways-scroll maze *(2026-08-28)* | The title/search/Add row moved out of the grid's fixed-height `toolbar` slot into [OasisTable](../src/components/OasisTable.tsx)'s own markup — driving the quick filter through `filterModel` — and below `sm` each table shows only its `mobileColumns`. Wide `<Table>`s scroll inside a `TableContainer`, the label sheet zooms to fit, and sign-in has a page of its own |
 | 32 | Low | Toolbar title was an `onClick` on a `Typography` — not focusable, invisible to screen readers | Logo and title sit inside one `<Link to="/">` |
-| 29 | Medium | `linkButton`, `anchor`, and `mapAnchor` rendered bare `<Link>` / `<a>`, so every link in every table came out browser-default blue turning visited-purple *(2026-08-28)* | All three use MUI `<Link>` (the router one via `component={RouterLink}`), plus a `MuiLink` theme default: `underline: 'hover'` and a `focus-visible` ring |
-| 45 | Low | The Save button swapped its label for a bare `<CircularProgress>` while saving, leaving it with no accessible name *(2026-08-28)* | Label reads "Saving…" with the spinner as an `aria-hidden` `startIcon`; the test that pinned the old behavior now asserts the accessible name |
-| 30 | Medium | Not usable on a phone: the table header was clipped by the column headers, and fixed pixel column widths made every table a sideways-scroll maze *(2026-08-28)* | The title/search/Add row moved out of the grid's fixed-height `toolbar` slot into [OasisTable](../src/components/OasisTable.tsx)'s own markup — driving the quick filter through `filterModel` — and below `sm` each table shows only its `mobileColumns` (defaulting to the first two), flexed to the viewport with wrapping cells. The wide `<Table>`s on the finished-order page scroll inside a `TableContainer`, the label sheet zooms to fit, and the sign-in form has a page of its own. A stacked card list and a deliverer route view are still ROADMAP §3 |
+| 45 | Low | The Save button swapped its label for a bare `<CircularProgress>` while saving, leaving it with no accessible name *(2026-08-28)* | Label reads "Saving…" with the spinner as an `aria-hidden` `startIcon` |
 
 ### Infrastructure
 
 | # | Sev | Issue | Fix |
 | --- | --- | --- | --- |
-| 36 | Medium | CI used `npm install` and outdated actions, and never ran ESLint | `npm ci` plus lint, typecheck, test, and `check:functions` steps on current actions |
+| 36 | Medium | CI used `npm install` and outdated actions, and never ran ESLint | `npm ci` plus lint, typecheck, test, and `check:functions` on current actions |
 | 38 | Medium | No migration system; `dataModel.sql` was applied by hand and contains `DROP TABLE … CASCADE` | Schema changes go through `supabase/migrations/` and `npx supabase db push` |
-| 39 | Low | No `.env.example` — the template lived only in the README *(2026-08-28)* | `.env.example` committed; the README now says `cp .env.example .env` |
 | 44 | Medium | `react-router` had open high-severity advisories *(2026-08-28)* | Bumped to 7.18.2, once #35's smoke test could catch a routing regression. `npm audit` is clean |
-| 40 | Low | No `format` script, no `engines` or `.nvmrc`, version stuck at `0.0.0` *(2026-08-28)* | `npm run format`, `engines: node >=22`, `.nvmrc`, and version `1.0.0`. Prettier's options moved out of the ESLint rule into `.prettierrc.json` so the CLI, the editor, and `npm run lint` cannot disagree; `.prettierignore` keeps it off the hand-wrapped docs |
+| 39 | Low | No `.env.example` — the template lived only in the README *(2026-08-28)* | `.env.example` committed; the README says `cp .env.example .env` |
+| 40 | Low | No `format` script, no `engines` or `.nvmrc`, version stuck at `0.0.0` *(2026-08-28)* | `npm run format`, `engines: node >=22`, `.nvmrc`, version `1.0.0`. Prettier's options moved into `.prettierrc.json` so the CLI, the editor, and `npm run lint` cannot disagree |

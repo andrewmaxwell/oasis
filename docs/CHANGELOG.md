@@ -1,5 +1,50 @@
 # Changelog
 
+## 2026-08-28 — The dashboard's kid count, and a re-prioritized roadmap
+
+**"Active Kids" counted children nobody was ordering diapers for.** (ISSUES #48)
+`getTableCount` read the `kid` table filtered on the kid's own `is_active` and
+`is_deleted`, and nothing else. A kid row says nothing about whether the family
+holding it is still on the roster, so deactivating or deleting a family left its
+children on the front page as active — while `kid_view` hid them from the Kids
+list (it drops kids of a soft-deleted parent) and `finishOrder` skipped them in
+the order (it snapshots active parents only). Three parts of the app, three
+different answers to "how many kids are we serving". Same class of bug as
+ISSUES #8, one join short.
+
+`20260828000004` adds `rostered_kid_view` — kid's own columns, joined to parent
+and filtered to families that are live and active — and `COUNT_SOURCE` in
+`supabase.ts` routes the kid count through it. Because the view exposes the kid
+columns unchanged, the existing `is_active` / `is_deleted` filters on the query
+still mean exactly what they meant against the table; the join is the only thing
+that moved. `e2e/dashboard.spec.ts` pins it with a family that is merely inactive
+and one that is deleted, both holding an active child, and checks the narrower
+count against the wider list: the inactive family's child still belongs on the
+Kids page, and does not belong in the count. Verified by mutation — pointing the
+count back at `kid` fails the spec.
+
+The E2E mock had to learn two things for this: `rostered_kid_view` alongside the
+other views in `database.ts`, and `count=exact` on a view at all, which it
+previously answered without a `content-range` header — a count against a view
+would have silently come back as zero.
+
+**Documentation.** `ISSUES.md` and `ROADMAP.md` were getting long enough to stop
+being read; both are trimmed, with the fixed-item history compressed to a line
+each. Three things came out of a fresh review and are now tracked: no idle
+timeout on a session (ISSUES #49 — the app holds refugee-family PII and is used
+on shared devices, so an unattended screen is the realistic leak), nothing
+preventing two orders for the same month (ISSUES #51), and orders being immutable
+once created (ROADMAP §14 — there is no write path to `order_parent` or
+`order_kid` outside `create_order`, so a family that moves mid-month has nowhere
+to go but a delete-and-rebuild).
+
+The roadmap's priority list is rewritten around what is small and load-bearing:
+the undo toast, the idle timeout, form validation, order corrections, then SQL
+assertions on the views. The deliverer-facing view and server-side email are
+explicitly parked pending a conversation with Selia about whether deliverers
+should use the app at all and how they should get their assignments — both were
+being ranked on an assumption nobody had checked.
+
 ## 2026-08-28 — A transactional order snapshot
 
 **Creating an order was three inserts, and a retry double-counted the diapers.**
