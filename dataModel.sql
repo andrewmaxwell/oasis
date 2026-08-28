@@ -211,13 +211,15 @@ LEFT JOIN deliverer d
   ON d.id = op.deliverer_id 
 LEFT JOIN kid k 
   ON k.parent_id = op.parent_id 
+-- The is_deleted predicate belongs in ON, not WHERE: in WHERE it evaluates to NULL for
+-- outer-joined rows with no match and drops the family entirely (ISSUES #12).
 LEFT JOIN order_kid ok 
   ON ok.kid_id = k.id 
   AND ok.order_id = op.order_id
+  AND ok.is_deleted IS NOT TRUE
 LEFT JOIN order_record o
   ON o.id = op.order_id
-WHERE NOT ok.is_deleted
-  AND NOT o.is_deleted
+WHERE NOT o.is_deleted
 GROUP BY o.id, op.parent_id, op.deliverer_id, d.name
 ORDER BY o.date_of_order DESC;
 

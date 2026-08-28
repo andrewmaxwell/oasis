@@ -17,14 +17,16 @@ the anon key (#6). Enhancements — as opposed to defects — live in [ROADMAP.m
 
 ### 35. High — Thin test coverage — *partly fixed*
 
-> **Fixed 2026-08-27:** Vitest is configured, `npm test` runs in CI, and all of `src/utils/`
-> is covered — 46 tests across the diaper-quantity rules, the order-snapshot consolidation,
-> `getDifference`, `splitEvery`, `groupBy`, `indexBy`, and `toAppUser`.
+> **Fixed 2026-08-27:** Vitest in CI, and all of `src/utils/` covered — 46 tests over the
+> diaper-quantity rules, order-snapshot consolidation, and the small helpers.
+>
+> **Fixed 2026-08-28:** `jsdom` + React Testing Library wired up, and
+> [OasisForm.test.tsx](../src/components/OasisForm.test.tsx) adds 17 tests over field
+> rendering, required-field validation, the dirty/submitting Save button, `OptionSource`
+> cache sharing, and every branch of the unsaved-changes blocker (#26). 63 tests total.
 
-**Still open:** nothing above `src/utils/` is tested. The TanStack Query data layer, every
-page's loading/error/save path, and `OasisForm`'s validation and dirty-state handling have no
-coverage. See ROADMAP §6.2–§6.4 for the order to add it in — component tests, then a
-Playwright smoke test of the core flow, then view-level SQL assertions.
+**Still open:** the TanStack Query data layer and every page's loading/error/save path. See
+ROADMAP §6.3–§6.4 — a Playwright smoke test of the core flow, then view-level SQL assertions.
 
 ### 5. Medium — No password policy — *partly fixed*
 
@@ -35,16 +37,6 @@ Playwright smoke test of the core flow, then view-level SQL assertions.
 **Still open:** [ChangePasswordPage.tsx](../src/components/pages/ChangePasswordPage.tsx)
 requires only a non-empty value matching the confirmation. Enforce a minimum length and set
 Supabase's password requirements in the dashboard.
-
-### 12. Medium — `parent_order_view` silently hides orders with no kid rows
-
-[dataModel.sql:219](../dataModel.sql#L219) — `WHERE NOT ok.is_deleted` on a `LEFT JOIN`ed
-table turns the outer join into an inner join, dropping any row where `ok` is NULL. The
-`COALESCE(json_agg(ok) FILTER (WHERE ok IS NOT NULL), '[]')` on line 208 shows the intent
-was to keep those rows.
-
-**Fix:** move the predicate into the `LEFT JOIN … ON` clause, or write
-`(ok.is_deleted IS NOT TRUE)`.
 
 ### 13. Medium — Order creation is not transactional
 
@@ -115,6 +107,17 @@ to catch a routing regression (#35).
 ```bash
 npm i react-router-dom@^7.18.2 && npm run lint && npm run typecheck && npm test && npm run build
 ```
+
+### 45. Low — The Save button has no accessible name while saving
+
+[OasisForm.tsx](../src/components/OasisForm.tsx) swaps the "Save" label for a bare
+`<CircularProgress>` while `submitting`, so for the length of the save the button's
+accessible name is empty — a screen reader announces just "button", with no hint that
+anything is in progress. Found by the new `OasisForm` tests, which assert the current
+behavior so a fix makes them fail loudly.
+
+**Fix:** keep the text beside the spinner, or add an `aria-label` and `aria-hidden` the
+spinner. Fits the accessibility pass in ROADMAP §10.
 
 ### 23. Low — Deprecated MUI API — *partly fixed*
 
@@ -200,6 +203,7 @@ app as part of #1 — see the warning in [CLAUDE.md](../CLAUDE.md) §4.
 | 9 | High | Every Supabase error called `alert()`, threw, and left the page on a spinner | `fail()` logs and throws; react-query retries twice then renders `<ErrorState>` with Retry. See ROADMAP §2 |
 | 10 | High | `dataModel.sql` had a trailing comma before the closing `)` of `order_kid`, so the file wouldn't run *(2026-08-28)* | Comma removed |
 | 11 | High | `dataModel.sql` created `parent` before the `deliverer` it references, and dropped `deliverer` after creating `parent`, cascading away the constraint on a re-run *(2026-08-28)* | All `DROP TABLE` statements grouped at the top in reverse dependency order; tables created in dependency order, `deliverer` first |
+| 12 | Medium | `parent_order_view` evaluated `NOT ok.is_deleted` in `WHERE` on a `LEFT JOIN`ed table, collapsing it to an inner join — a family in an order with no surviving `order_kid` rows vanished from the historical record entirely *(2026-08-28)* | Predicate moved into the `LEFT JOIN … ON` clause as `ok.is_deleted IS NOT TRUE`, so the outer join survives and `json_agg`'s `'[]'` fallback renders as intended. Migration `20260828000001_fix_parent_order_view_outer_join.sql`; `dataModel.sql` synced |
 | 15 | Medium | Non-admins got an infinite spinner instead of "Access Denied" | Admin guard runs before the loading check, and the user list isn't requested at all for non-admins |
 | 16 | Medium | `LabelPage` called `.sort()` on state in place | Sorts a copy |
 | 18 | Medium | Null birth dates rendered as an empty cell in error red (`new Date(null)` is 1970) | Truthiness check before the date comparison |

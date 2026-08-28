@@ -9,9 +9,9 @@ small-team, mobile-heavy, PII-holding non-profit tool.
 
 1. **§3 Mobile**, starting with the deliverer view. The delivery-day use case — the one a
    volunteer has in a car, mid-route — is the only major workflow the app doesn't support.
-2. **§6.2 Component tests on `OasisForm`.** The utils are locked down now; the form is the
-   next-most-load-bearing untested thing — and now that the unsaved-changes blocker lives
-   inside it (ISSUES #26), the dirty-state logic it carries is worth a test.
+2. **§6.3 Playwright smoke test.** `OasisForm` is covered now; the core flow end-to-end is
+   not, and ISSUES #44 (the `react-router` advisories) is waiting on exactly this before the
+   bump can be made safely.
 3. **§5 Restore and undo.** Soft-deleted records are invisible in the app today, so a
    misclick needs a developer with SQL access.
 
@@ -31,6 +31,11 @@ small-team, mobile-heavy, PII-holding non-profit tool.
   on error". Dropped `memoizee`. *Generated types, Postgres functions still open — see §11.*
 - **§6.1 Unit tests on `src/utils/`** (2026-08-27) — Vitest, 46 tests, `npm test` in CI.
   *Everything above `src/utils/` is still untested — see §6.*
+- **§6.2 Component tests on `OasisForm`** (2026-08-28) — `jsdom` + React Testing Library,
+  a `renderForm` harness in [`src/test/`](../src/test/renderForm.tsx) supplying the data
+  router / confirm / query providers the form needs, and 17 tests over validation, the Save
+  button's dirty and submitting states, `OptionSource` cache sharing, and the
+  unsaved-changes blocker. Filed ISSUES #45 along the way. *§6.3 and §6.4 still open.*
 - **§10 A real theme file** (2026-08-27) — [`src/theme.ts`](../src/theme.ts) holds palette,
   typography, shape, and component defaults; `LandingPage`'s stat cards key off palette
   tokens and `alpha()` rather than hardcoded hex. *Light mode is still open — see §10.*
@@ -80,18 +85,16 @@ preview-before-send dialog. Optionally attach the label PDF (§7).
 - **Field-level permissions.** `rough_family_income` and `country_of_origin` are the most
   sensitive columns; consider restricting them to `admin`.
 
-## 6. Testing — M — §6.1 done
+## 6. Testing — M — §6.1 and §6.2 done
 
-`src/utils/` is covered (46 Vitest tests). Remaining, in value order:
+`src/utils/` (46 tests) and `OasisForm` (17 tests) are covered — 63 in all. The RTL harness
+is in place now, so a new component test is a file, not a project. Remaining, in value order:
 
-2. **React Testing Library on `OasisForm`.** Required-field validation, the dirty/disabled
-   Save button, select options loading, and the unsaved-changes blocker added for ISSUES #26
-   — including that `allowNextNavigation()` suppresses the prompt after a save or delete.
 3. **Playwright smoke test.** Sign in → create a family → add a kid → create an order →
    verify the totals. This one test would catch most regressions in the core flow, and would
    unblock the `react-router` bump (ISSUES #44).
-4. **`pgTAP` or plain SQL assertions** on the views, especially the join semantics in
-   ISSUES #12.
+4. **`pgTAP` or plain SQL assertions** on the views. The `LEFT JOIN` semantics that caused
+   ISSUES #12 are fixed but unguarded — nothing would catch the same mistake in the next view.
 
 ## 7. Better operational output — M
 

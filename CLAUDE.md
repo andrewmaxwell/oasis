@@ -231,11 +231,17 @@ fail at runtime.
 CI runs lint, typecheck, test, `check:functions`, and build. All five pass clean — keep them
 that way.
 
-**Tests.** Vitest, no jsdom, no setup file. Tests are `*.test.ts` next to the module they
-cover, and today they cover `src/utils/` only — the pure functions, where the diaper-quantity
-rules live. `tsconfig.json` includes them, so `npm run typecheck` type-checks the tests too.
-Anything above `src/utils/` (hooks, pages, `OasisForm`) is untested; adding component tests
-means adding `jsdom` and RTL first — see ROADMAP §6.
+**Tests.** Vitest. [vitest.config.ts](vitest.config.ts) merges the Vite config and adds
+`jsdom`, `globals: true` (React Testing Library registers its auto-cleanup only when the
+globals exist), and [src/test/setup.ts](src/test/setup.ts) for the `jest-dom` matchers.
+Tests sit next to what they cover — `*.test.ts` for `src/utils/`, `*.test.tsx` for
+components — and `tsconfig.json` includes them, so `npm run typecheck` covers them too.
+
+Covered today: all of `src/utils/`, plus `OasisForm`. Component tests mount via `renderForm`
+in [src/test/renderForm.tsx](src/test/renderForm.tsx), which supplies the providers the form
+reaches for. Note it must be a **data** router (`createMemoryRouter`) — plain `MemoryRouter`
+has no `useBlocker` and `useUnsavedChangesPrompt` will throw. Pages and hooks are still
+untested — see ROADMAP §6.3.
 
 Environment: copy the template in the README into `.env`:
 ```
