@@ -70,12 +70,6 @@ clients, truncating long delivery lists without warning.
 **Fix:** render the list as a dialog with a per-deliverer "Open email" button and a
 "Copy to clipboard" fallback — or send server-side (ROADMAP §4).
 
-### 30. Medium — Not usable on a phone
-
-`DataGrid` columns use fixed pixel widths up to 400 px with no responsive behavior, so on a
-phone the tables are a horizontal-scroll maze. Deliverers checking an address mid-route are
-exactly the mobile case. See ROADMAP §3.
-
 ### 31. Medium — Dark mode is forced
 
 `* {color-scheme: dark}` in [index.html](../index.html) and a hardcoded dark palette in
@@ -127,9 +121,24 @@ a breach, but rotating the key is cheap hygiene.
 
 ### 33. Low — Table toolbar lost its standard controls
 
-The custom toolbar in [OasisTable.tsx:29-90](../src/components/OasisTable.tsx#L29-L90)
-replaced the MUI default, dropping the columns, filter, density, and CSV-export buttons. A
+The custom header in [OasisTable.tsx](../src/components/OasisTable.tsx) replaced the MUI
+default toolbar, dropping the columns, filter, density, and CSV-export buttons. A
 CSV export in particular is something this kind of org asks for constantly.
+
+### 47. Low — A view's `ORDER BY` is convention, not contract — *partly fixed*
+
+> **Fixed 2026-08-28:** ordering now lives in the database for every list: `ORDER BY` in the views, a `SortSpec[]`
+> on `getAllRecords` for raw tables. `kid_view` sorted by birth date, which scattered kids
+> who had aged out through the working roster, and `deliverer_options` sorted `is_active`
+> ASC — false before true — so retired volunteers were listed above active ones in the
+> family form's dropdown. Both fixed in
+> [20260828000002](../supabase/migrations/20260828000002_sort_kid_view_and_deliverer_options.sql).
+
+**Still open:** SQL does not guarantee that a view's `ORDER BY` survives a `SELECT` from
+that view — Postgres preserves it for the simple plans these queries produce, but a
+parallel or re-ordered plan would be within its rights. At this size it is fine. If a table
+grows to where the planner gets creative, or if paging is ever added, move the ordering to
+an explicit `.order()` on the query.
 
 ### 34. Low — Hardcoded contact address in generated emails
 
@@ -203,6 +212,7 @@ app as part of #1 — see the warning in [CLAUDE.md](../CLAUDE.md) §4.
 | 32 | Low | Toolbar title was an `onClick` on a `Typography` — not focusable, invisible to screen readers | Logo and title sit inside one `<Link to="/">` |
 | 29 | Medium | `linkButton`, `anchor`, and `mapAnchor` rendered bare `<Link>` / `<a>`, so every link in every table came out browser-default blue turning visited-purple *(2026-08-28)* | All three use MUI `<Link>` (the router one via `component={RouterLink}`), plus a `MuiLink` theme default: `underline: 'hover'` and a `focus-visible` ring |
 | 45 | Low | The Save button swapped its label for a bare `<CircularProgress>` while saving, leaving it with no accessible name *(2026-08-28)* | Label reads "Saving…" with the spinner as an `aria-hidden` `startIcon`; the test that pinned the old behavior now asserts the accessible name |
+| 30 | Medium | Not usable on a phone: the table header was clipped by the column headers, and fixed pixel column widths made every table a sideways-scroll maze *(2026-08-28)* | The title/search/Add row moved out of the grid's fixed-height `toolbar` slot into [OasisTable](../src/components/OasisTable.tsx)'s own markup — driving the quick filter through `filterModel` — and below `sm` each table shows only its `mobileColumns` (defaulting to the first two), flexed to the viewport with wrapping cells. The wide `<Table>`s on the finished-order page scroll inside a `TableContainer`, the label sheet zooms to fit, and the sign-in form has a page of its own. A stacked card list and a deliverer route view are still ROADMAP §3 |
 
 ### Infrastructure
 

@@ -59,15 +59,19 @@ The `onMutate`/`onError` rollback pattern is available now but not used anywhere
 
 ## 3. Mobile and offline — M/L
 
-Deliverers use this in a car. Today it's a desktop app rendered small (ISSUES #30).
+Deliverers use this in a car. The admin UI now fits a phone — responsive columns, a header
+that doesn't clip, scrollable wide tables (ISSUES #30) — but it is still a desktop app made
+narrow, not a delivery tool.
 
 - **A deliverer-focused view.** Rather than making the admin UI work on a phone, add a
   `/deliverer/:id/order/:orderId` route: just my families, in delivery order, with tap-to-map,
   tap-to-call, and a "delivered" checkbox. This is arguably the highest-value new feature in
   the whole list.
-- **Responsive tables.** Below the `md` breakpoint, swap `DataGrid` for a stacked card list:
-  name, address, phone, diaper summary. `cellRenderers` already has `mapAnchor` and `tel:`
-  anchors — surface them as proper touch targets.
+- **Responsive tables.** *Partly done:* below `sm`, `OasisTable` hides everything outside
+  each page's `mobileColumns` and flexes the rest to the viewport. Still open: swapping the
+  `DataGrid` for a stacked card list — name, address, phone, diaper summary in one tappable
+  block — so `mapAnchor` and the `tel:` anchors become proper touch targets rather than
+  text inside a cell.
 - **PWA.** `vite-plugin-pwa` gives an installable app with a home-screen icon. Cache the app
   shell and the current order's delivery list so a route sheet survives losing signal.
 

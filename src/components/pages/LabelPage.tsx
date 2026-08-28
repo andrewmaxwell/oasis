@@ -43,6 +43,15 @@ const useLabelStyles = () => {
       @media print {
         .page, .label {outline: 0}
       }
+
+      /* The sheet is a physical 8.5in wide, so on a phone it runs off the screen. Scale
+         it down to the viewport for on-screen preview; print is untouched and still comes
+         out at true size. A browser that doesn't support dividing by a length drops the
+         rule and scrolls sideways, exactly as it did before — hence no overflow:hidden
+         here, which would clip the sheet with no way to reach the rest of it. */
+      @media screen and (max-width: 8.5in) {
+        .page {zoom: calc(100vw / 8.5in)}
+      }
       `;
     document.head.append(styleTag);
 

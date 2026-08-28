@@ -25,10 +25,11 @@ const columns: GridColDef<OrderRecord>[] = [
   },
 ];
 
+// Newest order first — the one being worked on is almost always the most recent.
 const getOrders = async () =>
-  ((await getAllRecords('order_record')) as OrderRecord[]).sort((a, b) =>
-    b.date_of_order.localeCompare(a.date_of_order),
-  );
+  (await getAllRecords('order_record', [
+    {column: 'date_of_order', ascending: false},
+  ])) as OrderRecord[];
 
 const OrderTablePage = () => {
   const {

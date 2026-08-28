@@ -211,6 +211,7 @@ const ParentPage = () => {
           data={parent.kid}
           label="Kid"
           columns={kidColumns}
+          mobileColumns={['name', 'diaper_size']}
           emptyMessage="No kids on this family yet."
           newItemUrl={`/kid/new?parent_id=${parent.id}&last_name=${parent.last_name}`}
         />

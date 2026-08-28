@@ -78,6 +78,22 @@ export const seed = (): Database => ({
 });
 
 const live = (rows: Row[]) => rows.filter((r) => !r.is_deleted);
+
+const fullName = (row: Row) => `${row.first_name} ${row.last_name}`;
+
+/**
+ * The views carry their own `ORDER BY` (dataModel.sql) and the app leans on it — the roster
+ * pages render rows in the order they arrive. Mirror it here, or the suite and production
+ * disagree about what the top of a list is.
+ */
+const byName = (rows: Row[], nameOf: (row: Row) => string) =>
+  [...rows].sort((a, b) => nameOf(a).localeCompare(nameOf(b)));
+
+const activeFirstByName = (rows: Row[], nameOf: (row: Row) => string) =>
+  byName(rows, nameOf).sort(
+    (a, b) => Number(b.is_active) - Number(a.is_active),
+  );
+
 const byId = (rows: Row[], id: unknown) => rows.find((r) => r.id === id);
 
 /**
@@ -98,7 +114,7 @@ const orderKidsFor = (db: Database, op: Row) =>
  */
 export const views: Record<string, (db: Database) => Row[]> = {
   parent_view: (db) =>
-    live(db.parent).map((p) => {
+    activeFirstByName(live(db.parent), fullName).map((p) => {
       const deliverer = live(db.deliverer).find(
         (d) => d.id === p.deliverer_id && d.is_active,
       );
@@ -119,7 +135,7 @@ export const views: Record<string, (db: Database) => Row[]> = {
     }),
 
   kid_view: (db) =>
-    live(db.kid).flatMap((k) => {
+    activeFirstByName(live(db.kid), fullName).flatMap((k) => {
       const parent = byId(live(db.parent), k.parent_id);
       // An INNER JOIN in SQL: a kid whose parent is soft-deleted drops out.
       if (!parent) return [];
@@ -139,13 +155,13 @@ export const views: Record<string, (db: Database) => Row[]> = {
     }),
 
   parent_options: (db) =>
-    live(db.parent).map((p) => ({
+    byName(live(db.parent), fullName).map((p) => ({
       value: p.id,
-      label: `${p.first_name} ${p.last_name}`,
+      label: fullName(p),
     })),
 
   deliverer_options: (db) =>
-    live(db.deliverer).map((d) => ({
+    activeFirstByName(live(db.deliverer), (d) => String(d.name)).map((d) => ({
       value: d.id,
       label: d.is_active ? d.name : `${d.name} (INACTIVE)`,
     })),

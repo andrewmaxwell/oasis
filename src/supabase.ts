@@ -91,10 +91,22 @@ export const getKidsForParent = async (parentId: string) => {
   return (data ?? []) as Kid[];
 };
 
+/**
+ * A column to sort on, server-side. Sorting belongs next to the query — the views all
+ * carry their own `ORDER BY` (see dataModel.sql), and this is how a read of a raw table
+ * says the same thing rather than re-sorting the array in the page.
+ */
+export type SortSpec = {column: string; ascending?: boolean};
+
 export const getAllRecords = async <T extends TableWithSoftDelete>(
   tableName: T,
+  orderBy: SortSpec[] = [],
 ) => {
-  const {data, error} = await from(tableName).select().eq('is_deleted', false);
+  let query = from(tableName).select().eq('is_deleted', false);
+  for (const {column, ascending = true} of orderBy) {
+    query = query.order(column, {ascending});
+  }
+  const {data, error} = await query;
   if (error) fail(error);
   return (data ?? []) as Database['public']['Tables'][T]['Row'][];
 };

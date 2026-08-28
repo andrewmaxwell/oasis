@@ -1,5 +1,56 @@
 # Changelog
 
+## 2026-08-28 — Mobile layout and list ordering
+
+### The app on a phone
+
+**The table header was being sliced off by the column headers.** (ISSUES #30)
+`OasisTable` put its title, count, search box, and Add button in the `DataGrid`'s
+`toolbar` slot, which has a fixed height and clips whatever spills past it. On a
+desktop the row fits on one line; on a phone it wraps, and everything past the
+first line disappeared under the grid — including the only way to add a family.
+The header moved out of the slot into `OasisTable`'s own markup, which means the
+quick filter is now driven through the grid's `filterModel` rather than
+`<QuickFilter>`.
+
+**Every table was a sideways-scroll maze.** (ISSUES #30) Columns are fixed pixel
+widths adding up to ~1,500 px. Below the `sm` breakpoint a table now shows only
+the fields in its new `mobileColumns` prop — defaulting to the first two —
+flexed to fill the viewport with wrapping cells. Quick filter still searches the
+hidden columns (the grid excludes them by default), so a family is still findable
+by zip or phone from a car, and inactive rows are dimmed, since the "Active" chip
+is one of the columns a phone hides.
+
+**The rest of the mobile pass.** The seven-column tables on the finished-order
+page scroll inside a `TableContainer` instead of widening the page, and that
+page's action buttons stack instead of overflowing. The label sheet — physically
+8.5in wide — zooms to fit the viewport on screen, leaving print at true size. The
+sign-in form, which renders outside the router's `Container` and so had no
+padding at all, got a page of its own. Added `theme-color` so the phone browser's
+chrome matches the app.
+
+### List ordering
+
+**Ordering moved into the database, and two views were wrong.** (ISSUES #47)
+`parent_view` already sorted active-first-then-alphabetically; `kid_view` sorted
+by birth date, scattering children who had aged out through the roster staff work
+from every month. Worse, `deliverer_options` sorted `is_active` ASC — false
+before true in Postgres — so every retired volunteer was listed *above* the
+active ones in the family form's "Planned Deliverer" dropdown. Both fixed in
+`20260828000002`. The three pages that sorted their fetched arrays by hand now
+pass a `SortSpec[]` to `getAllRecords` instead, so ordering lives in one place;
+the E2E mock learned `order=` to match.
+
+### Testing
+
+`e2e/mobile.spec.ts` runs the roster at 390 px and pins the header controls being
+wholly on screen, the page not overflowing sideways, and search still reaching
+hidden columns. `e2e/ordering.spec.ts` pins active-before-inactive on the kids
+list, the deliverers list, and the deliverer dropdown, with fixtures seeded out of
+order so insertion order alone cannot pass it.
+
+---
+
 ## 2026-08-27 – 2026-08-28
 
 Sixteen commits over two days, taking the app from a working prototype with a

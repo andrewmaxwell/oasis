@@ -24,16 +24,28 @@ export const SignInForm = () => {
           showToast((e as Error).message, {severity: 'error'});
         }
       })}
+      // This route renders outside the router's Container, so it carries its own page
+      // padding — without it the form sits flush against the top-left edge of a phone.
       sx={{
-        '& .MuiTextField-root': {m: 1, width: '25ch'},
+        '& .MuiTextField-root': {width: '100%'},
         display: 'flex',
         flexDirection: 'column',
-        alignItems: 'center',
-        justifyContent: 'center',
+        gap: 2,
+        width: '100%',
+        maxWidth: 360,
+        mx: 'auto',
+        px: 3,
+        py: {xs: 6, sm: 10},
       }}
     >
-      <Typography variant="h6" gutterBottom>
-        Sign In
+      <Box
+        component="img"
+        src="/oasis/favicon.png"
+        alt=""
+        sx={{height: 64, width: 64, borderRadius: '50%', alignSelf: 'center'}}
+      />
+      <Typography variant="h5" sx={{textAlign: 'center', fontWeight: 700}}>
+        Oasis
       </Typography>
       <OasisTextField
         label="Email Address"
@@ -52,7 +64,8 @@ export const SignInForm = () => {
       <Button
         type="submit"
         variant="contained"
-        sx={{mt: 3, mb: 2}}
+        size="large"
+        sx={{mt: 1}}
         disabled={isSubmitting}
       >
         Sign In

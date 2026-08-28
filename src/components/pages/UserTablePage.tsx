@@ -52,6 +52,7 @@ const UserTablePage = () => {
       data={userList}
       label="User"
       columns={columns}
+      mobileColumns={['name', 'access_level']}
       newItemUrl="/user/new"
       emptyMessage="No users yet."
       error={error}

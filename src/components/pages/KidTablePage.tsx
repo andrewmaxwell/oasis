@@ -57,6 +57,7 @@ const KidTablePage = () => {
       data={kids}
       label="Kid"
       columns={columns}
+      mobileColumns={['name', 'diaper_size']}
       newItemUrl="/kid/new"
       emptyMessage="No kids yet — add one from a family's page."
       error={error}

@@ -85,6 +85,7 @@ const ParentTablePage = () => {
           : ''
       }
       columns={columns}
+      mobileColumns={['name', 'address']}
       newItemUrl="/parent/new"
       emptyMessage="No families yet — add your first one."
       error={error}

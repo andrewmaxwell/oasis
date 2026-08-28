@@ -6,9 +6,10 @@ import {Database, Row, seed, views} from './database.ts';
  * and updates, the password grant, and the realtime socket.
  *
  * It implements only the query surface `src/supabase.ts` actually uses — `select=*`,
- * `col=eq.value` filters, `count=exact` HEAD requests, and `return=representation`
- * inserts. Anything outside that fails loudly rather than silently returning [], because a
- * mock that quietly answers a query it does not understand is worse than no mock at all.
+ * `col=eq.value` filters, `order=col.asc`, `count=exact` HEAD requests, and
+ * `return=representation` inserts. Anything outside that fails loudly rather than silently
+ * returning [], because a mock that quietly answers a query it does not understand is
+ * worse than no mock at all.
  */
 
 const RESERVED = new Set([
@@ -62,6 +63,45 @@ const applyFilters = (rows: Row[], params: URLSearchParams) => {
     out = out.filter((row) => row[column] === value);
   }
   return out;
+};
+
+/** Postgres' default collation order, near enough for the fixture's ASCII-ish data. */
+const compare = (a: unknown, b: unknown) => {
+  if (a === b) return 0;
+  // PostgREST puts nulls last by default.
+  if (a === null || a === undefined) return 1;
+  if (b === null || b === undefined) return -1;
+  if (typeof a === 'boolean' && typeof b === 'boolean') return a ? 1 : -1;
+  if (typeof a === 'number' && typeof b === 'number') return a - b;
+  return String(a).localeCompare(String(b));
+};
+
+/**
+ * `order=is_active.desc,name.asc`, as supabase-js spells `.order()`. Sorting lives in the
+ * query now (`getAllRecords` in src/supabase.ts) and in the views, so a mock that ignored
+ * this would hand the app rows in insertion order and quietly disagree with production
+ * about what the roster looks like.
+ */
+const applyOrder = (rows: Row[], params: URLSearchParams) => {
+  const spec = params.get('order');
+  if (!spec) return rows;
+  const keys = spec.split(',').map((part) => {
+    const [column, ...modifiers] = part.split('.');
+    const unsupported = modifiers.filter((m) => m !== 'asc' && m !== 'desc');
+    if (unsupported.length) {
+      throw new Error(
+        `supabaseMock: unsupported order modifier "${unsupported.join('.')}" in "${part}". Add it here if the app now needs it.`,
+      );
+    }
+    return {column, descending: modifiers.includes('desc')};
+  });
+  return [...rows].sort((a, b) => {
+    for (const {column, descending} of keys) {
+      const result = compare(a[column], b[column]);
+      if (result) return descending ? -result : result;
+    }
+    return 0;
+  });
 };
 
 let idCounter = 0;
@@ -148,8 +188,10 @@ export const mockSupabase = async (page: Page): Promise<MockHandle> => {
     const params = url.searchParams;
 
     if (name in views) {
-      const rows = applyFilters(views[name](db), params);
-      return json(route, rows);
+      return json(
+        route,
+        applyOrder(applyFilters(views[name](db), params), params),
+      );
     }
 
     const table = db[name as keyof Database];
@@ -158,7 +200,7 @@ export const mockSupabase = async (page: Page): Promise<MockHandle> => {
     }
 
     if (method === 'GET' || method === 'HEAD') {
-      const rows = applyFilters(table, params);
+      const rows = applyOrder(applyFilters(table, params), params);
       // count=exact + head:true is how getTableCount asks for a number without the rows.
       const headers: Record<string, string> = request
         .headers()

@@ -26,10 +26,10 @@ import {ErrorState} from '../../PageStates.tsx';
 import {combineQueries} from '../../../hooks/combineQueries.ts';
 import {allowNextNavigation} from '../../../hooks/useUnsavedChangesPrompt.ts';
 
+// Alphabetical, not active-first: this list is grouped by active state in the summary
+// table itself, so the order that helps here is the one that makes a name easy to find.
 const getDeliverers = async () =>
-  ((await getAllRecords('deliverer')) as Deliverer[]).sort((a, b) =>
-    a.name.localeCompare(b.name),
-  );
+  (await getAllRecords('deliverer', [{column: 'name'}])) as Deliverer[];
 
 const finishOrder = async (
   formData: Partial<OrderRecord>,

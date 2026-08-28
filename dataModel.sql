@@ -157,7 +157,7 @@ JOIN parent p
 WHERE 
   NOT k.is_deleted
   AND NOT p.is_deleted
-ORDER BY k.birth_date ASC, k.first_name, k.last_name;
+ORDER BY k.is_active DESC, k.first_name, k.last_name;
 
 DROP VIEW IF EXISTS parent_options;
 CREATE VIEW parent_options WITH (security_invoker = ON) AS
@@ -178,7 +178,7 @@ SELECT
  END AS label
 FROM deliverer
 WHERE NOT is_deleted
-ORDER BY is_active, name;
+ORDER BY is_active DESC, name;
 
 DROP VIEW IF EXISTS kid_order_view;
 CREATE VIEW kid_order_view WITH (security_invoker = ON) AS

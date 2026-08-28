@@ -79,9 +79,19 @@ refetch-on-focus.
 
 Two families of read helpers:
 - `getAllRecords` / `getRecord` / `getTableCount` — raw tables, always filtered by
-  `is_deleted = false`.
+  `is_deleted = false`. `getAllRecords` takes an optional `SortSpec[]`.
 - `getView('some_view')` and the specific `get*Orders` helpers — read from SQL **views**
   that pre-join and pre-aggregate. Views end in `_view` or `_options`.
+
+**Sorting is the database's job.** Every view carries its own `ORDER BY` and reads of raw
+tables pass a `SortSpec[]` to `getAllRecords`; pages render rows in the order they arrive
+and don't re-sort the array. The house rule for anything with an `is_active` flag is active
+first, then alphabetically — `parent_view`, `kid_view`, `deliverer_options`, and the
+deliverer table all follow it, and a new list should too. (`ORDER BY` inside a view isn't
+contractual in SQL, but Postgres preserves it for the plain `SELECT *` PostgREST issues at
+this data size; a table that outgrows that should move to an explicit `.order()`.) Note
+`e2e/fixtures/database.ts` mirrors these orderings — keep it in step or the suite and
+production disagree about what's at the top of a list.
 
 ### Soft deletes
 Nothing is ever hard-deleted from the UI. `softDelete()` sets `is_deleted = true`. Every
@@ -151,9 +161,24 @@ Submitting goes through a mutation, which returns immediately, so react-hook-for
 instead.
 
 ### Tables
-`OasisTable` wraps MUI `DataGrid` with a custom toolbar (title, count subtitle, quick
-filter, and a write-gated "Add" button). Columns are `GridColDef` arrays, also module-level.
-Cell rendering is shared through `cellRenderers.tsx`.
+`OasisTable` wraps MUI `DataGrid` with a custom header (title, count subtitle, quick filter,
+and a write-gated "Add" button). Columns are `GridColDef` arrays, also module-level. Cell
+rendering is shared through `cellRenderers.tsx`.
+
+That header sits *above* the grid rather than in its `toolbar` slot: the slot has a fixed
+height and clips whatever spills past it, so on a phone — where the row wraps onto two
+lines — the search box and Add button were sliced off by the column headers. The cost is
+that the quick filter is ours to drive, through the grid's `filterModel`; don't move it
+back into the slot.
+
+Below the `sm` breakpoint a table shows only the fields in its `mobileColumns` prop
+(defaulting to the first two columns), flexed to fill the width with wrapping cells, so no
+table needs a sideways scroll to be read. Adding a column to a table means deciding whether
+it earns a place on a phone. Two things follow from hiding columns, and both are
+load-bearing: the filter model sets `quickFilterExcludeHiddenColumns: false`, so search
+still reaches a zip or a phone number a phone isn't showing, and inactive rows get the
+`oasis-row--inactive` class and are dimmed, because the "Active" chip is one of the columns
+that goes.
 
 ### Auth & permissions
 Three levels — `readOnly`, `readWrite`, `admin` — stored in Supabase
@@ -251,6 +276,11 @@ has no `useBlocker` and `useUnsavedChangesPrompt` will throw.
 excludes `e2e/**` so `npm test` stays fast and browserless.
 [smoke.spec.ts](e2e/smoke.spec.ts) walks the core flow: sign in → add a family → add a
 child → create the order → check the frozen totals.
+[mobile.spec.ts](e2e/mobile.spec.ts) runs the roster at 390 px and pins the two things that
+broke there before (ISSUES #30): the header controls being clipped by the column headers,
+and the table overflowing the viewport.
+[ordering.spec.ts](e2e/ordering.spec.ts) pins active-before-inactive on the kids list, the
+deliverers list, and the deliverer dropdown.
 
 Supabase is **mocked at the network boundary**, not run locally: no Docker, no test
 project, no credentials, identical on a laptop and in CI.
