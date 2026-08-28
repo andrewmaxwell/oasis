@@ -19,7 +19,7 @@ const NAME_FIELDS: FormField<TestRecord>[] = [
   {id: 'last_name', label: 'Last Name', width: 6},
 ];
 
-const save = () => screen.getByRole('button', {name: /save/i});
+const save = () => screen.getByRole('button', {name: /^sav/i});
 
 describe('OasisForm', () => {
   describe('rendering fields', () => {
@@ -99,12 +99,20 @@ describe('OasisForm', () => {
       });
 
       await user.type(screen.getByLabelText('First Name'), '!');
-      // Not `save()`: while submitting, the label is swapped for a bare
-      // <CircularProgress>, which leaves the button with no accessible name at all.
-      // Encoded as-is so this test fails loudly if that is ever fixed.
-      const submit = screen.getByRole('button');
-      expect(submit).toBeDisabled();
-      expect(submit).toHaveAccessibleName('');
+      expect(save()).toBeDisabled();
+    });
+
+    it('keeps an accessible name while saving (ISSUES #45)', async () => {
+      // The spinner used to replace the label outright, so for the length of the save a
+      // screen reader announced only "button".
+      const {user} = renderForm<TestRecord>({
+        fields: NAME_FIELDS,
+        origData: {first_name: 'Amara'},
+        submitting: true,
+      });
+
+      await user.type(screen.getByLabelText('First Name'), '!');
+      expect(save()).toHaveAccessibleName('Saving…');
     });
 
     it('is not rendered at all when the form is disabled', () => {

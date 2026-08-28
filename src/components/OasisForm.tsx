@@ -84,12 +84,16 @@ export const OasisForm = <T extends FieldValues>({
               type="submit"
               variant="contained"
               disabled={!isDirty || isSubmitting || submitting}
+              // ISSUES #45: the spinner used to replace the label outright, leaving the
+              // button with no accessible name for the length of the save. Keep a text
+              // label in both states and hide the decorative spinner from assistive tech.
+              startIcon={
+                isSubmitting || submitting ? (
+                  <CircularProgress size={16} color="inherit" aria-hidden />
+                ) : undefined
+              }
             >
-              {isSubmitting || submitting ? (
-                <CircularProgress size={24} color="inherit" />
-              ) : (
-                'Save'
-              )}
+              {isSubmitting || submitting ? 'Saving…' : 'Save'}
             </Button>
           </Grid>
         )}

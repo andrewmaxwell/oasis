@@ -33,7 +33,7 @@ small-team, mobile-heavy, PII-holding non-profit tool.
   *Everything above `src/utils/` is still untested — see §6.*
 - **§6.2 Component tests on `OasisForm`** (2026-08-28) — `jsdom` + React Testing Library,
   a `renderForm` harness in [`src/test/`](../src/test/renderForm.tsx) supplying the data
-  router / confirm / query providers the form needs, and 17 tests over validation, the Save
+  router / confirm / query providers the form needs, and 18 tests over validation, the Save
   button's dirty and submitting states, `OptionSource` cache sharing, and the
   unsaved-changes blocker. Filed ISSUES #45 along the way. *§6.3 and §6.4 still open.*
 - **§10 A real theme file** (2026-08-27) — [`src/theme.ts`](../src/theme.ts) holds palette,
@@ -87,7 +87,7 @@ preview-before-send dialog. Optionally attach the label PDF (§7).
 
 ## 6. Testing — M — §6.1 and §6.2 done
 
-`src/utils/` (46 tests) and `OasisForm` (17 tests) are covered — 63 in all. The RTL harness
+`src/utils/` (46 tests) and `OasisForm` (18 tests) are covered — 64 in all. The RTL harness
 is in place now, so a new component test is a file, not a project. Remaining, in value order:
 
 3. **Playwright smoke test.** Sign in → create a family → add a kid → create an order →
@@ -141,7 +141,9 @@ have:
 - **Brand identity.** The favicon is the only branding. A logo, color palette, and
   typographic scale would make it feel like the org's tool rather than a scaffold.
 - **Accessibility pass:** focus-visible rings, contrast audit against WCAG AA on the dark
-  palette, `aria-live` on the toast region, real labels on icon-only buttons.
+  palette, `aria-live` on the toast region, real labels on icon-only buttons. *Started: the
+  Save button keeps its name while saving (ISSUES #45) and `MuiLink` has a focus ring
+  (ISSUES #29).*
 
 ## 11. Data layer modernization — M — TanStack Query done
 
@@ -161,7 +163,8 @@ Everything is one record at a time today.
 
 ## 13. Housekeeping — S
 
-- `.env.example` (ISSUES #39), `.nvmrc`, `engines`, and a `format` script (ISSUES #40).
+- ~~`.env.example` (ISSUES #39), `.nvmrc`, `engines`, and a `format` script (ISSUES #40).~~
+  Done 2026-08-28.
 - Dependabot or Renovate for dependency updates.
 - A `CONTRIBUTING.md` and a `scripts/README.md` explaining when each script is run.
 - Bundle analysis — MUI plus DataGrid is heavy and the build already warns about a >500 kB

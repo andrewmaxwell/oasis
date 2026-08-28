@@ -195,7 +195,9 @@ The file does not currently run top-to-bottom without edits (ISSUES.md #10, #11)
   Pages `export default` (needed for `React.lazy`); shared components use named exports.
 - **Imports:** relative, with explicit `.ts` / `.tsx` extensions in most files. Be consistent
   with the file you're editing.
-- **Formatting:** Prettier via ESLint. Single quotes, no bracket spacing (`{foo}` not `{ foo }`).
+- **Formatting:** Prettier, configured in `.prettierrc.json` and enforced through ESLint's
+  `prettier/prettier` rule. Single quotes, no bracket spacing (`{foo}` not `{ foo }`).
+  `npm run format` fixes code in place; it skips the markdown docs, which are hand-wrapped.
   Run `npm run lint` before committing.
 - **Styling:** MUI `sx` prop. No CSS files. The only global CSS is in
   [index.html](index.html) and the injected print styles in `LabelPage`.
@@ -221,6 +223,7 @@ npm run typecheck        # tsc --noEmit
 npm run check:functions  # deno check on supabase/functions — see below
 npm test                 # vitest run
 npm run test:watch       # vitest, watching
+npm run format           # prettier --write over **/*.{ts,tsx,js}
 ```
 
 **`npm run check:functions` is not optional.** `tsconfig.json` scopes to `["src"]`, so the
@@ -243,11 +246,8 @@ reaches for. Note it must be a **data** router (`createMemoryRouter`) — plain 
 has no `useBlocker` and `useUnsavedChangesPrompt` will throw. Pages and hooks are still
 untested — see ROADMAP §6.3.
 
-Environment: copy the template in the README into `.env`:
-```
-VITE_SUPABASE_URL=…
-VITE_SUPABASE_KEY=…   # anon/public key ONLY, never the service role key
-```
+Environment: `cp .env.example .env` and fill in `VITE_SUPABASE_URL` and
+`VITE_SUPABASE_KEY` (anon/public key ONLY, never the service role key).
 These are baked into the client bundle at build time and are public by design. CI injects
 them from repo secrets.
 

@@ -32,11 +32,9 @@ export default [
       ...reactHooks.configs.recommended.rules,
       ...reactRefresh.configs.recommended.rules,
 
-      // Prettier plugin rules
-      'prettier/prettier': [
-        'warn',
-        {singleQuote: true, bracketSpacing: false, endOfLine: 'auto'},
-      ],
+      // Prettier plugin rules. Options live in .prettierrc.json so that `npm run
+      // format`, editor format-on-save, and `npm run lint` cannot disagree.
+      'prettier/prettier': 'warn',
 
       // Custom rules
       'dot-notation': 'warn',

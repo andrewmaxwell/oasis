@@ -1,12 +1,16 @@
 {
   "name": "oasis",
   "private": true,
-  "version": "0.0.0",
+  "version": "1.0.0",
   "type": "module",
+  "engines": {
+    "node": ">=22"
+  },
   "scripts": {
     "dev": "vite",
     "build": "tsc && vite build",
     "lint": "eslint .",
+    "format": "prettier --write \"**/*.{ts,tsx,js}\"",
     "typecheck": "tsc --noEmit",
     "check:functions": "deno check supabase/functions/**/*.ts",
     "test": "vitest run",

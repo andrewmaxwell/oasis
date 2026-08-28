@@ -1,29 +1,37 @@
-import {Box, Chip, Typography} from '@mui/material';
+import {Box, Chip, Link, Typography} from '@mui/material';
 import {GridRenderCellParams} from '@mui/x-data-grid';
-import {Link} from 'react-router-dom';
+import {Link as RouterLink} from 'react-router-dom';
+
+// ISSUES #29: these were bare <Link>/<a>, which on the dark theme render as the browser
+// default blue turning visited-purple — poor contrast, and inconsistent with every MUI
+// control around them. MUI's Link keeps them on the palette in every visited state.
 
 export const linkButton = (type: string, key = 'id') =>
   function LinkButton({row, value}: GridRenderCellParams) {
-    return <Link to={`/${type}/${row[key]}`}>{value}</Link>;
+    return (
+      <Link component={RouterLink} to={`/${type}/${row[key]}`}>
+        {value}
+      </Link>
+    );
   };
 
 export const anchor = (type: string) =>
   function Anchor({value}: GridRenderCellParams) {
     return (
-      <a href={`${type}:${value}`} target="_blank" rel="noreferrer">
+      <Link href={`${type}:${value}`} target="_blank" rel="noreferrer">
         {value}
-      </a>
+      </Link>
     );
   };
 
 export const mapAnchor = ({value, row}: GridRenderCellParams) => (
-  <a
+  <Link
     href={`https://www.google.com/maps/place/${row.address} ${row.zip}`}
     target="_blank"
     rel="noreferrer"
   >
     {value}
-  </a>
+  </Link>
 );
 
 export const bool = ({value}: GridRenderCellParams) => (

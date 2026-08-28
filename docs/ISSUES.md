@@ -21,9 +21,9 @@ the anon key (#6). Enhancements — as opposed to defects — live in [ROADMAP.m
 > diaper-quantity rules, order-snapshot consolidation, and the small helpers.
 >
 > **Fixed 2026-08-28:** `jsdom` + React Testing Library wired up, and
-> [OasisForm.test.tsx](../src/components/OasisForm.test.tsx) adds 17 tests over field
+> [OasisForm.test.tsx](../src/components/OasisForm.test.tsx) adds 18 tests over field
 > rendering, required-field validation, the dirty/submitting Save button, `OptionSource`
-> cache sharing, and every branch of the unsaved-changes blocker (#26). 63 tests total.
+> cache sharing, and every branch of the unsaved-changes blocker (#26). 64 tests total.
 
 **Still open:** the TanStack Query data layer and every page's loading/error/save path. See
 ROADMAP §6.3–§6.4 — a Playwright smoke test of the core flow, then view-level SQL assertions.
@@ -63,13 +63,6 @@ clients, truncating long delivery lists without warning.
 **Fix:** render the list as a dialog with a per-deliverer "Open email" button and a
 "Copy to clipboard" fallback — or send server-side (ROADMAP §4).
 
-### 29. Medium — Links in tables are unstyled browser defaults
-
-`linkButton`, `anchor`, and `mapAnchor` in
-[cellRenderers.tsx](../src/components/cellRenderers.tsx) render bare `<Link>` / `<a>`, which
-on the dark theme come out as default blue turning visited-purple — poor contrast and
-inconsistent with every MUI control around them. Wrap in MUI `<Link>` with theme colors.
-
 ### 30. Medium — Not usable on a phone
 
 `DataGrid` columns use fixed pixel widths up to 400 px with no responsive behavior, so on a
@@ -108,17 +101,6 @@ to catch a routing regression (#35).
 npm i react-router-dom@^7.18.2 && npm run lint && npm run typecheck && npm test && npm run build
 ```
 
-### 45. Low — The Save button has no accessible name while saving
-
-[OasisForm.tsx](../src/components/OasisForm.tsx) swaps the "Save" label for a bare
-`<CircularProgress>` while `submitting`, so for the length of the save the button's
-accessible name is empty — a screen reader announces just "button", with no hint that
-anything is in progress. Found by the new `OasisForm` tests, which assert the current
-behavior so a fix makes them fail loudly.
-
-**Fix:** keep the text beside the spinner, or add an `aria-label` and `aria-hidden` the
-spinner. Fits the accessibility pass in ROADMAP §10.
-
 ### 23. Low — Deprecated MUI API — *partly fixed*
 
 > **Fixed 2026-08-27:** `OasisTextField` uses `slotProps={{inputLabel: {shrink: true}}}`
@@ -145,18 +127,6 @@ CSV export in particular is something this kind of org asks for constantly.
 `selia.buss@oasis4refugees.org` is baked into
 [generateEmails.ts:24](../src/components/pages/FinishedOrderPage/generateEmails.ts#L24). Move
 to config or an org-settings row so it survives staff turnover.
-
-### 39. Low — No `.env.example`
-
-The template exists only in the README. Commit `.env.example` so `cp .env.example .env` works.
-
-### 40. Low — Missing developer scripts and version pinning — *partly fixed*
-
-> **Fixed 2026-08-27:** `typecheck`, `check:functions`, `test`, and `test:watch` scripts now
-> exist and all but `test:watch` run in CI.
-
-**Still open:** no `format` script, no `engines` field or `.nvmrc` (the README says Node 20+
-while CI uses 22), and `package.json` version is still `0.0.0`.
 
 ### 41. Low — `supabase/seed.sql` is empty
 
@@ -222,6 +192,8 @@ app as part of #1 — see the warning in [CLAUDE.md](../CLAUDE.md) §4.
 | 27 | Medium | Native `alert()` and `confirm()` | `useToast()` and promise-based `useConfirm()`; neither native call appears in `src/` any more |
 | 28 | Medium | Delete dialogs claimed a soft delete "cannot be undone" | Copy says an administrator can restore it. The user-delete dialog still says it, where it's true. Restore UI is ROADMAP §5 |
 | 32 | Low | Toolbar title was an `onClick` on a `Typography` — not focusable, invisible to screen readers | Logo and title sit inside one `<Link to="/">` |
+| 29 | Medium | `linkButton`, `anchor`, and `mapAnchor` rendered bare `<Link>` / `<a>`, so every link in every table came out browser-default blue turning visited-purple *(2026-08-28)* | All three use MUI `<Link>` (the router one via `component={RouterLink}`), plus a `MuiLink` theme default: `underline: 'hover'` and a `focus-visible` ring |
+| 45 | Low | The Save button swapped its label for a bare `<CircularProgress>` while saving, leaving it with no accessible name *(2026-08-28)* | Label reads "Saving…" with the spinner as an `aria-hidden` `startIcon`; the test that pinned the old behavior now asserts the accessible name |
 
 ### Infrastructure
 
@@ -229,3 +201,5 @@ app as part of #1 — see the warning in [CLAUDE.md](../CLAUDE.md) §4.
 | --- | --- | --- | --- |
 | 36 | Medium | CI used `npm install` and outdated actions, and never ran ESLint | `npm ci` plus lint, typecheck, test, and `check:functions` steps on current actions |
 | 38 | Medium | No migration system; `dataModel.sql` was applied by hand and contains `DROP TABLE … CASCADE` | Schema changes go through `supabase/migrations/` and `npx supabase db push` |
+| 39 | Low | No `.env.example` — the template lived only in the README *(2026-08-28)* | `.env.example` committed; the README now says `cp .env.example .env` |
+| 40 | Low | No `format` script, no `engines` or `.nvmrc`, version stuck at `0.0.0` *(2026-08-28)* | `npm run format`, `engines: node >=22`, `.nvmrc`, and version `1.0.0`. Prettier's options moved out of the ESLint rule into `.prettierrc.json` so the CLI, the editor, and `npm run lint` cannot disagree; `.prettierignore` keeps it off the hand-wrapped docs |

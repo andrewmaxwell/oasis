@@ -32,6 +32,21 @@ export const theme = createTheme({
         }),
       },
     },
+    MuiLink: {
+      // Table cells are dense and whole columns are links (see cellRenderers), so a
+      // permanent underline turns to noise; hover plus the palette colour carries it,
+      // and focus-visible keeps it reachable from the keyboard.
+      defaultProps: {underline: 'hover'},
+      styleOverrides: {
+        root: ({theme}) => ({
+          '&.Mui-focusVisible, &:focus-visible': {
+            outline: `2px solid ${theme.palette.primary.main}`,
+            outlineOffset: 2,
+            borderRadius: 2,
+          },
+        }),
+      },
+    },
     MuiCard: {
       styleOverrides: {
         root: ({theme}) => ({

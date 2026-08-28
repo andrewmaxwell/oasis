@@ -4,7 +4,7 @@ Oasis is a web application for managing deliverers, parents, and kids for a non-
 
 ## Prerequisites
 
--   Node.js (v20+ recommended)
+-   Node.js 22+ (see `.nvmrc`; CI builds on 22)
 -   npm (v10+ recommended)
 
 ## Getting Started
@@ -21,11 +21,10 @@ Oasis is a web application for managing deliverers, parents, and kids for a non-
     ```
 
 3.  **Configure environment variables:**
-    Create a `.env` file in the root directory and add your Supabase credentials. Use the following template:
+    Copy the committed template and fill in your Supabase credentials:
 
-    ```env
-    VITE_SUPABASE_URL=your_supabase_url
-    VITE_SUPABASE_KEY=your_supabase_anon_key
+    ```bash
+    cp .env.example .env
     ```
 
     > **Note:** These keys are for the client-side application. Ensure you are using the **Anon/Public** key, NOT the Service Role key.

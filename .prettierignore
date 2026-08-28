@@ -1,0 +1,5 @@
+# The docs are hand-wrapped for readability; Prettier's reflow fights that.
+*.md
+dist
+coverage
+supabase/.temp
