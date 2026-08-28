@@ -45,21 +45,6 @@ the real view semantics — ROADMAP §6.4.
 requires only a non-empty value matching the confirmation. Enforce a minimum length and set
 Supabase's password requirements in the dashboard.
 
-### 13. Medium — Order creation is not transactional
-
-[NewOrderPage.tsx:35-68](../src/components/pages/NewOrderPage/NewOrderPage.tsx#L35-L68)
-inserts `order_record`, then `order_parent` and `order_kid` in a `Promise.all`. If either of
-the latter fails, an orphaned or half-populated order is left behind and the user is
-navigated to it anyway.
-
-**Fix:** move the whole snapshot into a Postgres function and call it via `supabase.rpc()`.
-
-### 14. Medium — `order_parent` and `order_kid` have no primary key
-
-[dataModel.sql:75-87](../dataModel.sql#L75-L87). A retried insert produces duplicate rows and
-double-counts diapers. Add composite primary keys `(order_id, parent_id)` and
-`(order_id, kid_id)`.
-
 ### 17. Medium — Deliverer emails are blocked after the first one
 
 [generateEmails.ts:30](../src/components/pages/FinishedOrderPage/generateEmails.ts#L30) opens
@@ -151,11 +136,14 @@ to config or an org-settings row so it survives staff turnover.
 Zero bytes. Either populate it from `scripts/generateFake.js` or delete it. The `scripts/`
 directory generally has no README explaining when to run what.
 
-### 42. Low — Missing indexes on foreign keys
+### 42. Low — Missing indexes on foreign keys — *partly fixed*
 
-`dataModel.sql` declares no indexes on `kid.parent_id`, `parent.deliverer_id`,
-`order_parent.order_id`, `order_kid.order_id`, or `order_kid.kid_id`. Fine at current scale,
-but the views join across all of them.
+> **Fixed 2026-08-28, as a side effect of #14:** the composite primary keys on
+> `order_parent` and `order_kid` lead with `order_id`, so the joins the order views make on
+> it are indexed now.
+
+**Still open:** `kid.parent_id`, `parent.deliverer_id`, and `order_kid.kid_id` still have no
+index. Fine at current scale, but the views join across all of them.
 
 ### 43. Low — No audit trail
 
@@ -192,6 +180,8 @@ app as part of #1 — see the warning in [CLAUDE.md](../CLAUDE.md) §4.
 | 10 | High | `dataModel.sql` had a trailing comma before the closing `)` of `order_kid`, so the file wouldn't run *(2026-08-28)* | Comma removed |
 | 11 | High | `dataModel.sql` created `parent` before the `deliverer` it references, and dropped `deliverer` after creating `parent`, cascading away the constraint on a re-run *(2026-08-28)* | All `DROP TABLE` statements grouped at the top in reverse dependency order; tables created in dependency order, `deliverer` first |
 | 12 | Medium | `parent_order_view` evaluated `NOT ok.is_deleted` in `WHERE` on a `LEFT JOIN`ed table, collapsing it to an inner join — a family in an order with no surviving `order_kid` rows vanished from the historical record entirely *(2026-08-28)* | Predicate moved into the `LEFT JOIN … ON` clause as `ok.is_deleted IS NOT TRUE`, so the outer join survives and `json_agg`'s `'[]'` fallback renders as intended. Migration `20260828000001_fix_parent_order_view_outer_join.sql`; `dataModel.sql` synced |
+| 13 | Medium | Order creation was three separate inserts, so a failure in the second or third left a committed, half-populated `order_record` behind — and navigated the user into it as if it were complete *(2026-08-28)* | The whole snapshot moved into the `create_order` Postgres function, called via `supabase.rpc()`, so it commits or it does not. `SECURITY INVOKER`, so the RLS policies still gate what it writes. Migration `20260828000003`; the E2E mock implements it too |
+| 14 | Medium | `order_parent` and `order_kid` had no primary key, so a retried insert appended a second copy of every row and double-counted the diapers the org orders against *(2026-08-28)* | Composite primary keys `(order_id, parent_id)` and `(order_id, kid_id)`, added in `20260828000003` after de-duplicating anything already written that way. The key columns are `NOT NULL` now too |
 | 15 | Medium | Non-admins got an infinite spinner instead of "Access Denied" | Admin guard runs before the loading check, and the user list isn't requested at all for non-admins |
 | 16 | Medium | `LabelPage` called `.sort()` on state in place | Sorts a copy |
 | 18 | Medium | Null birth dates rendered as an empty cell in error red (`new Date(null)` is 1970) | Truthiness check before the date comparison |

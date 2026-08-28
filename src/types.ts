@@ -219,5 +219,16 @@ export type Database = {
         Row: Parent & {deliverer_name: string; diaper_sizes: string[]}; // Approximate
       };
     };
+    Functions: {
+      /** The transactional order snapshot — see `createOrder` in supabase.ts. */
+      create_order: {
+        Args: {
+          order_data: Omit<OrderRecord, 'id' | 'created_at' | 'modified_at'>;
+          parents: Omit<OrderParent, 'order_id'>[];
+          kids: Omit<OrderKid, 'order_id' | 'is_deleted'>[];
+        };
+        Returns: string;
+      };
+    };
   };
 };

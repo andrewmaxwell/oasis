@@ -113,9 +113,26 @@ Quantities come from a fixed lookup in [src/utils/calcDiaperSizes.ts](src/utils/
 sizes P/N/1 → 75 diapers, sizes 2–7 → 50. Changing a kid's size later must not alter a past
 order. That's why the values are denormalized into `order_kid` rather than joined.
 
+`order_parent` and `order_kid` are keyed by `(order_id, parent_id)` and `(order_id, kid_id)`.
+That is not decoration: without it a retried write appends a second copy of every row and the
+order double-counts its diapers (ISSUES #14).
+
 Snapshot creation lives in `finishOrder` in
-[NewOrderPage.tsx](src/components/pages/NewOrderPage/NewOrderPage.tsx#L28-L71). It only
-includes active parents who have at least one active kid.
+[NewOrderPage.tsx](src/components/pages/NewOrderPage/NewOrderPage.tsx#L34-L70), which picks
+the roster — active parents with at least one active kid — and hands it to `createOrder` in
+[supabase.ts](src/supabase.ts), a single `supabase.rpc('create_order', …)`. **All three
+tables are written by that one Postgres function, in one transaction** (`dataModel.sql`); do
+not split it back into separate inserts, or a partial failure leaves a half-built order the
+user gets navigated into (ISSUES #13).
+
+The function takes the rows the client computed rather than rebuilding the roster in SQL, so
+`calcDiaperSizes.ts` stays the only place the diaper-quantity rule lives. It is
+`SECURITY INVOKER`, so the RLS policies still apply to the caller — keep it that way. Its
+`GRANT EXECUTE` comes from `scripts/generateTriggersAndPolicies.js` like every other grant.
+
+The E2E mock implements `create_order` too ([supabaseMock.ts](e2e/fixtures/supabaseMock.ts)),
+primary-key conflict included — same standing rule as the views: change the SQL, change the
+mock, or the suite stays green while production breaks.
 
 ### Errors, loading, and feedback
 There is no `alert()` and no `confirm()` in `src/`, and adding one back is a regression.

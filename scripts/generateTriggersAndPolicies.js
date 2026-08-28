@@ -123,6 +123,13 @@ GRANT SELECT, INSERT, UPDATE, DELETE ON TABLE ${t} TO authenticated;`,
   )
   .join('\n');
 
+// create_order (dataModel.sql) is the transactional order snapshot. It is SECURITY INVOKER,
+// so the table policies above still gate what it can write — this grant only makes it
+// callable through PostgREST's /rpc endpoint.
+const functionGrants = `
+REVOKE ALL ON FUNCTION public.create_order(JSONB, JSONB, JSONB) FROM anon, public;
+GRANT EXECUTE ON FUNCTION public.create_order(JSONB, JSONB, JSONB) TO authenticated;`;
+
 // Views are declared WITH (security_invoker = ON), so the table policies above still apply
 // to the caller. These grants only make the views reachable through PostgREST.
 const viewGrants = views
@@ -140,5 +147,6 @@ console.log(
     triggers,
     tablePolicies,
     viewGrants,
+    functionGrants,
   ].join('\n'),
 );

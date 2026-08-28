@@ -72,18 +72,22 @@ CREATE TABLE order_record (
     notes TEXT
 );
 
+-- The composite primary keys are what make a retried snapshot harmless: a second attempt
+-- conflicts instead of appending a duplicate row and double-counting the diapers.
 CREATE TABLE order_parent (
-    order_id UUID REFERENCES order_record(id) ON DELETE CASCADE,
-    parent_id UUID REFERENCES parent(id),
-    deliverer_id UUID REFERENCES deliverer(id)
+    order_id UUID NOT NULL REFERENCES order_record(id) ON DELETE CASCADE,
+    parent_id UUID NOT NULL REFERENCES parent(id),
+    deliverer_id UUID REFERENCES deliverer(id),
+    PRIMARY KEY (order_id, parent_id)
 );
 
 CREATE TABLE order_kid (
-    order_id UUID REFERENCES order_record(id) ON DELETE CASCADE,
-    kid_id UUID REFERENCES kid(id),
+    order_id UUID NOT NULL REFERENCES order_record(id) ON DELETE CASCADE,
+    kid_id UUID NOT NULL REFERENCES kid(id),
     diaper_size TEXT NOT NULL,
     diaper_quantity NUMERIC,
-    is_deleted BOOLEAN NOT NULL DEFAULT false
+    is_deleted BOOLEAN NOT NULL DEFAULT false,
+    PRIMARY KEY (order_id, kid_id)
 );
 
 DROP VIEW IF EXISTS parent_view;
@@ -222,6 +226,61 @@ LEFT JOIN order_record o
 WHERE NOT o.is_deleted
 GROUP BY o.id, op.parent_id, op.deliverer_id, d.name
 ORDER BY o.date_of_order DESC;
+
+
+-- The monthly order snapshot, as one transaction (ISSUES #13). Three separate inserts left
+-- a committed order_record behind whenever the parent or kid inserts failed, and navigated
+-- the user into that half-built order as if it were complete.
+--
+-- The client passes the rows it already computed rather than this function rebuilding the
+-- roster: the diaper-quantity rule lives in src/utils/calcDiaperSizes.ts and is unit-tested
+-- there, and a SQL reimplementation would be a second source of truth for the one number
+-- the whole order is measured by. Atomicity is what this adds, not a second opinion.
+--
+-- SECURITY INVOKER (the default — deliberately NOT definer) so the RLS policies on the
+-- three tables still apply to the caller. See CLAUDE.md §4.
+CREATE OR REPLACE FUNCTION public.create_order(
+  order_data JSONB,
+  parents JSONB,
+  kids JSONB
+)
+RETURNS UUID
+LANGUAGE plpgsql
+SET search_path = ''
+AS $$
+DECLARE
+  new_order_id UUID;
+BEGIN
+  IF parents IS NULL OR jsonb_array_length(parents) = 0 THEN
+    RAISE EXCEPTION 'An order must include at least one family';
+  END IF;
+
+  INSERT INTO public.order_record (date_of_order, date_of_pickup, notes)
+  VALUES (
+    (order_data ->> 'date_of_order')::DATE,
+    (order_data ->> 'date_of_pickup')::DATE,
+    NULLIF(order_data ->> 'notes', '')
+  )
+  RETURNING id INTO new_order_id;
+
+  INSERT INTO public.order_parent (order_id, parent_id, deliverer_id)
+  SELECT
+    new_order_id,
+    (p ->> 'parent_id')::UUID,
+    NULLIF(p ->> 'deliverer_id', '')::UUID
+  FROM jsonb_array_elements(parents) AS p;
+
+  INSERT INTO public.order_kid (order_id, kid_id, diaper_size, diaper_quantity)
+  SELECT
+    new_order_id,
+    (k ->> 'kid_id')::UUID,
+    k ->> 'diaper_size',
+    (k ->> 'diaper_quantity')::NUMERIC
+  FROM jsonb_array_elements(kids) AS k;
+
+  RETURN new_order_id;
+END;
+$$;
 
 
 -- use the output of scripts/generateTriggersAndPolicies.js to add triggers, policies, and grants

@@ -26,7 +26,8 @@ small-team, mobile-heavy, PII-holding non-profit tool.
 - **§11 TanStack Query migration** (2026-08-27) — every read is a `useQuery`, every write a
   `useMutation` that invalidates what it changed, with all keys in
   [`queryClient.ts`](../src/queryClient.ts). This is what structurally fixed "spinner forever
-  on error". Dropped `memoizee`. *Generated types, Postgres functions still open — see §11.*
+  on error". Dropped `memoizee`. *Generated types still open — see §11; the order snapshot
+  became a Postgres function on 2026-08-28.*
 - **§6.1 Unit tests on `src/utils/`** (2026-08-27) — Vitest, 46 tests, `npm test` in CI.
   *Everything above `src/utils/` is still untested — see §6.*
 - **§6.2 Component tests on `OasisForm`** (2026-08-28) — `jsdom` + React Testing Library,
@@ -156,7 +157,9 @@ have:
 
 - **Generated Supabase types** (ISSUES #37) so the `as any` in `supabase.ts` and every
   `as unknown as X` at the call sites can go.
-- **Postgres functions** for multi-table writes — the order snapshot first (ISSUES #13).
+- **Postgres functions** for multi-table writes. *Done for the order snapshot (ISSUES #13,
+  #14): `create_order` in `dataModel.sql` writes all three tables in one transaction. The
+  same shape would suit a future bulk reassign (§12).*
 
 ## 12. Bulk operations — M
 

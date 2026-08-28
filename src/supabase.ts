@@ -8,6 +8,8 @@ import {
   Database,
   Kid,
   KidOrderRow,
+  OrderKid,
+  OrderParent,
   OrderParentViewRow,
   ParentOrderRow,
   TableName,
@@ -157,6 +159,33 @@ export const insertRecord = async <T extends TableName>(
   if (!data?.length)
     throw new Error(`Insert into ${tableName} returned no row`);
   return data[0] as Database['public']['Tables'][T]['Row'];
+};
+
+/**
+ * The monthly order snapshot, as one transaction (ISSUES #13). Previously this was three
+ * separate inserts from the page: a failure in the second or third left a committed but
+ * half-populated order_record behind, and the user was navigated into it as if it were
+ * complete. `create_order` (dataModel.sql) does the whole thing or none of it.
+ *
+ * The rows are computed on the client and passed in, because the diaper-quantity rule lives
+ * in utils/calcDiaperSizes.ts — see the comment on the function for why it is not in SQL.
+ */
+export const createOrder = async (
+  orderData: Database['public']['Tables']['order_record']['Insert'],
+  parents: Omit<OrderParent, 'order_id'>[],
+  kids: Omit<OrderKid, 'order_id' | 'is_deleted'>[],
+) => {
+  // Cast at the call, typed at the signature — the same trade as `from()` above. rpc()
+  // infers its argument type by exact-matching the Functions entry, which a hand-written
+  // Database (CLAUDE.md gotcha 6) does not satisfy. The parameters of this function are
+  // where callers actually get checked.
+  const {data, error} = await supabase.rpc('create_order', {
+    order_data: orderData,
+    parents,
+    kids,
+  } as never);
+  if (error) fail(error);
+  return data as unknown as string;
 };
 
 export const updateRecord = async <T extends TableWithId>(

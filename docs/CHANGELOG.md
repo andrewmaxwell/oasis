@@ -1,5 +1,37 @@
 # Changelog
 
+## 2026-08-28 — A transactional order snapshot
+
+**Creating an order was three inserts, and a retry double-counted the diapers.**
+(ISSUES #13, #14) `NewOrderPage` inserted `order_record`, then `order_parent` and
+`order_kid` in a `Promise.all`. Two failures came out of that shape. If either of
+the latter two calls failed, the `order_record` was already committed, and the
+user was navigated into a half-populated order that looked complete — the
+families or children that never landed were simply invisible, and the totals
+were wrong with nothing on screen to say so. And because `order_parent` and
+`order_kid` had no primary key, only nullable foreign keys, a retry appended a
+second copy of every row rather than conflicting: a double-tap or a network
+retry doubled the order this org places its real diaper order against.
+
+Both are closed by `20260828000003`. `order_parent` and `order_kid` get composite
+primary keys — `(order_id, parent_id)` and `(order_id, kid_id)` — after the
+migration de-duplicates anything already written that way, and the whole snapshot
+moves into one `create_order` Postgres function called through `supabase.rpc()`.
+It commits or it does not, so the error toast can now say "Nothing was saved"
+instead of telling the user to go check the Orders list by hand.
+
+The function is `SECURITY INVOKER`, so the existing RLS policies on all three
+tables still gate what it writes — it grants no ability a `readOnly` account did
+not already have. It takes the rows the client already computed rather than
+rebuilding the roster in SQL, deliberately: the diaper-quantity rule lives in
+`utils/calcDiaperSizes.ts` and is unit-tested there, and a SQL reimplementation
+would be a second source of truth for the one number the entire order is measured
+by. Atomicity is what it adds, not a second opinion.
+
+The E2E mock reimplements `create_order` alongside the views, including the
+primary-key conflict, since the app now depends on a function that Postgres would
+otherwise be the only thing to provide.
+
 ## 2026-08-28 — Mobile layout and list ordering
 
 ### The app on a phone

@@ -6,10 +6,10 @@ import {Database, Row, seed, views} from './database.ts';
  * and updates, the password grant, and the realtime socket.
  *
  * It implements only the query surface `src/supabase.ts` actually uses — `select=*`,
- * `col=eq.value` filters, `order=col.asc`, `count=exact` HEAD requests, and
- * `return=representation` inserts. Anything outside that fails loudly rather than silently
- * returning [], because a mock that quietly answers a query it does not understand is
- * worse than no mock at all.
+ * `col=eq.value` filters, `order=col.asc`, `count=exact` HEAD requests,
+ * `return=representation` inserts, and the `create_order` RPC. Anything outside that fails
+ * loudly rather than silently returning [], because a mock that quietly answers a query it
+ * does not understand is worse than no mock at all.
  */
 
 const RESERVED = new Set([
@@ -120,6 +120,63 @@ const DEFAULTS: Record<string, Row> = {
 /** The order tables are keyed by (order_id, …) rather than an id of their own. */
 const HAS_ID = new Set(['parent', 'kid', 'deliverer', 'order_record']);
 
+/**
+ * `create_order` from dataModel.sql, reimplemented the same way the views are: this suite
+ * mocks the network boundary, so a Postgres function the app now depends on has to exist
+ * here too. Two behaviors are load-bearing and mirror the real thing deliberately —
+ *
+ *   - it is all-or-nothing, so a rejected call leaves no order_record behind (ISSUES #13);
+ *   - the composite primary keys reject a duplicate (order_id, parent_id) /
+ *     (order_id, kid_id) rather than appending a second copy (ISSUES #14).
+ */
+const createOrder = (db: Database, args: Row) => {
+  const orderData = (args.order_data ?? {}) as Row;
+  const parents = (args.parents ?? []) as Row[];
+  const kids = (args.kids ?? []) as Row[];
+
+  if (!parents.length) {
+    throw new Error('An order must include at least one family');
+  }
+
+  const orderId = nextId();
+  const orderParents = parents.map((p) => ({
+    ...DEFAULTS.order_parent,
+    order_id: orderId,
+    parent_id: p.parent_id,
+    deliverer_id: p.deliverer_id ?? null,
+  }));
+  const orderKids = kids.map((k) => ({
+    ...DEFAULTS.order_kid,
+    order_id: orderId,
+    kid_id: k.kid_id,
+    diaper_size: k.diaper_size,
+    diaper_quantity: k.diaper_quantity,
+  }));
+
+  const duplicated = (rows: Row[], key: string) =>
+    new Set(rows.map((r) => String(r[key]))).size !== rows.length;
+  if (
+    duplicated(orderParents, 'parent_id') ||
+    duplicated(orderKids, 'kid_id')
+  ) {
+    throw new Error('duplicate key value violates unique constraint');
+  }
+
+  // Everything above can throw; nothing is written until here, which is what makes this
+  // atomic in the same way the real function's transaction is.
+  db.order_record.push({
+    ...DEFAULTS.order_record,
+    id: orderId,
+    date_of_order: orderData.date_of_order,
+    date_of_pickup: orderData.date_of_pickup,
+    notes: orderData.notes || null,
+  });
+  db.order_parent.push(...orderParents);
+  db.order_kid.push(...orderKids);
+
+  return orderId;
+};
+
 export type MockHandle = {
   /** The mock's current rows — assert against this to check what the app actually wrote. */
   db: Database;
@@ -186,6 +243,24 @@ export const mockSupabase = async (page: Page): Promise<MockHandle> => {
     const url = new URL(request.url());
     const [, name] = url.pathname.split('/rest/v1/');
     const params = url.searchParams;
+
+    if (name.startsWith('rpc/')) {
+      if (name !== 'rpc/create_order') {
+        throw new Error(`supabaseMock: unknown function "${name}"`);
+      }
+      try {
+        return json(route, createOrder(db, request.postDataJSON() as Row));
+      } catch (e) {
+        // PostgREST turns a RAISE EXCEPTION into a 400 with the message in `message`,
+        // which is the shape supabase-js hands to `fail()`.
+        return route.fulfill({
+          status: 400,
+          contentType: 'application/json',
+          headers: CORS,
+          body: JSON.stringify({message: (e as Error).message}),
+        });
+      }
+    }
 
     if (name in views) {
       return json(
