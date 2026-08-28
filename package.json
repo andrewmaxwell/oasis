@@ -7,7 +7,7 @@
     "node": ">=22"
   },
   "scripts": {
-    "dev": "vite",
+    "dev": "vite --strictPort",
     "build": "tsc && vite build",
     "lint": "eslint .",
     "format": "prettier --write \"**/*.{ts,tsx,js}\"",

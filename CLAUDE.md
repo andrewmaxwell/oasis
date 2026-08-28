@@ -213,7 +213,7 @@ The file does not currently run top-to-bottom without edits (ISSUES.md #10, #11)
 ## 6. Commands
 
 ```bash
-npm run dev        # Vite dev server on :5173
+npm run dev        # Vite dev server on :5173 (--strictPort; see below)
 npm run build      # tsc --noEmit then vite build
 npm run preview    # serve dist/
 npm run lint       # eslint .
@@ -321,7 +321,15 @@ editing — see [.vscode/extensions.json](.vscode/extensions.json)).
 9. **Print output** relies on the `@media print` block in `index.html` plus the `<style>` tag
    `LabelPage` injects into `<head>` on mount. The label sheet is hard-coded to US Letter
    with 4"×2" labels, 10 per page.
-10. **Popup blockers eat deliverer emails.** `generateEmails` calls `window.open('mailto:…')`
+10. **The dev server must be on :5173.** `npm run dev` passes `--strictPort` so it fails
+    loudly instead of drifting to 5174 when a stale server holds the port. That drift is
+    not cosmetic: the `user-management` edge function's CORS allow-list is
+    `github.io, localhost:5173, 127.0.0.1:5173`, so from any other port `/users` — the one
+    page that calls the function directly rather than through supabase-js — fails with
+    "Failed to fetch" while every other page works. 5174 is also reserved for Playwright
+    (`--strictPort` there too), so a squatter breaks `npm run test:e2e`. Don't widen the
+    allow-list to fix a port conflict; free the port.
+11. **Popup blockers eat deliverer emails.** `generateEmails` calls `window.open('mailto:…')`
     once per deliverer in a loop; browsers typically allow only the first.
 
 ## 8. Working agreements for AI assistants
