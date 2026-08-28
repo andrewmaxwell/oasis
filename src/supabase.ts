@@ -41,11 +41,7 @@ const supabase = createClient<Database>(supabaseUrl, supabaseKey);
 
 type TableWithId = 'parent' | 'kid' | 'deliverer' | 'order_record';
 export type TableWithSoftDelete =
-  | 'parent'
-  | 'kid'
-  | 'deliverer'
-  | 'order_record'
-  | 'order_kid';
+  'parent' | 'kid' | 'deliverer' | 'order_record' | 'order_kid';
 
 /** The subset of the above that carries an `is_active` flag. */
 export type TableWithActiveFlag = 'parent' | 'kid' | 'deliverer';

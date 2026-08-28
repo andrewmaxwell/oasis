@@ -2,7 +2,11 @@
   "compilerOptions": {
     "target": "ES2020",
     "useDefineForClassFields": true,
-    "lib": ["ESNext.Array", "DOM", "DOM.Iterable"],
+    /* "lib" REPLACES the target's default library rather than adding to it, so the core
+       ES lib has to be listed explicitly. Without it every global type — Array, Object,
+       String — goes missing. It only ever worked here because a transitive @types package
+       happened to pull the core lib in via a `reference lib` directive. */
+    "lib": ["ES2020", "ESNext.Array", "DOM", "DOM.Iterable"],
     "module": "ESNext",
     "skipLibCheck": true,
 

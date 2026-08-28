@@ -110,8 +110,7 @@ const refuseSelfLockout = (
  * so a single non-union shape does not typecheck.
  */
 type Envelope<T> =
-  | {data: T; error: null}
-  | {data: unknown; error: {message: string}};
+  {data: T; error: null} | {data: unknown; error: {message: string}};
 
 const unwrap = <T>(res: Envelope<T>): T => {
   if (res.error) throw new Error(res.error.message);

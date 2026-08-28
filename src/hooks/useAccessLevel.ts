@@ -13,8 +13,7 @@ export const useAccessLevel = () => {
   const {session, loaded} = useSessionState();
   return {
     accessLevel: session?.user.app_metadata?.access_level as
-      | AccessLevel
-      | undefined,
+      AccessLevel | undefined,
     loaded,
   };
 };
