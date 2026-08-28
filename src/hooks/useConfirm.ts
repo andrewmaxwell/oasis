@@ -1,4 +1,4 @@
-import {createContext, useContext} from 'react';
+import {createContext, use} from 'react';
 
 export type ConfirmOptions = {
   title: string;
@@ -18,7 +18,7 @@ export const ConfirmContext = createContext<Confirm | undefined>(undefined);
  * blocks the main thread, and on mobile looks like the browser has malfunctioned.
  */
 export const useConfirm = () => {
-  const confirm = useContext(ConfirmContext);
+  const confirm = use(ConfirmContext);
   if (!confirm) {
     throw new Error('useConfirm must be used inside a <ConfirmProvider>');
   }

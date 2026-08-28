@@ -169,8 +169,7 @@ Everything is one record at a time today.
 - ~~`.env.example` (ISSUES #39), `.nvmrc`, `engines`, and a `format` script (ISSUES #40).~~
   Done 2026-08-28.
 - Dependabot or Renovate for dependency updates. The tree was brought fully current on
-  2026-08-28 (`npm audit` clean); ESLint 10 and TypeScript 7 are blocked upstream, see
-  ISSUES #46.
+  2026-08-28 (`npm audit` clean). TypeScript 7 is still out of reach — see ISSUES #46.
 - A `CONTRIBUTING.md` and a `scripts/README.md` explaining when each script is run.
 - Bundle analysis — MUI plus DataGrid is heavy and the build already warns about a >500 kB
   chunk; routes are lazy-loaded, so check what's landing in the initial chunk.

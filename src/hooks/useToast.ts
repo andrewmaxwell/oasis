@@ -1,4 +1,4 @@
-import {createContext, useContext} from 'react';
+import {createContext, use} from 'react';
 
 export type ToastSeverity = 'success' | 'error' | 'info' | 'warning';
 
@@ -22,7 +22,7 @@ export const ToastContext = createContext<ShowToast | undefined>(undefined);
  * fire from every failed query (ISSUES #9, #25, #27).
  */
 export const useToast = () => {
-  const showToast = useContext(ToastContext);
+  const showToast = use(ToastContext);
   if (!showToast) {
     throw new Error('useToast must be used inside a <ToastProvider>');
   }

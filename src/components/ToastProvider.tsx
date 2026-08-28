@@ -44,7 +44,7 @@ export const ToastProvider = ({children}: {children: React.ReactNode}) => {
   const dismiss = useCallback(() => setQueue((q) => q.slice(1)), []);
 
   return (
-    <ToastContext.Provider value={showToast}>
+    <ToastContext value={showToast}>
       {children}
       <Snackbar
         key={current?.key}
@@ -89,6 +89,6 @@ export const ToastProvider = ({children}: {children: React.ReactNode}) => {
           {current?.message}
         </Alert>
       </Snackbar>
-    </ToastContext.Provider>
+    </ToastContext>
   );
 };

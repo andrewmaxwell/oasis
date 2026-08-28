@@ -150,6 +150,7 @@ const actions: Record<string, Handler> = {
       throw new Error(
         `Invite sent to ${email}, but setting their access level failed ` +
           `(${(error as Error).message}). Open the user and save again.`,
+        {cause: error},
       );
     }
   },

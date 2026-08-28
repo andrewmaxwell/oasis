@@ -29,7 +29,7 @@ export const ConfirmProvider = ({children}: {children: React.ReactNode}) => {
   };
 
   return (
-    <ConfirmContext.Provider value={confirm}>
+    <ConfirmContext value={confirm}>
       {children}
       <Dialog
         open={!!options}
@@ -53,6 +53,6 @@ export const ConfirmProvider = ({children}: {children: React.ReactNode}) => {
           </Button>
         </DialogActions>
       </Dialog>
-    </ConfirmContext.Provider>
+    </ConfirmContext>
   );
 };

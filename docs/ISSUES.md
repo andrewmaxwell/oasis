@@ -89,14 +89,26 @@ Dark-only is a real problem for printing and for outdoor phone use. See ROADMAP 
 TypeScript cannot catch a schema mismatch anywhere in the app. Generate types with
 `supabase gen types typescript` and drop the casts.
 
-### 46. Low — Two majors are blocked by plugins that have not caught up
+### 46. Low — TypeScript 7 is not adoptable yet
 
-**ESLint 10** is blocked by `eslint-plugin-react`, whose latest release (7.37.5) still
-declares `eslint@^3 || … || ^9.7`. **TypeScript 7** is blocked by `typescript-eslint` 8.68,
-which caps at `typescript@<6.1.0`. Both installs fail on peer resolution rather than on
-anything in this codebase, so there is nothing to fix here until upstream ships support —
-recheck when `eslint-plugin-react` and `typescript-eslint` publish new majors. Forcing
-either with `--legacy-peer-deps` would silently disable rules, which is worse than waiting.
+> **Fixed 2026-08-28 (the ESLint half):** ESLint 10 was blocked only by
+> `eslint-plugin-react`, whose latest release still caps at `eslint@^9.7`. Replaced with
+> [`@eslint-react/eslint-plugin`](https://eslint-react.xyz) v5, which declares `eslint: '*'`;
+> every other plugin already supported 10.
+
+**Still open:** TypeScript 7 is blocked twice over, and neither is a peer-range technicality.
+
+1. `typescript-eslint` caps at `typescript@<6.1.0` and has published no v9, no `next` tag,
+   and no canary above 8.68. TS 7 is the native compiler port, so this is a real piece of
+   work for them, not a version-range bump. There is no alternative to swap in: it is the
+   only serious TypeScript integration for ESLint. The nuclear option is dropping it for
+   `oxlint` or `biome`, which is a much bigger change than this project needs.
+2. **The codebase is not ready either.** Forcing TS 7 in with `--legacy-peer-deps`
+   typechecks with errors: `@types/node` is no longer picked up implicitly (it wants an
+   explicit `types` field), and `@testing-library/react` resolves with no exported `screen`
+   or `waitFor`. So even with the linter solved there is a migration to do.
+
+Recheck when `typescript-eslint` ships TS 7 support.
 
 ### 23. Low — Deprecated MUI API — *partly fixed*
 

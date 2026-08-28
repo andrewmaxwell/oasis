@@ -37,7 +37,7 @@ design decisions.
 | Server state | TanStack Query 5 (`@tanstack/react-query`) |
 | Backend | Supabase (Postgres + Auth + Realtime + Edge Functions/Deno) |
 | Hosting | GitHub Pages via GitHub Actions, served under `/oasis/` |
-| Lint | ESLint 9 flat config + Prettier (`singleQuote`, `bracketSpacing: false`) |
+| Lint | ESLint 10 flat config, `@eslint-react` + Prettier (`singleQuote`, `bracketSpacing: false`) |
 
 `base: '/oasis/'` in [vite.config.ts](vite.config.ts) and the hash router exist **because of
 GitHub Pages** — it can't do SPA server-side rewrites. Don't switch to `createBrowserRouter`

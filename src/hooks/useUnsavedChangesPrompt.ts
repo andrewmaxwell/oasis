@@ -46,14 +46,14 @@ export const useUnsavedChangesPrompt = (when: boolean) => {
   });
 
   // The blocker's identity changes whenever router state does, so the effect below can
-  // re-run while a dialog is already open. `prompting` keeps that to one dialog per
+  // re-run while a dialog is already open. `promptingRef` keeps that to one dialog per
   // blocked navigation; `proceed` and `reset` stay valid across those re-renders because
   // they're bound to the blocker's key, not to this particular object.
-  const prompting = useRef(false);
+  const promptingRef = useRef(false);
 
   useEffect(() => {
-    if (blocker.state !== 'blocked' || prompting.current) return;
-    prompting.current = true;
+    if (blocker.state !== 'blocked' || promptingRef.current) return;
+    promptingRef.current = true;
     confirm({
       title: 'Discard your changes?',
       message:
@@ -61,7 +61,7 @@ export const useUnsavedChangesPrompt = (when: boolean) => {
       confirmLabel: 'Discard',
       destructive: true,
     }).then((ok) => {
-      prompting.current = false;
+      promptingRef.current = false;
       if (ok) blocker.proceed?.();
       else blocker.reset?.();
     });
