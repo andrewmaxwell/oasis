@@ -11,7 +11,7 @@ small-team, mobile-heavy, PII-holding non-profit tool.
    volunteer has in a car, mid-route — is the only major workflow the app doesn't support.
 2. **§5 Restore and undo.** Soft-deleted records are invisible in the app today, so a
    misclick needs a developer with SQL access.
-3. **ISSUES #44**, the `react-router` bump — unblocked now that §6.3 has landed.
+3. **§6.4 SQL assertions on the views** — the one real gap the E2E mock leaves open.
 
 ## Done
 
@@ -168,7 +168,9 @@ Everything is one record at a time today.
 
 - ~~`.env.example` (ISSUES #39), `.nvmrc`, `engines`, and a `format` script (ISSUES #40).~~
   Done 2026-08-28.
-- Dependabot or Renovate for dependency updates.
+- Dependabot or Renovate for dependency updates. The tree was brought fully current on
+  2026-08-28 (`npm audit` clean); ESLint 10 and TypeScript 7 are blocked upstream, see
+  ISSUES #46.
 - A `CONTRIBUTING.md` and a `scripts/README.md` explaining when each script is run.
 - Bundle analysis — MUI plus DataGrid is heavy and the build already warns about a >500 kB
   chunk; routes are lazy-loaded, so check what's landing in the initial chunk.

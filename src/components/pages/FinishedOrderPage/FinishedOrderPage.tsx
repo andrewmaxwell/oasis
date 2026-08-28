@@ -197,7 +197,7 @@ const FinishedOrderPage = () => {
       </Grid>
 
       <Paper sx={{p: 2, mt: 2}}>
-        <Typography variant="h5" mb={2}>
+        <Typography variant="h5" sx={{mb: 2}}>
           Order Info
         </Typography>
 

@@ -142,7 +142,7 @@ const UserPage = () => {
       )}
 
       <Paper sx={{p: 2}}>
-        <Typography variant="h5" pb={2}>
+        <Typography variant="h5" sx={{pb: 2}}>
           User Info
         </Typography>
         <OasisForm
@@ -168,7 +168,7 @@ const UserPage = () => {
       </ul>
 
       {user.id && (
-        <Box mt={4}>
+        <Box sx={{mt: 4}}>
           <Button
             color="error"
             onClick={onDeleteClick}

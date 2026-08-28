@@ -30,8 +30,8 @@ design decisions.
 
 | Layer | Choice |
 | --- | --- |
-| Build | Vite 7, TypeScript 5.9 (strict), ESM |
-| UI | React 19, MUI 7 (`@mui/material`, `@mui/x-data-grid` v8), Emotion |
+| Build | Vite 8 (Rolldown), TypeScript 5.9 (strict), ESM |
+| UI | React 19, MUI 9 (`@mui/material`, `@mui/x-data-grid` v9), Emotion |
 | Routing | `react-router-dom` 7, **hash router** (`createHashRouter`) |
 | Forms | `react-hook-form` 7 |
 | Server state | TanStack Query 5 (`@tanstack/react-query`) |
@@ -199,7 +199,8 @@ The file does not currently run top-to-bottom without edits (ISSUES.md #10, #11)
   `prettier/prettier` rule. Single quotes, no bracket spacing (`{foo}` not `{ foo }`).
   `npm run format` fixes code in place; it skips the markdown docs, which are hand-wrapped.
   Run `npm run lint` before committing.
-- **Styling:** MUI `sx` prop. No CSS files. The only global CSS is in
+- **Styling:** MUI `sx` prop — MUI 9 removed the system shorthand props (`mb`, `pb`,
+  `fontWeight`, `alignItems`), so spacing and layout go in `sx` and nowhere else. No CSS files. The only global CSS is in
   [index.html](index.html) and the injected print styles in `LabelPage`.
 - **Utils:** pure, single-purpose, one export per file.
 - **Naming:** DB columns are `snake_case` and that leaks all the way into React props and

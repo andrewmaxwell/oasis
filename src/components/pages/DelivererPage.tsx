@@ -145,7 +145,7 @@ const DelivererPage = () => {
       </Button>
 
       <Paper sx={{p: 2, mb: 2}}>
-        <Typography variant="h5" pb={2}>
+        <Typography variant="h5" sx={{pb: 2}}>
           Deliverer Info
         </Typography>
         <OasisForm

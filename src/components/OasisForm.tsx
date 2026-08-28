@@ -43,7 +43,7 @@ export const OasisForm = <T extends FieldValues>({
 
   return (
     <form onSubmit={handleSubmit((data) => onSubmit(data, reset))}>
-      <Grid container alignItems="flex-start" spacing={2}>
+      <Grid container spacing={2} sx={{alignItems: 'flex-start'}}>
         {fields.map(
           ({id, label, required, type, width, options, multiline}) => (
             <Grid key={id} size={{xs: 12, md: width}}>

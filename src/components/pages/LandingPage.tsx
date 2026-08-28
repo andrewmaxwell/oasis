@@ -72,16 +72,19 @@ const StatCard = ({stat}: {stat: Stat}) => (
         ) : (
           <Typography
             variant="h3"
-            fontWeight={700}
-            color="text.primary"
-            sx={{letterSpacing: '-0.03em', lineHeight: 1}}
+            sx={{
+              fontWeight: 700,
+              color: 'text.primary',
+              letterSpacing: '-0.03em',
+              lineHeight: 1,
+            }}
           >
             {stat.value}
           </Typography>
         )}
       </Box>
       <Box sx={{alignSelf: 'flex-start'}}>
-        <Typography variant="h6" color="text.primary" fontWeight={600}>
+        <Typography variant="h6" sx={{color: 'text.primary', fontWeight: 600}}>
           {stat.label}
         </Typography>
         <Typography
@@ -134,7 +137,7 @@ const ActionCard = ({
         <action.Icon sx={{fontSize: 28}} />
       </Box>
       <Box>
-        <Typography variant="h6" fontWeight={600} color="text.primary">
+        <Typography variant="h6" sx={{fontWeight: 600, color: 'text.primary'}}>
           {action.label}
         </Typography>
         <Typography variant="body2" color="text.secondary">
@@ -244,7 +247,9 @@ const LandingPage = () => {
       <Grid
         container
         spacing={2.5}
-        justifyContent={visibleActions.length === 1 ? 'center' : 'flex-start'}
+        sx={{
+          justifyContent: visibleActions.length === 1 ? 'center' : 'flex-start',
+        }}
       >
         {visibleActions.map((action) => (
           <Grid key={action.label} size={{xs: 12, md: 6}}>

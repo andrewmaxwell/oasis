@@ -194,7 +194,7 @@ const ParentPage = () => {
       </Button>
 
       <Paper sx={{p: 2}}>
-        <Typography variant="h5" pb={2}>
+        <Typography variant="h5" sx={{pb: 2}}>
           Parent Info
         </Typography>
         <OasisForm

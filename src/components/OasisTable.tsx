@@ -47,7 +47,7 @@ const CustomToolbar = ({
         }}
       >
         <Box>
-          <Typography variant="h5" fontWeight="bold">
+          <Typography variant="h5" sx={{fontWeight: 'bold'}}>
             {label}s
           </Typography>
           <Typography variant="body2" color="text.secondary">

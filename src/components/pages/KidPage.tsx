@@ -178,7 +178,7 @@ const KidPage = () => {
       )}
 
       <Paper sx={{p: 2}}>
-        <Typography variant="h5" pb={2}>
+        <Typography variant="h5" sx={{pb: 2}}>
           Kid Info
         </Typography>
         <OasisForm

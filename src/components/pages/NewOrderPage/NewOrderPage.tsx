@@ -128,7 +128,7 @@ const NewOrderPage = () => {
 
   return (
     <>
-      <Typography mb={2}>
+      <Typography sx={{mb: 2}}>
         Review the data on the <Link to="/parents">Parents & Kids</Link> and{' '}
         <Link to="/deliverers">Deliverers</Link> pages closely. When you save
         this order, the number of diapers in the specified sizes for all active
@@ -149,7 +149,7 @@ const NewOrderPage = () => {
 
       {parents && deliverers && (
         <Paper sx={{p: 2, mt: 2}}>
-          <Typography variant="h5" mb={2}>
+          <Typography variant="h5" sx={{mb: 2}}>
             Deliverer Assignment Summary
           </Typography>
 
@@ -191,7 +191,7 @@ const NewOrderPage = () => {
       )}
 
       <Paper sx={{p: 2, mt: 2}}>
-        <Typography variant="h5" mb={2}>
+        <Typography variant="h5" sx={{mb: 2}}>
           Order Info
         </Typography>
 

@@ -36,8 +36,8 @@ export const OasisToolbar = () => {
 
           <Typography
             variant="h6"
-            fontWeight={700}
             sx={{
+              fontWeight: 700,
               overflow: 'hidden',
               whiteSpace: 'nowrap',
               textOverflow: 'ellipsis',

@@ -148,7 +148,7 @@ export const MobileNav = () => {
         >
           <Toolbar sx={{gap: 1.5}}>
             <img src="/oasis/favicon.png" height="32px" alt="" />
-            <Typography variant="h6" noWrap fontWeight={700}>
+            <Typography variant="h6" noWrap sx={{fontWeight: 700}}>
               Oasis
             </Typography>
           </Toolbar>
@@ -173,7 +173,7 @@ export const MobileNav = () => {
                   <ListItemText
                     primary={item.label}
                     slotProps={{
-                      primary: {fontWeight: active ? 700 : 500},
+                      primary: {sx: {fontWeight: active ? 700 : 500}},
                     }}
                   />
                 </ListItemButton>

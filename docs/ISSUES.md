@@ -89,25 +89,14 @@ Dark-only is a real problem for printing and for outdoor phone use. See ROADMAP 
 TypeScript cannot catch a schema mismatch anywhere in the app. Generate types with
 `supabase gen types typescript` and drop the casts.
 
-### 44. Medium — `react-router` has open high-severity advisories
+### 46. Low — Two majors are blocked by plugins that have not caught up
 
-Pinned at 7.13.0; the advisories cover `6.0.0 – 7.18.1` and are fixed in **7.18.2**.
-
-Practical exposure here is essentially nil — every advisory targets a server-side vector
-(turbo-stream deserialization, prerendered redirect HTML, the `__manifest` endpoint,
-single-fetch reflected input), and this app is a client-only SPA on GitHub Pages using
-`createHashRouter` with no loaders, actions, SSR, or RSC. `npm audit` will keep flagging it
-regardless. Everything else `npm audit` reports (babel, eslint, vite, rollup, esbuild,
-postcss, ws) is build-chain only and not shipped to users.
-
-**Now unblocked:** the smoke test added under #35 covers sign-in, three table pages, two
-detail pages, and the order flow, and it fails on a broken route (verified by mutation). Do
-the bump as its own change and run `npm run test:e2e`; still click through label printing and
-the invite redirect by hand, which the suite does not reach.
-
-```bash
-npm i react-router-dom@^7.18.2 && npm run lint && npm run typecheck && npm test && npm run build
-```
+**ESLint 10** is blocked by `eslint-plugin-react`, whose latest release (7.37.5) still
+declares `eslint@^3 || … || ^9.7`. **TypeScript 7** is blocked by `typescript-eslint` 8.68,
+which caps at `typescript@<6.1.0`. Both installs fail on peer resolution rather than on
+anything in this codebase, so there is nothing to fix here until upstream ships support —
+recheck when `eslint-plugin-react` and `typescript-eslint` publish new majors. Forcing
+either with `--legacy-peer-deps` would silently disable rules, which is worse than waiting.
 
 ### 23. Low — Deprecated MUI API — *partly fixed*
 
@@ -116,7 +105,7 @@ npm i react-router-dom@^7.18.2 && npm run lint && npm run typecheck && npm test 
 
 **Still open:** the `@ts-expect-error` in
 [OasisTable.tsx](../src/components/OasisTable.tsx) papering over `QuickFilterControl` prop
-typing.
+typing. Still required as of `@mui/x-data-grid` 9.12.0.
 
 ### 6. Low — Anon key is in git history
 
@@ -210,4 +199,5 @@ app as part of #1 — see the warning in [CLAUDE.md](../CLAUDE.md) §4.
 | 36 | Medium | CI used `npm install` and outdated actions, and never ran ESLint | `npm ci` plus lint, typecheck, test, and `check:functions` steps on current actions |
 | 38 | Medium | No migration system; `dataModel.sql` was applied by hand and contains `DROP TABLE … CASCADE` | Schema changes go through `supabase/migrations/` and `npx supabase db push` |
 | 39 | Low | No `.env.example` — the template lived only in the README *(2026-08-28)* | `.env.example` committed; the README now says `cp .env.example .env` |
+| 44 | Medium | `react-router` had open high-severity advisories *(2026-08-28)* | Bumped to 7.18.2, once #35's smoke test could catch a routing regression. `npm audit` is clean |
 | 40 | Low | No `format` script, no `engines` or `.nvmrc`, version stuck at `0.0.0` *(2026-08-28)* | `npm run format`, `engines: node >=22`, `.nvmrc`, and version `1.0.0`. Prettier's options moved out of the ESLint rule into `.prettierrc.json` so the CLI, the editor, and `npm run lint` cannot disagree; `.prettierignore` keeps it off the hand-wrapped docs |
