@@ -10,7 +10,8 @@ small-team, mobile-heavy, PII-holding non-profit tool.
 1. **§3 Mobile**, starting with the deliverer view. The delivery-day use case — the one a
    volunteer has in a car, mid-route — is the only major workflow the app doesn't support.
 2. **§6.2 Component tests on `OasisForm`.** The utils are locked down now; the form is the
-   next-most-load-bearing untested thing, and it gates ISSUES #26.
+   next-most-load-bearing untested thing — and now that the unsaved-changes blocker lives
+   inside it (ISSUES #26), the dirty-state logic it carries is worth a test.
 3. **§5 Restore and undo.** Soft-deleted records are invisible in the app today, so a
    misclick needs a developer with SQL access.
 
@@ -84,8 +85,8 @@ preview-before-send dialog. Optionally attach the label PDF (§7).
 `src/utils/` is covered (46 Vitest tests). Remaining, in value order:
 
 2. **React Testing Library on `OasisForm`.** Required-field validation, the dirty/disabled
-   Save button, select options loading. Also the prerequisite for ISSUES #26 — you want a
-   test around `isDirty` before wiring it to a router blocker.
+   Save button, select options loading, and the unsaved-changes blocker added for ISSUES #26
+   — including that `allowNextNavigation()` suppresses the prompt after a save or delete.
 3. **Playwright smoke test.** Sign in → create a family → add a kid → create an order →
    verify the totals. This one test would catch most regressions in the core flow, and would
    unblock the `react-router` bump (ISSUES #44).

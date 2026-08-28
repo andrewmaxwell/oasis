@@ -25,6 +25,7 @@ import {orderFields} from '../NewOrderPage/orderFields.ts';
 import {generateEmails} from './generateEmails.ts';
 import {useCanWrite} from '../../../hooks/useAccessLevel.ts';
 import {useOrderRecordWithParents} from '../../../hooks/useOrderRecordWithParents.ts';
+import {allowNextNavigation} from '../../../hooks/useUnsavedChangesPrompt.ts';
 
 // Date of next diaper pickup day
 // Who they will be picking up for (Name, address, phone, Size)
@@ -116,6 +117,7 @@ const FinishedOrderPage = () => {
         queryKey: queryKeys.table('order_record'),
       });
       showToast('Order deleted');
+      allowNextNavigation();
       navigate('/orders');
     },
     onError: (e: Error) =>

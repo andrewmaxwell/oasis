@@ -15,27 +15,6 @@ the anon key (#6). Enhancements — as opposed to defects — live in [ROADMAP.m
 
 ## Open
 
-### 10. High — `dataModel.sql` has a syntax error and won't run
-
-[dataModel.sql:83-84](../dataModel.sql#L83-L84) — trailing comma after
-`is_deleted BOOLEAN NOT NULL DEFAULT false,` before the closing `)` of `order_kid`.
-
-### 11. High — `dataModel.sql` statement order is wrong
-
-- Line 22: `parent.deliverer_id` references `deliverer(id)`, but `deliverer` isn't created
-  until line 47.
-- Line 46: `DROP TABLE IF EXISTS deliverer CASCADE` runs *after* `parent` is created, so on a
-  re-run it cascade-drops the constraint that line 22 just added.
-
-**Fix:** create `deliverer` first, and group all `DROP` statements at the top in reverse
-dependency order.
-
-### 26. High — Unsaved changes are lost silently
-
-Navigating away from a dirty `OasisForm` discards edits with no prompt. `react-hook-form`
-already exposes `formState.isDirty`; wire it to a router blocker and the existing
-`useConfirm()` dialog.
-
 ### 35. High — Thin test coverage — *partly fixed*
 
 > **Fixed 2026-08-27:** Vitest is configured, `npm test` runs in CI, and all of `src/utils/`
@@ -59,9 +38,9 @@ Supabase's password requirements in the dashboard.
 
 ### 12. Medium — `parent_order_view` silently hides orders with no kid rows
 
-[dataModel.sql:216](../dataModel.sql#L216) — `WHERE NOT ok.is_deleted` on a `LEFT JOIN`ed
+[dataModel.sql:219](../dataModel.sql#L219) — `WHERE NOT ok.is_deleted` on a `LEFT JOIN`ed
 table turns the outer join into an inner join, dropping any row where `ok` is NULL. The
-`COALESCE(json_agg(ok) FILTER (WHERE ok IS NOT NULL), '[]')` on line 210 shows the intent
+`COALESCE(json_agg(ok) FILTER (WHERE ok IS NOT NULL), '[]')` on line 208 shows the intent
 was to keep those rows.
 
 **Fix:** move the predicate into the `LEFT JOIN … ON` clause, or write
@@ -78,7 +57,7 @@ navigated to it anyway.
 
 ### 14. Medium — `order_parent` and `order_kid` have no primary key
 
-[dataModel.sql:70-84](../dataModel.sql#L70-L84). A retried insert produces duplicate rows and
+[dataModel.sql:75-87](../dataModel.sql#L75-L87). A retried insert produces duplicate rows and
 double-counts diapers. Add composite primary keys `(order_id, parent_id)` and
 `(order_id, kid_id)`.
 
@@ -197,7 +176,7 @@ real operational and compliance value. See ROADMAP §5.
 
 ## Fixed
 
-All fixed 2026-08-27. The security work is deployed and verified in production —
+Fixed 2026-08-27 unless noted. The security work is deployed and verified in production —
 see [SECURITY-FIX-DEPLOY.md](SECURITY-FIX-DEPLOY.md).
 
 ### Security
@@ -219,6 +198,8 @@ app as part of #1 — see the warning in [CLAUDE.md](../CLAUDE.md) §4.
 | 7 | High | Realtime `UPDATE` patched soft-deleted rows in place, so a deleted family could still be snapshotted into a new order | `useTable` drops the row when `newRecord.is_deleted` is true |
 | 8 | High | Dashboard counted inactive records under "Active" labels | `getTableCount` filters `is_active`, and its parameter narrowed to `TableWithActiveFlag` so it can't be called on the order tables |
 | 9 | High | Every Supabase error called `alert()`, threw, and left the page on a spinner | `fail()` logs and throws; react-query retries twice then renders `<ErrorState>` with Retry. See ROADMAP §2 |
+| 10 | High | `dataModel.sql` had a trailing comma before the closing `)` of `order_kid`, so the file wouldn't run *(2026-08-28)* | Comma removed |
+| 11 | High | `dataModel.sql` created `parent` before the `deliverer` it references, and dropped `deliverer` after creating `parent`, cascading away the constraint on a re-run *(2026-08-28)* | All `DROP TABLE` statements grouped at the top in reverse dependency order; tables created in dependency order, `deliverer` first |
 | 15 | Medium | Non-admins got an infinite spinner instead of "Access Denied" | Admin guard runs before the loading check, and the user list isn't requested at all for non-admins |
 | 16 | Medium | `LabelPage` called `.sort()` on state in place | Sorts a copy |
 | 18 | Medium | Null birth dates rendered as an empty cell in error red (`new Date(null)` is 1970) | Truthiness check before the date comparison |
@@ -233,6 +214,7 @@ app as part of #1 — see the warning in [CLAUDE.md](../CLAUDE.md) §4.
 | --- | --- | --- | --- |
 | 24 | High | No navigation — reaching Kids from Deliverers meant going home first | [OasisNav.tsx](../src/components/OasisNav.tsx): AppBar links at `md`+, hamburger `Drawer` below, active section carries `aria-current`. Breadcrumbs still open — ROADMAP §1 |
 | 25 | High | Saving gave no confirmation | Every mutation toasts on success and on failure; delete buttons disable while in flight |
+| 26 | High | Navigating away from a dirty form discarded the edits silently *(2026-08-28)* | `useUnsavedChangesPrompt` in [OasisForm](../src/components/OasisForm.tsx) blocks in-app navigation via react-router's `useBlocker` and shows the `useConfirm()` dialog, plus a `beforeunload` handler for tab close and reload. Mutations that navigate on success call `allowNextNavigation()` first, so a save or delete doesn't also ask |
 | 27 | Medium | Native `alert()` and `confirm()` | `useToast()` and promise-based `useConfirm()`; neither native call appears in `src/` any more |
 | 28 | Medium | Delete dialogs claimed a soft delete "cannot be undone" | Copy says an administrator can restore it. The user-delete dialog still says it, where it's true. Restore UI is ROADMAP §5 |
 | 32 | Low | Toolbar title was an `onClick` on a `Typography` — not focusable, invisible to screen readers | Logo and title sit inside one `<Link to="/">` |

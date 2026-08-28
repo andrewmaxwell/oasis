@@ -16,6 +16,7 @@ import {OasisForm} from '../OasisForm.tsx';
 import {useSessionState} from '../../hooks/useSession.ts';
 import {useIsAdmin} from '../../hooks/useAccessLevel.ts';
 import {useUser} from '../../hooks/useUser.ts';
+import {allowNextNavigation} from '../../hooks/useUnsavedChangesPrompt.ts';
 
 const userFields: FormField<AppUser>[] = [
   {id: 'name', label: 'Name', required: true, width: 4},
@@ -76,6 +77,7 @@ const UserPage = () => {
       queryClient.invalidateQueries({queryKey: queryKeys.users()});
       if (id) queryClient.invalidateQueries({queryKey: queryKeys.user(id)});
       showToast(wasInvite ? 'Invitation sent' : 'User saved');
+      allowNextNavigation();
       navigate('/users');
     },
     onError: (e: Error) =>
@@ -94,6 +96,7 @@ const UserPage = () => {
     onSuccess: () => {
       queryClient.invalidateQueries({queryKey: queryKeys.users()});
       showToast('User deleted');
+      allowNextNavigation();
       navigate('/users');
     },
     onError: (e: Error) =>

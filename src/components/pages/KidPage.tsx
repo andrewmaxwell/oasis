@@ -27,6 +27,7 @@ import {useKid} from '../../hooks/useKid.ts';
 import {OasisTable} from '../OasisTable.tsx';
 import {GridColDef} from '@mui/x-data-grid';
 import {linkButton} from '../cellRenderers.tsx';
+import {allowNextNavigation} from '../../hooks/useUnsavedChangesPrompt.ts';
 
 const parentOptions: OptionSource = {
   key: 'parent_options',
@@ -124,6 +125,7 @@ const KidPage = () => {
     onSuccess: (parentId) => {
       invalidateKid(parentId);
       showToast('Child saved');
+      allowNextNavigation();
       navigate(`/parent/${parentId}`, {replace: true});
     },
     onError: (e: Error) =>
@@ -135,6 +137,7 @@ const KidPage = () => {
     onSuccess: () => {
       invalidateKid(kid?.parent_id);
       showToast('Child deleted');
+      allowNextNavigation();
       navigate(`/parent/${kid?.parent_id}`);
     },
     onError: (e: Error) =>

@@ -139,6 +139,13 @@ invalidate it by name.
 
 Updates send only changed keys via `getDifference(formData, original)`.
 
+A dirty form blocks navigation: `OasisForm` calls `useUnsavedChangesPrompt` in
+[hooks/useUnsavedChangesPrompt.ts](src/hooks/useUnsavedChangesPrompt.ts), which wraps
+react-router's `useBlocker` plus a `beforeunload` handler. Only one blocker can be active
+at a time, so keep it to one `OasisForm` per page. Any mutation that navigates on success
+must call `allowNextNavigation()` immediately before `navigate()` — otherwise the user gets
+a "discard your changes?" dialog right after the save or delete they just confirmed.
+
 Submitting goes through a mutation, which returns immediately, so react-hook-form's own
 `isSubmitting` is useless for keeping Save disabled — pass `submitting={mutation.isPending}`
 instead.

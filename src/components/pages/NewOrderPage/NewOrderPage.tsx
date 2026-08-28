@@ -24,6 +24,7 @@ import {queryKeys} from '../../../queryClient.ts';
 import {useToast} from '../../../hooks/useToast.ts';
 import {ErrorState} from '../../PageStates.tsx';
 import {combineQueries} from '../../../hooks/combineQueries.ts';
+import {allowNextNavigation} from '../../../hooks/useUnsavedChangesPrompt.ts';
 
 const getDeliverers = async () =>
   ((await getAllRecords('deliverer')) as Deliverer[]).sort((a, b) =>
@@ -103,6 +104,7 @@ const NewOrderPage = () => {
         queryKey: queryKeys.table('order_record'),
       });
       showToast('Order created');
+      allowNextNavigation();
       navigate(`/order/${orderId}`);
     },
     onError: (e: Error) =>

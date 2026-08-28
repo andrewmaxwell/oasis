@@ -4,6 +4,7 @@ import {OasisTextField} from './OasisTextField.tsx';
 import {OasisSwitch} from './OasisSwitch.tsx';
 import {FormField} from '../types.ts';
 import {OasisSelect} from './OasisSelect.tsx';
+import {useUnsavedChangesPrompt} from '../hooks/useUnsavedChangesPrompt.ts';
 
 type OasisFormProps<T> = {
   origData: Partial<T>;
@@ -34,6 +35,11 @@ export const OasisForm = <T extends FieldValues>({
     control,
     reset,
   } = useForm({values: origData});
+
+  // ISSUES #26: navigating away from a dirty form used to discard the edits silently.
+  // A save in flight is excluded — the page navigates itself once it succeeds, and calls
+  // `allowNextNavigation()` when it does.
+  useUnsavedChangesPrompt(isDirty && !isSubmitting && !submitting);
 
   return (
     <form onSubmit={handleSubmit((data) => onSubmit(data, reset))}>

@@ -14,6 +14,7 @@ import {linkButton, mapAnchor} from '../cellRenderers.tsx';
 import {GridColDef} from '@mui/x-data-grid';
 import {useCanWrite} from '../../hooks/useAccessLevel.ts';
 import {useDelivererWithParents} from '../../hooks/useDelivererWithParents.ts';
+import {allowNextNavigation} from '../../hooks/useUnsavedChangesPrompt.ts';
 
 const delivererFields: FormField<Deliverer>[] = [
   {id: 'name', label: 'Name', required: true, width: 6},
@@ -80,6 +81,7 @@ const DelivererPage = () => {
     onSuccess: () => {
       invalidateDeliverer();
       showToast('Deliverer saved');
+      allowNextNavigation();
       navigate('/deliverers', {replace: true});
     },
     onError: (e: Error) =>
@@ -93,6 +95,7 @@ const DelivererPage = () => {
     onSuccess: () => {
       invalidateDeliverer();
       showToast('Deliverer deleted');
+      allowNextNavigation();
       navigate('/deliverers');
     },
     onError: (e: Error) =>

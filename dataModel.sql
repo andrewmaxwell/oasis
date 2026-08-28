@@ -8,7 +8,27 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
+-- Drops are grouped here in reverse dependency order, and the tables below are created
+-- in dependency order, so this file re-runs cleanly (ISSUES #11).
+DROP TABLE IF EXISTS order_kid CASCADE;
+DROP TABLE IF EXISTS order_parent CASCADE;
+DROP TABLE IF EXISTS order_record CASCADE;
+DROP TABLE IF EXISTS kid CASCADE;
 DROP TABLE IF EXISTS parent CASCADE;
+DROP TABLE IF EXISTS deliverer CASCADE;
+
+CREATE TABLE deliverer (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    name TEXT NOT NULL,
+    email TEXT NOT NULL,
+    phone_number TEXT,
+    is_active BOOLEAN NOT NULL,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    modified_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    is_deleted BOOLEAN NOT NULL DEFAULT false,
+    notes TEXT
+);
+
 CREATE TABLE parent (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     first_name TEXT NOT NULL,
@@ -27,7 +47,6 @@ CREATE TABLE parent (
     notes TEXT
 );
 
-DROP TABLE IF EXISTS kid CASCADE;
 CREATE TABLE kid (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     parent_id UUID REFERENCES parent(id) ON DELETE CASCADE,
@@ -43,20 +62,6 @@ CREATE TABLE kid (
     notes TEXT
 );
 
-DROP TABLE IF EXISTS deliverer CASCADE;
-CREATE TABLE deliverer (
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    name TEXT NOT NULL,
-    email TEXT NOT NULL,
-    phone_number TEXT,
-    is_active BOOLEAN NOT NULL,
-    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
-    modified_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
-    is_deleted BOOLEAN NOT NULL DEFAULT false,
-    notes TEXT
-);
-
-DROP TABLE IF EXISTS order_record CASCADE;
 CREATE TABLE order_record (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     date_of_order DATE NOT NULL,
@@ -67,20 +72,18 @@ CREATE TABLE order_record (
     notes TEXT
 );
 
-DROP TABLE IF EXISTS order_parent CASCADE;
 CREATE TABLE order_parent (
     order_id UUID REFERENCES order_record(id) ON DELETE CASCADE,
     parent_id UUID REFERENCES parent(id),
     deliverer_id UUID REFERENCES deliverer(id)
 );
 
-DROP TABLE IF EXISTS order_kid CASCADE;
 CREATE TABLE order_kid (
     order_id UUID REFERENCES order_record(id) ON DELETE CASCADE,
     kid_id UUID REFERENCES kid(id),
     diaper_size TEXT NOT NULL,
     diaper_quantity NUMERIC,
-    is_deleted BOOLEAN NOT NULL DEFAULT false,
+    is_deleted BOOLEAN NOT NULL DEFAULT false
 );
 
 DROP VIEW IF EXISTS parent_view;

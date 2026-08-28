@@ -17,6 +17,7 @@ import {birthDate, bool, linkButton} from '../cellRenderers.tsx';
 import {useCanWrite} from '../../hooks/useAccessLevel.ts';
 import {useParent} from '../../hooks/useParent.ts';
 import {consolidateOrderKids} from '../../utils/consolidateOrderKids.ts';
+import {allowNextNavigation} from '../../hooks/useUnsavedChangesPrompt.ts';
 
 const parentFields: FormField<Parent>[] = [
   {id: 'first_name', label: 'First Name', required: true, width: 4},
@@ -131,7 +132,10 @@ const ParentPage = () => {
       });
       queryClient.invalidateQueries({queryKey: queryKeys.count('parent')});
       showToast('Family saved');
-      if (isNew) navigate(`/parent/${parentId}`, {replace: true});
+      if (isNew) {
+        allowNextNavigation();
+        navigate(`/parent/${parentId}`, {replace: true});
+      }
     },
     onError: (e: Error) =>
       showToast(`Could not save this family: ${e.message}`, {
@@ -145,6 +149,7 @@ const ParentPage = () => {
       queryClient.invalidateQueries({queryKey: queryKeys.view('parent_view')});
       queryClient.invalidateQueries({queryKey: queryKeys.count('parent')});
       showToast('Family deleted');
+      allowNextNavigation();
       navigate('/parents');
     },
     onError: (e: Error) =>
